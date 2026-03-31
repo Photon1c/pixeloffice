@@ -92,7 +92,7 @@ export interface Agent {
   targetY: number;
   dir: "left" | "right";
   frame: 0 | 1;
-  mode: "walking" | "sitting" | "idle-wander";
+  mode: "walking" | "sitting" | "idle-wander" | "standing";
   deskIndex: number;
   currentZone?: string;
 }

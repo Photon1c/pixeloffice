@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { Agent, DashboardConfig, AgentStatus, AgentVisibility, Task, TaskStatus, TaskPriority, ZoneActivity } from "../types";
+import { Agent, DashboardConfig, AgentStatus, AgentVisibility, Task, ZoneActivity } from "../types";
 import GenealogyLab from "./GenealogyLab";
 import AdminAssistant from "./AdminAssistant";
 import StockForecasts from "./StockForecasts";
@@ -39,10 +39,8 @@ import { drawAgent, drawDeskItem } from "../utils/drawAgent";
 import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
-  COLORS,
   CHAIR_POSITIONS,
   getZoneAtPosition,
-  ROOMS,
 } from "../utils/layout";
 
 function getKitchenPosition(agentIndex: number): { x: number; y: number } {
@@ -101,7 +99,6 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   });
   const [showParams, setShowParams] = useState<boolean>(false);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
-  const [showTaskManager, setShowTaskManager] = useState<boolean>(false);
   const [showGenealogyLab, setShowGenealogyLab] = useState<boolean>(false);
   const [showAdminAssistant, setShowAdminAssistant] = useState<boolean>(false);
   const [showStockForecasts, setShowStockForecasts] = useState<boolean>(false);
@@ -113,7 +110,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [activeConversationZone, setActiveConversationZone] = useState<string | null>(null);
   const [stigmergyTraces, setStigmergyTraces] = useState<any[]>([]);
   const [currentTopic, setCurrentTopic] = useState<string>("");
-  const [tasks, setTasks] = useState<Task[]>([
+  const [tasks] = useState<Task[]>([
     { id: "1", title: "Review pull requests", description: "Check pending PRs from team", status: "in_progress", priority: "high", assigneeId: "ironclaw", createdAt: Date.now() - 86400000 },
     { id: "2", title: "Update documentation", description: "Add new API endpoints to docs", status: "todo", priority: "medium", createdAt: Date.now() - 172800000 },
     { id: "3", title: "Fix login bug", description: "Users reporting intermittent login failures", status: "done", priority: "high", assigneeId: "zeroclaw", createdAt: Date.now() - 259200000 },
@@ -140,8 +137,6 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
   const lastFrameTime = useRef<number>(0);
   const walkCycleTimer = useRef<number>(0);
-  const coolerTalkTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const coolerTalkEndTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const [isScrumRunning, setIsScrumRunning] = useState<boolean>(false);
   const [isCoolerTalkRunning, setIsCoolerTalkRunning] = useState<boolean>(false);
@@ -456,10 +451,6 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     setSelectedAgent(clickedAgent || null);
   }, [agents]);
 
-  const updateTask = (taskId: string, updates: Partial<Task>) => {
-    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, ...updates } : t));
-  };
-
   if (showGenealogyLab) return <GenealogyLab onNavigate={() => setShowGenealogyLab(false)} />;
   if (showAdminAssistant) return <AdminAssistant onNavigate={() => setShowAdminAssistant(false)} />;
   if (showStockForecasts) return <StockForecasts />;
@@ -640,7 +631,7 @@ function Dashboard({ config, onUpdate, onOpenGenealogyLab, onOpenAdminAssistant,
   );
 }
 
-function AgentActionCard({ agent, card, workflowState, setWorkflowState, onClose, onMoodChange }: any) {
+function AgentActionCard({ agent, card, onClose, onMoodChange }: any) {
   const [chatMsg, setChatMsg] = useState("");
   const [replies, setReplies] = useState<string[]>([]);
 
@@ -781,7 +772,6 @@ function ChatOverlay({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
-function TaskManager({ tasks, agents, onUpdateTask, onAddTask, onDeleteTask, onClose }: any) { return null; }
 
 const chatStyles: Record<string, React.CSSProperties> = {
   overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
