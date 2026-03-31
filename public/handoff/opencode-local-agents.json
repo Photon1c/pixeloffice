@@ -1,0 +1,288 @@
+[
+  {
+    "id": "frontdesk",
+    "name": "FrontDesk",
+    "description": "Receptionist agent handling initial visitor intake and task routing",
+    "tags": ["office", "reception", "intake"],
+    "models": {
+      "primary": {
+        "name": "gemma-3-1b-it",
+        "provider": "ollama",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "status": "local-ready"
+      },
+      "fallback": {
+        "name": "gpt-4.1-mini",
+        "provider": "openai",
+        "status": "remote"
+      }
+    },
+    "visualizer_node": "FRONT",
+    "status": "active",
+    "meta": {
+      "version": 2,
+      "updatedAt": "2026-03-25T00:00:00.000Z",
+      "app": "pixel_office"
+    }
+  },
+  {
+    "id": "ironclaw",
+    "name": "IronClaw",
+    "description": "Custodian agent managing office cleanliness and maintenance",
+    "tags": ["office", "custodian", "maintenance"],
+    "models": {
+      "primary": {
+        "name": "gemma-3-1b-it",
+        "provider": "ollama",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "status": "local-ready"
+      },
+      "fallback": {
+        "name": "gpt-4.1-mini",
+        "provider": "openai",
+        "status": "remote"
+      }
+    },
+    "visualizer_node": "IRON",
+    "status": "active",
+    "meta": {
+      "version": 2,
+      "updatedAt": "2026-03-26T00:00:00.000Z",
+      "app": "pixel_office"
+    }
+  },
+  {
+    "id": "zeroclaw",
+    "name": "ZeroClaw",
+    "description": "Specialist agent for technical analysis and problem-solving",
+    "tags": ["office", "specialist", "technical"],
+    "models": {
+      "primary": {
+        "name": "PhysicsObsession/blaze-3b",
+        "provider": "ollama",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "status": "local-ready"
+      },
+      "fallback": {
+        "name": "gpt-4.1-mini",
+        "provider": "openai",
+        "status": "remote"
+      }
+    },
+    "visualizer_node": "ZERO",
+    "status": "active",
+    "meta": {
+      "version": 2,
+      "updatedAt": "2026-03-26T00:00:00.000Z",
+      "app": "pixel_office"
+    }
+  },
+  {
+    "id": "hermitclaw",
+    "name": "HermitClaw",
+    "description": "Archivist agent managing knowledge records and documentation",
+    "tags": ["office", "archivist", "records"],
+    "models": {
+      "primary": {
+        "name": "gemma-3-1b-it",
+        "provider": "ollama",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "status": "local-ready"
+      },
+      "fallback": {
+        "name": "gpt-4.1-mini",
+        "provider": "openai",
+        "status": "remote"
+      }
+    },
+    "visualizer_node": "HERMIT",
+    "status": "active",
+    "meta": {
+      "version": 2,
+      "updatedAt": "2026-03-26T00:00:00.000Z",
+      "app": "pixel_office"
+    }
+  },
+  {
+    "id": "openclaw",
+    "name": "OpenClaw",
+    "description": "Clerk agent handling administrative tasks and documentation",
+    "tags": ["office", "clerk", "admin"],
+    "models": {
+      "primary": {
+        "name": "gemma-3-1b-it",
+        "provider": "ollama",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "status": "local-ready"
+      },
+      "fallback": {
+        "name": "gpt-4.1-mini",
+        "provider": "openai",
+        "status": "remote"
+      }
+    },
+    "visualizer_node": "OPEN",
+    "status": "active",
+    "meta": {
+      "version": 2,
+      "updatedAt": "2026-03-25T00:00:00.000Z",
+      "app": "pixel_office"
+    }
+  },
+  {
+    "id": "leslieclaw",
+    "name": "LeslieClaw",
+    "description": "Executive agent for high-level decision making and approvals",
+    "tags": ["office", "executive", "management"],
+    "models": {
+      "primary": {
+        "name": "gemma-3-1b-it",
+        "provider": "ollama",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "status": "local-ready"
+      },
+      "fallback": {
+        "name": "gpt-4.1-mini",
+        "provider": "openai",
+        "status": "remote"
+      }
+    },
+    "visualizer_node": "LESLIE",
+    "status": "active",
+    "meta": {
+      "version": 2,
+      "updatedAt": "2026-03-26T00:00:00.000Z",
+      "app": "pixel_office"
+    }
+  },
+  {
+    "id": "sherlobster",
+    "name": "Sherlobster",
+    "description": "Clerk agent assisting with general office operations",
+    "tags": ["office", "clerk", "operations"],
+    "models": {
+      "primary": {
+        "name": "gemma-3-1b-it",
+        "provider": "ollama",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "status": "local-ready"
+      },
+      "fallback": {
+        "name": "gpt-4.1-mini",
+        "provider": "openai",
+        "status": "remote"
+      }
+    },
+    "visualizer_node": "SHERL",
+    "status": "active",
+    "meta": {
+      "version": 2,
+      "updatedAt": "2026-03-25T00:00:00.000Z",
+      "app": "pixel_office"
+    }
+  },
+  {
+    "id": "hercule-prawnro",
+    "name": "Hercule Prawnro",
+    "description": "Specialist agent for complex problem resolution",
+    "tags": ["office", "specialist", "resolution"],
+    "models": {
+      "primary": {
+        "name": "PhysicsObsession/blaze-3b",
+        "provider": "ollama",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "status": "local-ready"
+      },
+      "fallback": {
+        "name": "gpt-4.1-mini",
+        "provider": "openai",
+        "status": "remote"
+      }
+    },
+    "visualizer_node": "HERCULE",
+    "status": "active",
+    "meta": {
+      "version": 2,
+      "updatedAt": "2026-03-26T00:00:00.000Z",
+      "app": "pixel_office"
+    }
+  },
+  {
+    "id": "pixel_me",
+    "name": "Pixel Me",
+    "description": "Personal productivity agent managing tasks, energy, and daily activities",
+    "tags": ["personal", "productivity", "self-care"],
+    "models": {
+      "primary": {
+        "name": "PhysicsObsession/blaze-3b",
+        "provider": "ollama",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "status": "local-ready"
+      },
+      "fallback": {
+        "name": "gpt-4.1-mini",
+        "provider": "openai",
+        "status": "remote"
+      }
+    },
+    "visualizer_node": "PIXME",
+    "status": "active",
+    "meta": {
+      "version": 2,
+      "updatedAt": "2026-03-25T00:00:00.000Z",
+      "app": "pixel-me"
+    }
+  },
+  {
+    "id": "pixel_me_diary",
+    "name": "Pixel Me Diary",
+    "description": "Journal and reflection agent for daily self-reflection",
+    "tags": ["personal", "journal", "reflection"],
+    "models": {
+      "primary": {
+        "name": "gemma-3-1b-it",
+        "provider": "ollama",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "status": "local-ready"
+      },
+      "fallback": {
+        "name": "gpt-4.1-mini",
+        "provider": "openai",
+        "status": "remote"
+      }
+    },
+    "visualizer_node": "DIARY",
+    "status": "active",
+    "meta": {
+      "version": 2,
+      "updatedAt": "2026-03-25T00:00:00.000Z",
+      "app": "pixel-me"
+    }
+  },
+  {
+    "id": "pixel_me_triage",
+    "name": "Pixel Me Triage",
+    "description": "Task prioritization and triage agent",
+    "tags": ["personal", "tasks", "triage"],
+    "models": {
+      "primary": {
+        "name": "gemma-3-1b-it",
+        "provider": "ollama",
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "status": "local-ready"
+      },
+      "fallback": {
+        "name": "gpt-4.1-mini",
+        "provider": "openai",
+        "status": "remote"
+      }
+    },
+    "visualizer_node": "TRIAGE",
+    "status": "active",
+    "meta": {
+      "version": 2,
+      "updatedAt": "2026-03-25T00:00:00.000Z",
+      "app": "pixel-me"
+    }
+  }
+]

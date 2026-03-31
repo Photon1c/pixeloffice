@@ -1,0 +1,44 @@
+{
+  "id": "ct-1774844039779",
+  "version": "cooler_v2",
+  "topic": "test",
+  "participants": [
+    "FrontDesk",
+    "ZeroClaw",
+    "OpenClaw",
+    "LeslieClaw",
+    "IronClaw",
+    "Hercule Prawnro",
+    "Sherlobster",
+    "HermitClaw"
+  ],
+  "topicKeywords": [
+    "test"
+  ],
+  "utterances": [
+    {
+      "speaker": "FrontDesk",
+      "text": "Good morning! I was just thinking about the new testing protocols we’re rolling out next week and it got me wondering—what’s everyone’s take on them? Do you think having them fully digital will streamline things, or are you worried it might create more hiccups for teams that aren’t as tech-focused?",
+      "intent": "ask",
+      "replyTo": null,
+      "validation": {
+        "valid": true,
+        "retries": 1,
+        "rejected_reasons": []
+      }
+    },
+    {
+      "speaker": "ZeroClaw",
+      "text": "Good morning. I do think digital protocols could streamline our process, but FrontDesk raises a great point about the learning curve. It makes me wonder if we've allocated enough time for training and support. Shifting gears slightly, what does everyone think about the security implications of moving all our test data to a new digital platform?",
+      "intent": "redirect",
+      "replyTo": 0,
+      "validation": {
+        "valid": true,
+        "retries": 5,
+        "rejected_reasons": []
+      }
+    }
+  ],
+  "location": "kitchen",
+  "startedAt": "2026-03-30T04:13:59.779Z"
+}
