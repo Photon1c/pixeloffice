@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Agent, DashboardConfig, AgentStatus, AgentVisibility, Task, ZoneActivity } from "../types";
+import { LAB_MODE } from "../config/env";
 import GenealogyLab from "./GenealogyLab";
 import AdminAssistant from "./AdminAssistant";
 import StockForecasts from "./StockForecasts";
@@ -133,6 +134,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     workflowStateRef.current = state;
     forceUpdate(n => n + 1);
   };
+  void setWorkflowState; // reserved for future use
   const workflowState = workflowStateRef.current;
 
   const lastFrameTime = useRef<number>(0);
@@ -497,9 +499,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           <div style={{ fontSize: '10px', color: '#feca57', marginBottom: '8px', fontStyle: 'italic' }}>Topic: {currentTopic || "Loading..."}</div>
           {stigmergyTraces.length > 0 && (
             <div style={{ borderTop: "1px solid rgba(255, 100, 50, 0.2)", paddingTop: "8px" }}>
-              {stigmergyTraces.slice(0, 5).map((t, i) => (
+              {stigmergyTraces.slice(0, 5).filter((t, i, arr) => arr.findIndex(x => x.type === t.type && x.roomId === t.roomId) === i).map((t, i) => (
                 <div key={i} style={{ fontSize: "10px", color: "#e8e8f0", marginBottom: "4px" }}>
-                  <strong>{t.intensity.toFixed(2)}</strong> - {t.type.replace('_', ' ')}
+                  <strong>{t.intensity.toFixed(2)}</strong> - {t.type.replace('_', ' ')} {t.roomId && `(${t.roomId})`}
                 </div>
               ))}
             </div>
@@ -590,7 +592,6 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               agent={selectedAgent}
               card={getAgentCardForRuntimeAgent(selectedAgent, agentCards)}
               workflowState={workflowState}
-              setWorkflowState={setWorkflowState}
               onClose={() => setSelectedAgent(null)}
               tasks={tasks.filter(t => t.assigneeId === selectedAgent.id)}
               onMoodChange={(mood: any) => {
@@ -611,12 +612,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 function Dashboard({ config, onUpdate, onOpenGenealogyLab, onOpenAdminAssistant, onOpenStockForecasts }: any) {
   return (
     <div style={styles.subPanel}>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
-        <a href="http://localhost:4173/command" target="_blank" style={styles.commandLink}>Terminal ↗</a>
-        <a href="http://127.0.0.1:5190" target="_blank" rel="noreferrer" style={styles.commandLink}>Sherlock CS ↗</a>
-        <a href="http://185.211.4.97" target="_blank" rel="noreferrer" style={styles.commandLink}>NightWatchauton ↗</a>
-        <a href="http://localhost:3847" target="_blank" rel="noreferrer" style={styles.commandLink}>ClawGuard ↗</a>
-      </div>
+      {LAB_MODE && (
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ fontSize: '11px', color: '#4ecdc4', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>🔬 Lab Tools</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            <a href="http://localhost:4173/command" target="_blank" style={styles.commandLink}>Terminal ↗</a>
+            <a href="http://127.0.0.1:5190" target="_blank" rel="noreferrer" style={styles.commandLink}>Sherlock CS ↗</a>
+            <a href="http://185.211.4.97" target="_blank" rel="noreferrer" style={styles.commandLink}>NightWatchauton ↗</a>
+            <a href="http://localhost:3847" target="_blank" rel="noreferrer" style={styles.commandLink}>ClawGuard ↗</a>
+          </div>
+        </div>
+      )}
       <h3 style={{ marginTop: 0 }}>Office Settings</h3>
       <div style={styles.formGroup}>
         <label><input type="checkbox" checked={config.liveMode} onChange={e => onUpdate({ liveMode: e.target.checked, mockMode: !e.target.checked })} /> Live Mode</label>
@@ -624,80 +630,180 @@ function Dashboard({ config, onUpdate, onOpenGenealogyLab, onOpenAdminAssistant,
       <div style={styles.formGroup}>
         <label><input type="checkbox" checked={config.showNames} onChange={e => onUpdate({ showNames: e.target.checked })} /> Show Names</label>
       </div>
-      <button style={styles.secondaryBtn} onClick={onOpenGenealogyLab}>Genealogy Lab</button>
-      <button style={styles.secondaryBtn} onClick={onOpenAdminAssistant}>Admin Assistant</button>
-      <button style={styles.secondaryBtn} onClick={onOpenStockForecasts}>Stock Forecasts</button>
+      {LAB_MODE && (
+        <>
+          <button style={styles.secondaryBtn} onClick={onOpenGenealogyLab}>Genealogy Lab</button>
+          <button style={styles.secondaryBtn} onClick={onOpenAdminAssistant}>Admin Assistant</button>
+          <button style={styles.secondaryBtn} onClick={onOpenStockForecasts}>Stock Forecasts</button>
+        </>
+      )}
     </div>
   );
 }
 
-function AgentActionCard({ agent, card, onClose, onMoodChange }: any) {
-  const [chatMsg, setChatMsg] = useState("");
-  const [replies, setReplies] = useState<string[]>([]);
+function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, tasks }: any) {
+  const unassignedTasks = tasks?.filter((t: any) => !t.assigneeId) || [];
+  const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [selectedModel, setSelectedModel] = useState("dash-squirrel");
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedWorkflow, setSelectedWorkflow] = useState("");
+  
+  const isReceptionist = agent.role === "receptionist";
 
-  const handleChat = async () => {
-    if (!chatMsg) return;
-    const msg = chatMsg;
-    setChatMsg("");
-    setReplies(prev => [...prev, `You: ${msg}`]);
-    
-    try {
-      const resp = await fetch("/api/agent-chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: msg, agentName: agent.name, agentRole: agent.role })
-      });
-      const data = await resp.json();
-      if (data.error) {
-        setReplies(prev => [...prev, `System: ${data.error}`]);
-      } else {
-        setReplies(prev => [...prev, `${agent.name}: ${data.reply}`]);
-      }
-    } catch {
-      setReplies(prev => [...prev, "System: Error connecting to agent."]);
-    }
+  const handleSendChat = () => {
+    if (!chatInput.trim() || isLoading) return;
+    const userMessage = chatInput;
+    setChatMessages(prev => [...prev, { role: "user", content: userMessage }]);
+    setChatInput("");
+    setIsLoading(true);
+    fetch('/api/agent-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: userMessage, model: selectedModel, agentName: agent.name, agentRole: agent.role })
+    })
+    .then(response => response.json())
+    .then(data => {
+      setIsLoading(false);
+      if (data.reply) setChatMessages(prev => [...prev, { role: "agent", content: data.reply }]);
+      else if (data.error) setChatMessages(prev => [...prev, { role: "agent", content: `Error: ${data.error}` }]);
+    })
+    .catch(error => {
+      setIsLoading(false);
+      setChatMessages(prev => [...prev, { role: "agent", content: `Error: ${error.message}` }]);
+    });
   };
 
+  const availableModels = [
+    { id: "gemma-clerk", name: "Gemma Clerk" },
+    { id: "physics-assistant:latest", name: "Physics Assistant (Latest)" },
+    { id: "dash-squirrel", name: "Dash Squirrel" },
+    { id: "night-dreamer", name: "Night Dreamer" },
+    { id: "gemma-3-1b-it", name: "Gemma 3" },
+    { id: "smollm", name: "SmolLM" },
+  ];
+
   return (
-    <div style={styles.agentCard}>
-      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-        <h2 style={{ margin: 0 }}>{agent.name}</h2>
-        <button onClick={onClose} style={styles.closeBtn}>×</button>
-      </div>
-      <p style={{ fontSize: '12px', color: '#a0a0b0' }}>{card?.description || agent.role}</p>
-      
-      {/* MODEL STATUS */}
-      {card && (
-        <div style={styles.modelStatus}>
-          <span style={{...styles.badge, background: card.models.primary.status === 'local-ready' ? '#2ecc71' : '#f1c40f'}}>
-            {card.models.primary.status === 'local-ready' ? 'Local' : 'Remote'}
-          </span>
-          <span style={{ fontSize: '10px', marginLeft: '8px' }}>{card.models.primary.name}</span>
+    <div style={actionCardStyles.overlay} onClick={onClose}>
+      <div style={actionCardStyles.card} onClick={e => e.stopPropagation()}>
+        <div style={actionCardStyles.header}>
+          <div style={{...actionCardStyles.avatar, backgroundColor: agent.color}}>{agent.name.charAt(0)}</div>
+          <div>
+            <h3 style={actionCardStyles.name}>{agent.name}</h3>
+            <span style={actionCardStyles.role}>{agent.role}</span>
+          </div>
+          <button style={actionCardStyles.closeBtn} onClick={onClose}>×</button>
         </div>
-      )}
+        
+        <div style={actionCardStyles.statusRow}>
+          <span style={{...actionCardStyles.statusDot, background: agent.status === 'working' ? '#26de81' : '#f1c40f'}} />
+          <span style={actionCardStyles.statusText}>{agent.status === 'working' ? 'Working' : 'Idle'}</span>
+          {card?.models?.primary?.status && (
+            <span style={{...actionCardStyles.visibilityBadge, background: card.models.primary.status === 'local-ready' ? '#26de81' : '#4a90d9', color: '#050509', marginLeft: 'auto'}}>
+              {card.models.primary.status === 'local-ready' ? 'Local' : 'Remote'}
+            </span>
+          )}
+        </div>
 
-      {/* CHAT */}
-      <div style={styles.chatBox}>
-        {replies.map((r, i) => <div key={i} style={{ marginBottom: '4px' }}>{r}</div>)}
-      </div>
-      <div style={{ display: 'flex', gap: '4px' }}>
-        <input style={styles.input} value={chatMsg} onChange={e => setChatMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleChat()} placeholder="Chat..." />
-        <button style={styles.sendBtn} onClick={handleChat}>Send</button>
-      </div>
+        <div style={actionCardStyles.section}>
+          <h4 style={actionCardStyles.sectionTitle}>Mood: {getMoodEmoji(agent.mood)}</h4>
+          <div style={actionCardStyles.moodGrid}>
+            {MOOD_OPTIONS.map(mood => (
+              <button key={mood} style={{...actionCardStyles.moodBtn, borderColor: agent.mood === mood ? '#4ecdc4' : '#2a3548'}} onClick={() => onMoodChange?.(mood)}>
+                {getMoodEmoji(mood)}
+              </button>
+            ))}
+          </div>
+        </div>
 
-      {/* MOODS */}
-      <div style={{ marginTop: '12px', display: 'flex', gap: '4px' }}>
-        {MOOD_OPTIONS.map(m => (
-          <button key={m} onClick={() => onMoodChange(m)} style={styles.moodBtn}>{getMoodEmoji(m)}</button>
-        ))}
-      </div>
+        <div style={actionCardStyles.section}>
+          <h4 style={actionCardStyles.sectionTitle}>Quick Actions</h4>
+          {isReceptionist && (
+            <select 
+              style={{width: '100%', padding: '10px 12px', background: '#1a2538', border: '1px solid #3a4a5a', borderRadius: '6px', color: '#e2e8f0', fontSize: '13px', cursor: 'pointer', marginTop: '8px'}}
+              value={selectedWorkflow}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSelectedWorkflow(value);
+                if (value === 'readme') alert('GitHub README workflow - configure endpoint');
+                else if (value === 'sitrep') alert('SitRep workflow - configure endpoint');
+                else if (value === 'nightly') alert('Nightly report workflow coming soon!');
+                setSelectedWorkflow("");
+              }}
+            >
+              <option value="">Select Workflow...</option>
+              <option value="readme">Fetch GitHub README</option>
+              <option value="sitrep">Generate Office SitRep</option>
+              <option value="nightly">Generate Nightly Report</option>
+            </select>
+          )}
+        </div>
 
-      {/* SPECIAL ACTIONS */}
-      {agent.id === "frontdesk" && (
-        <button style={{...styles.secondaryBtn, marginTop: '12px', background: '#e67e22'}} onClick={() => {
-          // GitHub workflow trigger
-        }}>GitHub README Workflow</button>
-      )}
+        {workflowState && (
+          <div style={actionCardStyles.section}>
+            <div style={{background: '#0a1520', border: '1px solid #2a3a4a', borderRadius: '8px', padding: '16px', marginTop: '12px'}}>
+              <div style={{color: '#4ecdc4', fontSize: '14px', fontWeight: 'bold', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px'}}>
+                {workflowState.status === 'running' && (
+                  <span style={{width: '10px', height: '10px', borderRadius: '50%', background: '#4ecdc4', animation: 'pulse 1s infinite'}} />
+                )}
+                {workflowState.status === 'completed' && '✓'}
+                {workflowState.status === 'failed' && '✗'}
+                {workflowState.message}
+              </div>
+              <div style={{height: '6px', background: '#1a2a3a', borderRadius: '3px', overflow: 'hidden', marginBottom: '12px'}}>
+                <div style={{height: '100%', width: `${((workflowState.currentStep + 1) / workflowState.totalSteps) * 100}%`, background: workflowState.status === 'completed' ? '#26de81' : workflowState.status === 'failed' ? '#fc5c65' : '#4ecdc4', transition: 'width 0.5s ease-out'}} />
+              </div>
+              <div style={{display: 'flex', gap: '8px', justifyContent: 'space-between'}}>
+                {['Receptionist', 'Clerk', 'Specialist', 'Archivist'].map((step, idx) => {
+                  const isActive = idx === workflowState.currentStep;
+                  const isComplete = idx < workflowState.currentStep || workflowState.status === 'completed';
+                  return (
+                    <div key={step} style={{display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px'}}>
+                      <div style={{width: '24px', height: '24px', borderRadius: '50%', background: isComplete ? '#26de81' : isActive ? '#4ecdc4' : '#2a3a4a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', color: isComplete || isActive ? '#050509' : '#606070', boxShadow: isActive ? '0 0 10px #4ecdc4' : 'none'}}>
+                        {isComplete ? '✓' : idx + 1}
+                      </div>
+                      <span style={{fontSize: '9px', color: isActive ? '#4ecdc4' : isComplete ? '#26de81' : '#505060'}}>{step}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {unassignedTasks.length > 0 && (
+          <div style={actionCardStyles.section}>
+            <h4 style={actionCardStyles.sectionTitle}>Assign Task</h4>
+            {unassignedTasks.slice(0, 3).map((task: any) => (
+              <button key={task.id} style={actionCardStyles.taskItem}>
+                <span style={{...actionCardStyles.priorityDot, background: task.priority === 'high' ? '#ff4b4b' : task.priority === 'medium' ? '#feca57' : '#4ecdc4'}} />
+                {task.title}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div style={actionCardStyles.chatContainer}>
+          <h4 style={actionCardStyles.sectionTitle}>Chat with {agent.name}</h4>
+          <div style={actionCardStyles.modelSelect}>
+            <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} style={actionCardStyles.modelDropdown}>
+              {availableModels.map(model => (<option key={model.id} value={model.id}>{model.name}</option>))}
+            </select>
+          </div>
+          <div style={actionCardStyles.chatMessages}>
+            {chatMessages.map((msg, i) => (
+              <div key={i} style={{...actionCardStyles.chatMessage, alignSelf: msg.role === "user" ? "flex-end" : "flex-start", background: msg.role === "user" ? "#1a3a3a" : "#0f1520", border: msg.role === "user" ? "1px solid #4ecdc4" : "1px solid #2a3a4a"}}>
+                {msg.content}
+              </div>
+            ))}
+            {isLoading && <div style={{color: '#4ecdc4', fontSize: '12px'}}>Thinking...</div>}
+          </div>
+          <div style={{display: 'flex', gap: '8px'}}>
+            <input style={actionCardStyles.chatInput} value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendChat()} placeholder={`Ask ${agent.name}...`} />
+            <button style={actionCardStyles.chatSendBtn} onClick={handleSendChat} disabled={isLoading}>Send</button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -786,6 +892,36 @@ const chatStyles: Record<string, React.CSSProperties> = {
   inputArea: { display: "flex", gap: "8px", padding: "16px", borderTop: "1px solid #1b2333" },
   input: { flex: 1, padding: "12px 16px", background: "#1a1a2a", border: "1px solid #2a3548", color: "#e8e8f0", borderRadius: "8px", fontSize: "14px" },
   sendBtn: { padding: "12px 24px", background: "#4a90d9", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer", fontSize: "14px", fontWeight: 600 }
+};
+
+const actionCardStyles: Record<string, React.CSSProperties> = {
+  overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
+  card: { width: "380px", maxHeight: "85vh", background: "rgba(15, 15, 25, 0.98)", borderRadius: "12px", border: "1px solid #2a3a4a", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" },
+  header: { display: "flex", alignItems: "center", gap: "12px", padding: "16px", borderBottom: "1px solid #2a3a4a" },
+  avatar: { width: "40px", height: "40px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: "bold", color: "#050509" },
+  name: { margin: 0, fontSize: "16px", color: "#e8e8f0" },
+  role: { fontSize: "12px", color: "#707080", textTransform: "capitalize" },
+  closeBtn: { background: "transparent", border: "none", color: "#707080", fontSize: "24px", cursor: "pointer", marginLeft: "auto" },
+  statusRow: { display: "flex", alignItems: "center", gap: "8px", padding: "8px 16px", borderBottom: "1px solid #1a2a3a", fontSize: "12px" },
+  statusDot: { width: "8px", height: "8px", borderRadius: "50%" },
+  statusText: { color: "#a0a0b0" },
+  visibilityBadge: { fontSize: "10px", padding: "2px 6px", borderRadius: "4px", background: "#2a3a4a", color: "#e0e8f0" },
+  section: { padding: "12px 16px", borderBottom: "1px solid #1a2a3a" },
+  sectionTitle: { margin: "0 0 8px 0", fontSize: "12px", color: "#4ecdc4", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.5px" },
+  moodGrid: { display: "flex", gap: "6px", flexWrap: "wrap" },
+  moodBtn: { background: "#1a2a3a", border: "1px solid #2a3548", borderRadius: "6px", padding: "6px 10px", fontSize: "16px", cursor: "pointer" },
+  actions: { display: "flex", flexDirection: "column", gap: "8px" },
+  actionBtn: { padding: "10px", background: "#1a2a3a", border: "1px solid #2a3548", borderRadius: "6px", color: "#e0e8f0", cursor: "pointer", fontSize: "13px" },
+  taskList: { display: "flex", flexDirection: "column", gap: "6px" },
+  taskItem: { display: "flex", alignItems: "center", gap: "8px", padding: "8px", background: "#1a2538", border: "1px solid #2a3548", borderRadius: "6px", color: "#e0e8f0", cursor: "pointer", fontSize: "12px", textAlign: "left" },
+  priorityDot: { width: "6px", height: "6px", borderRadius: "50%" },
+  chatContainer: { padding: "12px 16px" },
+  modelSelect: { marginBottom: "8px" },
+  modelDropdown: { width: "100%", padding: "6px 8px", background: "#1a2538", border: "1px solid #2a3548", borderRadius: "4px", color: "#e0e8f0", fontSize: "12px" },
+  chatMessages: { height: "120px", overflowY: "auto", background: "#0a1520", borderRadius: "6px", padding: "8px", display: "flex", flexDirection: "column", gap: "6px", marginBottom: "8px" },
+  chatMessage: { padding: "8px 10px", borderRadius: "6px", fontSize: "12px", lineHeight: 1.4, maxWidth: "85%" },
+  chatInput: { flex: 1, padding: "8px 10px", background: "#1a2538", border: "1px solid #2a3548", borderRadius: "4px", color: "#e0e8f0", fontSize: "12px" },
+  chatSendBtn: { padding: "8px 16px", background: "#4a90d9", border: "none", borderRadius: "4px", color: "#fff", cursor: "pointer", fontSize: "12px", fontWeight: 600 }
 };
 
 const styles: Record<string, React.CSSProperties> = {

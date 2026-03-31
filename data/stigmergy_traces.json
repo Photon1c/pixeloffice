@@ -1,65 +1,38 @@
 [
   {
-    "id": "trace-1774995759570-520",
+    "id": "trace-1775000696450-146",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
-    "roomId": "openOffice",
-    "created_at": "2026-03-31T22:22:39.570Z",
-    "expires_at": "2026-03-31T22:32:39.570Z"
+    "roomId": "dataNodes",
+    "created_at": "2026-03-31T23:44:56.450Z",
+    "expires_at": "2026-03-31T23:54:56.450Z"
   },
   {
-    "id": "trace-1774995765323-80",
+    "id": "trace-1775000702419-29",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
-    "roomId": "openOffice",
-    "created_at": "2026-03-31T22:22:45.323Z",
-    "expires_at": "2026-03-31T22:32:45.323Z"
+    "roomId": "dataNodes",
+    "created_at": "2026-03-31T23:45:02.419Z",
+    "expires_at": "2026-03-31T23:55:02.419Z"
   },
   {
-    "id": "trace-1774995777408-332",
+    "id": "trace-1775000726405-934",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
-    "roomId": "openOffice",
-    "created_at": "2026-03-31T22:22:57.407Z",
-    "expires_at": "2026-03-31T22:32:57.407Z"
+    "roomId": "dataNodes",
+    "created_at": "2026-03-31T23:45:26.405Z",
+    "expires_at": "2026-03-31T23:55:26.405Z"
   },
   {
-    "id": "trace-1774995783388-970",
+    "id": "trace-1775000732411-262",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
-    "roomId": "openOffice",
-    "created_at": "2026-03-31T22:23:03.388Z",
-    "expires_at": "2026-03-31T22:33:03.388Z"
-  },
-  {
-    "id": "trace-1774995789330-35",
-    "type": "task_shadow",
-    "intensity": 0.6,
-    "agentId": "ironclaw",
-    "roomId": "openOffice",
-    "created_at": "2026-03-31T22:23:09.330Z",
-    "expires_at": "2026-03-31T22:33:09.330Z"
-  },
-  {
-    "id": "trace-1774995795315-916",
-    "type": "task_shadow",
-    "intensity": 0.6,
-    "agentId": "ironclaw",
-    "roomId": "openOffice",
-    "created_at": "2026-03-31T22:23:15.315Z",
-    "expires_at": "2026-03-31T22:33:15.315Z"
-  },
-  {
-    "id": "trace-1774995807392-198",
-    "type": "task_shadow",
-    "intensity": 0.6,
-    "agentId": "ironclaw",
-    "roomId": "openOffice",
-    "created_at": "2026-03-31T22:23:27.392Z",
-    "expires_at": "2026-03-31T22:33:27.392Z"
+    "roomId": "dataNodes",
+    "created_at": "2026-03-31T23:45:32.411Z",
+    "expires_at": "2026-03-31T23:55:32.411Z"
   }
 ]
