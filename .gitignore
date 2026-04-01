@@ -15,7 +15,6 @@ dist/
 .env.local
 .env.development
 .env.production
-.env.*
 
 # logs
 npm-debug.log*
