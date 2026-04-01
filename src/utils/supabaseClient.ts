@@ -10,4 +10,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 export const supabase = createClient(supabaseUrl ?? '', supabaseAnonKey ?? '');
 
+// Attach to window for live debugging (Fixes ReferenceError in console)
+if (typeof window !== 'undefined') {
+  (window as any).supabase = supabase;
+}
+
 export type SupabaseClientType = typeof supabase;
