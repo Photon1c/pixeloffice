@@ -1,142 +1,251 @@
-# Pixel Office
+# 🏢 Pixel Office – Stigmergic Agent Lab
 
-A 2D pixel art office visualization for AI agents using HTML Canvas and React.
+A 2D pixel art office where AI agents move, talk at the water cooler, and generate SCRUM runs and tasks from their conversations.
 
-## Features
+Built with **React + Vite (frontend)** and a **Node/TypeScript server** that talks to **Supabase** and other backends.
 
-- **Live Agent Mode**: Real-time agent status from backend API
-- **Privacy System**: Agents can be public, private, or offline
-- **View Modes**: Public (respects privacy) or Operator (shows all)
-- **Interactive Canvas**: Agents walk, work, and wander in the office
-- **Terminal Endpoint**: `/command` - A retro terminal interface
-- **Collapsible Dashboard**: Parameters panel that can be hidden
+---
 
-## Quick Start
+## ✨ Current Highlights (March 31, 2026)
+
+- **Grid-Based Layout**
+  - 5×3 grid filling a 1200×800 canvas
+  - Standardized room interiors (70% back wall / 30% floor strip)
+  - Kitchen and Sherlock's Office fully furnished via schema-driven layout
+
+- **Stigmergic Fields**
+  - **Review Heat**: orange pulsing aura in the kitchen when cooler talk centers on PR backlog / review bottlenecks
+  - **Task Shadows**: blue fading footprints at desks where agents have unfinished work
+  - These fields are wired into backend logic (cooler→SCRUM bridge) and visible in the scene
+
+- **Cooler → SCRUM Bridge**
+  - Cooler sessions are scored for relevance (tags + action phrases)
+  - Qualifying conversations are promoted into `scrum_runs` + `tasks` via the Supabase backend
+  - Dev CLI: `scripts/promote_cooler_to_scrum.ts` for manual promotion/testing
+
+- **Chat & Agent Action Cards**
+  - Restored **AgentActionCard** with:
+    - Quick Actions (e.g., fetch GitHub README, generate situational reports)
+    - Workflow visualization (progress bar + step indicators)
+    - Task assignment section
+    - Model selector + chat history
+  - Chat overlay restored with error handling when local models (Ollama) are not available
+
+- **Public vs Lab Modes**
+  - `PUBLIC_MODE` / `LAB_MODE` flags control which UI surfaces are exposed
+  - **Always visible**: Live Mode, Show Agent Names, core office view
+  - **Lab-only**: Terminal, Sherlock CS, NightWatchauton, ClawGuard, Genealogy Lab, Admin Assistant, Stock Forecasts, and other experimental tools
+
+---
+
+## 🧱 Architecture Overview
+
+```text
+pixel_office/
+├─ src/
+│  ├─ components/
+│  │  └─ PixelOffice.tsx        # Main React component + HUD
+│  ├─ config/
+│  │  └─ env.ts                 # PUBLIC_MODE / LAB_MODE helpers
+│  ├─ utils/
+│  │  ├─ drawOffice.ts         # Canvas rendering
+│  │  └─ agentLogic.ts         # Agent movement & behavior
+│  └─ ...
+├─ server/
+│  ├─ index.ts                  # Express server entry
+│  ├─ cooler/
+│  │  ├─ coolerToScrum.ts      # Cooler → SCRUM bridge logic
+│  │  └─ stigmergy.ts          # Review Heat / Task Shadows endpoints
+│  ├─ roleModels.ts             # Role → model mapping
+│  └─ ...
+├─ docs/
+│  └─ active/                   # Design briefs & current specs
+│     ├─ 03-31-quick-summary.md
+│     ├─ evening_summary.md
+│     ├─ opencode_nvidia_integration_spec.md
+│     ├─ stigmergy.md
+│     └─ cooler_scrum_quick_summary.md
+├─ netlify.toml                 # Build + functions config for Netlify
+├─ package.json
+└─ README.md                    # You are here
+```
+
+---
+
+## 🚀 Quick Start (Local Dev)
+
+From the Pixel Office project root:
 
 ```bash
 # Install dependencies
-cd pixel_office
 npm install
 
-# Start backend server (port 4173) - serves /command endpoint
+# Start backend server (port 4173)
 npm run dev:server
 
-# Start frontend dev server (port 5173) - in another terminal
+# In another terminal: start frontend dev server (port 5173)
 npm run dev
 ```
 
-Or run both together:
+Or run both together with the orchestrated script (if configured):
+
 ```bash
-npm run live  # builds and starts backend server
+npm run live
 ```
 
-**Note:** Both servers must be running for the Terminal link to work. The frontend proxies `/command` requests to the backend on port 4173.
+Then open:
 
-Open http://localhost:5173 in your browser.
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:4173
 
-## Running Tests
+> Note: Some chat features expect a local model (e.g., Ollama) to be available. When it isn't, the UI will surface a clear error.
+
+---
+
+## 🌐 Netlify Deployment – `stigmergic-pixel-office`
+
+Pixel Office is deployed via Netlify as **`stigmergic-pixel-office`**.
+
+### Build Settings
+
+- **Build command**: `npm run build`
+- **Publish directory**: `dist`
+- **Functions directory**: `netlify/functions`
+
+### Public vs Lab Modes
+
+Controlled by Vite env vars (set in Netlify environment):
+
+```env
+VITE_PUBLIC_MODE=true  # public surface (hide lab tools)
+VITE_LAB_MODE=false    # lab tools off in production
+```
+
+And for local dev (in `.env.local`, not committed):
+
+```env
+VITE_PUBLIC_MODE=false
+VITE_LAB_MODE=true
+```
+
+`src/config/env.ts` exposes:
+
+```ts
+export const PUBLIC_MODE = import.meta.env.VITE_PUBLIC_MODE === 'true';
+export const LAB_MODE = import.meta.env.VITE_LAB_MODE === 'true' || (!PUBLIC_MODE && import.meta.env.VITE_LAB_MODE !== 'false');
+```
+
+Use these flags to gate:
+
+- **Always on** (both modes):
+  - Live Mode toggle
+  - Show Agent Names
+  - Core office visualization
+
+- **Lab-only** (LAB_MODE):
+  - Terminal, Sherlock CS, NightWatchauton, ClawGuard
+  - Genealogy Lab, Admin Assistant, Stock Forecasts
+  - Other experimental/lab tools
+
+---
+
+## 🗄️ Backend: Supabase & pixel_memory
+
+Pixel Office uses **Supabase** for cooler sessions, SCRUM runs, and tasks, and **pixel_memory** for core memory tables.
+
+### Supabase (frontend)
+
+Vite env vars (public/publishable, safe for browser when RLS is enabled):
+
+```env
+VITE_SUPABASE_URL=...
+VITE_SUPABASE_ANON_KEY=...
+```
+
+Used in `src/utils/supabaseClient.ts`:
+
+```ts
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+```
+
+### Supabase (backend / Netlify functions)
+
+Server-side env vars (not exposed to the browser):
+
+```env
+SUPABASE_URL=...
+SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+Example admin client (for Netlify functions or backend scripts):
+
+```ts
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.SUPABASE_URL!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: { persistSession: false },
+});
+```
+
+### pixel_memory DB
+
+`pixel_memory` provides tables like:
+
+- `entities` – People, projects, places, systems
+- `mem_entries` – Notes, tasks, events, reflections, logs
+- `prefs` – Long-lived preferences and settings
+- `pixel_state` – UI state per app
+
+Steps (summarized – see `.env.template` for exact keys):
 
 ```bash
-# From the workspace root
+cp .env.template .env
+# Edit DB credentials, then:
+npm run pixel_memory:migrate
+```
+
+---
+
+## 🧪 Tests & Smoke Checks
+
+Pixel Office has some external smoke tests wired via the OpenClaw workspace (Playwright, etc.). These are currently run from the outer workspace and may reference paths like:
+
+```bash
 cd /home/sherlockhums/.openclaw/workspace
 source lobsterenv/bin/activate
 python3 tools/smoke_playwright.py
 ```
 
-## Configuration
+Use these when you want an end-to-end "does the office render and respond" check.
 
-### Visibility Settings
+---
 
-Edit `~/.openclaw/workspace-main/memory/logs/agent-visibility.json`:
+## 🔧 Available Scripts
 
-```json
-{
-  "sherlock": {
-    "visibility": "public",
-    "note": "Deep work mode"
-  },
-  "sherlobster": {
-    "visibility": "public"
-  },
-  "hercule-prawnro": {
-    "visibility": "public"
-  }
-}
-```
+- `npm run dev` – Start Vite dev server (frontend)
+- `npm run build` – Build for production
+- `npm run preview` – Preview production build
+- `npm run dev:server` – Start backend server
+- `npm run live` – Optional combined flow (build + server), if configured
 
-Valid values: `public`, `private`, `offline`
+---
 
-### Environment
+## 📎 Notes & Future Work
 
-- **Backend Port**: 4173
-- **Frontend Port**: 5173
-- **API Endpoint**: `/api/employee-status`
+- **Cloud model routing for remote (Netlify) chat** is next:
+  - NVIDIA + OpenAI as providers behind a Netlify Function.
+  - Frontend routes chat through that function when `PUBLIC_MODE` is true.
+- **Stigmergy extensions** planned:
+  - Review Heat influencing SCRUM scoring and badges.
+  - Task Shadows nudging agent/session selection and a small "Unfinished Work Hotspots" panel.
+  - Lightweight social activity meter around the cooler.
 
-### Database Setup
-
-pixel_office uses **pixel_memory** for persistent storage (entities, memory entries, preferences).
-
-1. **Copy the environment template:**
-   ```bash
-   cp .env.template .env
-   ```
-
-2. **Edit `.env`** with your database credentials:
-   ```
-   CORE_DB_HOST=localhost        # Database host
-   CORE_DB_PORT=5432            # Port (5432 postgres, 3306 mysql)
-   CORE_DB_NAME=hermit_core     # Database name
-   CORE_DB_USER=pixel_app      # Database user
-   CORE_DB_PASS=your_password   # Database password
-   CORE_DB_TYPE=postgres       # "postgres" or "mysql"
-   ```
-
-3. **Create the database** (if it doesn't exist):
-   ```bash
-   # For PostgreSQL
-   createdb <DB_NAME> -U <DB_USER> -h <DB_HOST>
-
-   # For MySQL
-   mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS <DB_NAME>;"
-   ```
-
-   Replace `<DB_NAME>`, `<DB_USER>`, and `<DB_HOST>` with the values from your `.env`.
-
-4. **Run migrations:**
-   ```bash
-   npm run pixel_memory:migrate
-   ```
-
-This creates the following tables:
-- `entities` - Things in life (people, projects, places, systems)
-- `mem_entries` - Atomic notes, tasks, events, reflections, logs
-- `prefs` - Long-lived preferences and settings
-- `pixel_state` - Stateful UI bits per-app
-
-## Privacy & View Modes
-
-| Mode | Behavior |
-|------|----------|
-| **Public** | Respects agent visibility settings |
-| **Operator** | Shows all agents with real status |
-
-| Visibility | Door | Agent | Status Bar |
-|------------|------|-------|-------------|
-| `public` | Open, green light | Visible | Working/Idle |
-| `private` | Closed, purple light | Visible | "Busy" + "[Private]" |
-| `offline` | Dark, no light | Hidden | "Offline" |
-
-## Available Scripts
-
-- `npm run dev` - Start Vite dev server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm run dev:server` - Start backend server
-
-## Files
-
-- `src/components/PixelOffice.tsx` - Main React component
-- `src/utils/drawOffice.ts` - Canvas rendering
-- `src/utils/agentLogic.ts` - Agent movement logic
-- `server/index.ts` - Express backend API
-- `computer_screen.html` - Terminal screen (served at `/command`)
+If you’re reading this from the future, check `docs/active/` for the latest design briefs and see what’s actually been implemented.

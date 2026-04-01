@@ -17,7 +17,7 @@ export interface StigmergyTrace {
   metadata?: Record<string, any>;
 }
 
-const TRACES_FILE = path.resolve(process.cwd(), "data/stigmergy_traces.json");
+const TRACES_FILE = "/home/sherlockhums/apps/pixelworld/pixel_office/data/stigmergy_traces.json";
 const DEFAULTS = {
   review_heat: { decayMs: 15 * 60 * 1000 },
   task_shadow: { decayMs: 10 * 60 * 1000 },
@@ -30,14 +30,22 @@ function ensureDataDir() {
 }
 
 export function getActiveTraces(): StigmergyTrace[] {
-  if (!fs.existsSync(TRACES_FILE)) return [];
+  console.log("[Stigmergy] getActiveTraces called, file:", TRACES_FILE);
+  if (!fs.existsSync(TRACES_FILE)) {
+    console.log("[Stigmergy] File does not exist");
+    return [];
+  }
   try {
     const raw = fs.readFileSync(TRACES_FILE, "utf-8");
+    console.log("[Stigmergy] Raw content:", raw.substring(0, 200));
     if (!raw || raw.trim() === "" || raw.trim() === "null") return [];
     const all: StigmergyTrace[] = JSON.parse(raw);
     const now = new Date().toISOString();
-    return all.filter(t => t.expires_at > now);
+    const active = all.filter(t => t.expires_at > now);
+    console.log("[Stigmergy] Active traces:", active.length);
+    return active;
   } catch (e) {
+    console.log("[Stigmergy] Error:", e);
     return [];
   }
 }

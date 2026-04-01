@@ -259,11 +259,6 @@ export function drawWalls(ctx: CanvasRenderingContext2D): void {
 }
 
 export function drawZoneIndicators(ctx: CanvasRenderingContext2D, zoneActivity: Map<string, ZoneActivity>, traces: any[] = []): void {
-  // Deduplicate traces by type + roomId to avoid duplicate rendering
-  const uniqueTraces = traces.filter((t, i, arr) => 
-    arr.findIndex(x => x.type === t.type && x.roomId === t.roomId) === i
-  );
-  
   Object.values(ROOMS).forEach(room => {
     const activity = zoneActivity.get(room.zoneId);
     
@@ -279,7 +274,7 @@ export function drawZoneIndicators(ctx: CanvasRenderingContext2D, zoneActivity: 
     }
 
     // 2. Draw STIGMERGY TRACES
-    const roomTraces = uniqueTraces.filter(t => t.roomId === room.zoneId);
+    const roomTraces = traces.filter(t => t.roomId === room.zoneId);
     roomTraces.forEach(t => {
       const centerX = room.x + room.width / 2;
       const centerY = room.y + room.height * 0.7;
