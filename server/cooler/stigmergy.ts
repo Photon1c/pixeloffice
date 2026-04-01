@@ -35,7 +35,7 @@ interface SocialPotentialResult {
 
 export function calculateSocialPotential(): SocialPotentialResult {
   const sessionsDir = "/home/sherlockhums/apps/pixelworld/pixel_office/data/cooler_sessions";
-  const windowMs = 60 * 60 * 1000; // 60 minutes
+  const windowMs = 60 * 60 * 1000;
   const now = Date.now();
   const windowStart = new Date(now - windowMs).toISOString();
   
@@ -51,20 +51,15 @@ export function calculateSocialPotential(): SocialPotentialResult {
           const filePath = path.join(sessionsDir, file);
           const raw = fs.readFileSync(filePath, 'utf-8');
           const session = JSON.parse(raw);
+          const stats = fs.statSync(filePath);
           
-          // Check created_at field, or fall back to file mtime
-          let sessionTime = session.created_at;
-          if (!sessionTime) {
-            const stats = fs.statSync(filePath);
-            sessionTime = stats.mtime.toISOString();
-          }
+          let sessionTime = session.created_at || session.startedAt;
+          const mtimeMs = stats.mtimeMs;
           
-          // Also check if there's a startedAt field
-          if (session.startedAt && !sessionTime) {
-            sessionTime = session.startedAt;
-          }
+          // Count if session timestamp OR file modification is within window
+          const isRecent = sessionTime > windowStart || mtimeMs > now - windowMs;
           
-          if (sessionTime && sessionTime > windowStart) {
+          if (isRecent) {
             sessionCount++;
             const participants = session.participants || [];
             participantCount += participants.length;
@@ -72,17 +67,20 @@ export function calculateSocialPotential(): SocialPotentialResult {
               id: session.id,
               topic: session.topic || '',
               participants,
-              created_at: sessionTime
+              created_at: sessionTime || stats.mtime.toISOString()
             });
           }
-        } catch {}
+        } catch (e) {
+          console.log("[Stigmergy] Error reading session:", e);
+        }
       }
     }
   } catch (e) {
     console.log("[Stigmergy] Error calculating social potential:", e);
   }
   
-  // Normalize to [0, 1] - assume max 10 sessions with 16 participants = 160 participant-actions
+  console.log("[Stigmergy] Social potential:", { sessionCount, participantCount });
+  
   const maxSessions = 10;
   const maxParticipants = 160;
   const sessionNorm = Math.min(sessionCount / maxSessions, 1);

@@ -31,3 +31,7 @@ Thumbs.db
 
 #Deployment
 .netlify/
+
+#Documentation
+
+docs/active/deepdev/

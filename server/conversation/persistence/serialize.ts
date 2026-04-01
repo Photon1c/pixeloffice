@@ -56,12 +56,6 @@ export function serializeSession(session: CoolerSession): SerializedSession {
   if (session.startedAt) result.startedAt = session.startedAt;
 
   return result;
-};
-
-  if (session.location) result.location = session.location;
-  if (session.startedAt) result.startedAt = session.startedAt;
-
-  return result;
 }
 
 export function deserializeSession(data: SerializedSession): CoolerSession {
