@@ -728,6 +728,7 @@ function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, ta
   const [selectedModel, setSelectedModel] = useState("dash-squirrel");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState("");
+  const [githubRepo, setGithubRepo] = useState("photon1c/pixeloffice");
   
   const isReceptionist = agent.role === "receptionist";
 
@@ -799,23 +800,36 @@ function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, ta
         <div style={actionCardStyles.section}>
           <h4 style={actionCardStyles.sectionTitle}>Quick Actions</h4>
           {isReceptionist && (
-            <select 
-              style={{width: '100%', padding: '10px 12px', background: '#1a2538', border: '1px solid #3a4a5a', borderRadius: '6px', color: '#e2e8f0', fontSize: '13px', cursor: 'pointer', marginTop: '8px'}}
-              value={selectedWorkflow}
-              onChange={(e) => {
-                const value = e.target.value;
-                setSelectedWorkflow(value);
-                if (value === 'readme') alert('GitHub README workflow - configure endpoint');
-                else if (value === 'sitrep') alert('SitRep workflow - configure endpoint');
-                else if (value === 'nightly') alert('Nightly report workflow coming soon!');
-                setSelectedWorkflow("");
-              }}
-            >
-              <option value="">Select Workflow...</option>
-              <option value="readme">Fetch GitHub README</option>
-              <option value="sitrep">Generate Office SitRep</option>
-              <option value="nightly">Generate Nightly Report</option>
-            </select>
+            <>
+              <div style={{ marginBottom: '10px' }}>
+                <label style={{ fontSize: '11px', color: '#707080', display: 'block', marginBottom: '4px' }}>Target GitHub Repo</label>
+                <input 
+                  style={{ ...actionCardStyles.chatInput, width: '100%', boxSizing: 'border-box' }}
+                  value={githubRepo}
+                  onChange={(e) => setGithubRepo(e.target.value)}
+                  placeholder="owner/repo"
+                />
+              </div>
+              <select 
+                style={{width: '100%', padding: '10px 12px', background: '#1a2538', border: '1px solid #3a4a5a', borderRadius: '6px', color: '#e2e8f0', fontSize: '13px', cursor: 'pointer'}}
+                value={selectedWorkflow}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedWorkflow(value);
+                  if (value === 'readme') alert(`Fetching README for ${githubRepo}...`);
+                  else if (value === 'write-readme') alert(`Writing README Section for ${githubRepo}...`);
+                  else if (value === 'sitrep') alert('SitRep workflow - configure endpoint');
+                  else if (value === 'nightly') alert('Nightly report workflow coming soon!');
+                  setSelectedWorkflow("");
+                }}
+              >
+                <option value="">Select Workflow...</option>
+                <option value="readme">Fetch GitHub README</option>
+                <option value="write-readme">Write README Section</option>
+                <option value="sitrep">Generate Office SitRep</option>
+                <option value="nightly">Generate Nightly Report</option>
+              </select>
+            </>
           )}
         </div>
 
