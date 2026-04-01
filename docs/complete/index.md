@@ -58,7 +58,8 @@ This index tracks historical implementations, feature-level completion status, a
 
 ## 🔍 Human Review Requested
 1. **Stock Forecast Cockpit (port 5005)**: Please verify if the underlying python service is currently active in the user environment.
-2. **Criminology Lab**: Status marked as broken in recent logs; needs review to determine if it should stay in `docs/complete` or move back to `active`.
-3. **Supabase Sync**: Historical docs suggest sync is configured, but recent 500 errors were fixed by bypassing remote sync. Confirm current preference.
+2. **Criminology Lab**: Currently hidden due to a broken Mermaid generator; needs a decision on whether to repair or fully archive.
 
-*Last Reviewed: April 1, 2026*
+> **Resolved:** Supabase sync and 500 errors mentioned in prior docs have been addressed; current deployment uses the corrected configuration as per `docs/active/deploy_spec_netlify_supabase.md`.
+
+*Last Reviewed: April 1, 2026 – Supabase configuration confirmed healthy in current deployment.*
