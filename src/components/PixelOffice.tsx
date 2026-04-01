@@ -110,6 +110,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [zoneActivity, setZoneActivity] = useState<Map<string, ZoneActivity>>(new Map());
   const [activeConversationZone, setActiveConversationZone] = useState<string | null>(null);
   const [stigmergyTraces, setStigmergyTraces] = useState<any[]>([]);
+  const [socialPotential, setSocialPotential] = useState<{sessionCount: number; participantCount: number; intensity: number} | null>(null);
   const [currentTopic, setCurrentTopic] = useState<string>("");
   const [tasks] = useState<Task[]>([
     { id: "1", title: "Review pull requests", description: "Check pending PRs from team", status: "in_progress", priority: "high", assigneeId: "ironclaw", createdAt: Date.now() - 86400000 },
@@ -218,6 +219,16 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       }
     };
 
+    const fetchSocialPotential = async () => {
+      try {
+        const resp = await fetch("/api/stigmergy/social-potential");
+        const data = await resp.json();
+        setSocialPotential(data);
+      } catch (err) {
+        console.warn("Failed to fetch social potential", err);
+      }
+    };
+
     const fetchTopic = async () => {
       try {
         const resp = await fetch("/api/cooler/topics/current");
@@ -227,17 +238,27 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     };
     
     fetchTraces();
+    fetchSocialPotential();
     fetchTopic();
-    const interval = setInterval(fetchTraces, 5000);
+    const interval = setInterval(() => {
+      fetchTraces();
+      fetchSocialPotential();
+    }, 5000);
     return () => clearInterval(interval);
   }, []);
 
   // STIGMERGY: Detect Task Shadows (abandoned work)
   useEffect(() => {
+    const now = Date.now();
     agents.forEach(agent => {
       const hasTask = tasks.some(t => t.assigneeId === agent.id && t.status !== "done");
       if (agent.status === "idle" && hasTask) {
-        const recentShadow = stigmergyTraces.find(t => t.type === "task_shadow" && t.agentId === agent.id);
+        // Only deposit one shadow per agent per 5 minutes to avoid duplicates
+        const recentShadow = stigmergyTraces.find(t => 
+          t.type === "task_shadow" && 
+          t.agentId === agent.id &&
+          (now - new Date(t.created_at).getTime()) < 5 * 60 * 1000
+        );
         if (!recentShadow) {
           fetch("/api/stigmergy/deposit", {
             method: "POST",
@@ -501,9 +522,68 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             <div style={{ borderTop: "1px solid rgba(255, 100, 50, 0.2)", paddingTop: "8px" }}>
               {stigmergyTraces.slice(0, 10).map((t, i) => (
                 <div key={`${t.type}-${t.roomId}-${t.agentId || i}`} style={{ fontSize: "10px", color: "#e8e8f0", marginBottom: "4px" }}>
-                  <strong>{t.intensity.toFixed(2)}</strong> - {t.type.replace(/_/g, ' ')} {t.roomId && `(${t.roomId})`} {t.agentId && `@${t.agentId}`}
+                  <span style={{color: '#ff6432'}}>{t.intensity.toFixed(2)}</span> {t.type.replace(/_/g, ' ')} {t.roomId && `(${t.roomId})`} {t.agentId && `>@${t.agentId}`}
                 </div>
               ))}
+            </div>
+          )}
+          {stigmergyTraces.length === 0 && (
+            <div style={{ fontSize: '9px', color: '#505060', borderTop: "1px solid rgba(255, 100, 50, 0.2)", paddingTop: "8px" }}>
+              No stigmergy traces
+            </div>
+          )}
+          
+          {/* Social Activity Meter - Lab Mode Only */}
+          {LAB_MODE && socialPotential && (
+            <div style={{ borderTop: "1px solid rgba(100, 200, 150, 0.2)", paddingTop: "8px", marginTop: "8px" }}>
+              <div style={{ fontSize: '10px', color: '#4ecdc4', marginBottom: '6px', fontWeight: 600 }}>💬 Social Activity</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ flex: 1, height: '6px', background: '#1a2a3a', borderRadius: '3px', overflow: 'hidden' }}>
+                  <div style={{ height: '100%', width: `${socialPotential.intensity * 100}%`, background: socialPotential.intensity > 0.6 ? '#26de81' : socialPotential.intensity > 0.3 ? '#feca57' : '#4a5a6a', transition: 'width 0.3s' }} />
+                </div>
+                <span style={{ fontSize: '9px', color: '#a0a0b0' }}>{socialPotential.intensity.toFixed(2)}</span>
+              </div>
+              <div style={{ fontSize: '8px', color: '#606070', marginTop: '4px' }}>
+                {socialPotential.sessionCount} sessions, {socialPotential.participantCount} participants (60min)
+              </div>
+            </div>
+          )}
+          
+          {/* Task Shadow Hotspots - Lab Mode Only */}
+          {LAB_MODE && (
+            <div style={{ borderTop: "1px solid rgba(100, 150, 255, 0.2)", paddingTop: "8px", marginTop: "8px" }}>
+              <div style={{ fontSize: '10px', color: '#6495ed', marginBottom: '6px', fontWeight: 600 }}>🔴 Unfinished Work Hotspots</div>
+              {(() => {
+                const shadowTraces = stigmergyTraces.filter(t => t.type === 'task_shadow');
+                if (shadowTraces.length === 0) {
+                  return <div style={{ fontSize: '9px', color: '#505060' }}>All clear</div>;
+                }
+                // Group by agent and calculate average intensity
+                const byAgent: Record<string, { count: number; totalIntensity: number; roomId: string }> = {};
+                shadowTraces.forEach(t => {
+                  const aid = t.agentId || 'unknown';
+                  if (!byAgent[aid]) byAgent[aid] = { count: 0, totalIntensity: 0, roomId: t.roomId || '' };
+                  byAgent[aid].count++;
+                  byAgent[aid].totalIntensity += t.intensity;
+                });
+                
+                return Object.keys(byAgent).map(agentId => {
+                  const data = byAgent[agentId];
+                  const avgIntensity = data.totalIntensity / data.count;
+                  const bars = Math.ceil(avgIntensity * 3);
+                  return (
+                    <div key={agentId} style={{ fontSize: '9px', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ color: '#a0a0b0', minWidth: '50px' }}>{agentId}</span>
+                      <span style={{ display: 'flex', gap: '2px' }}>
+                        {[0,1,2].map(b => (
+                          <span key={b} style={{ width: '6px', height: '8px', borderRadius: '2px', background: b < bars ? '#ff6b6b' : '#2a2a3a' }} />
+                        ))}
+                      </span>
+                      <span style={{ color: '#ff6b6b', fontSize: '8px' }}>{avgIntensity.toFixed(2)}</span>
+                    </div>
+                  );
+                });
+              })()}
             </div>
           )}
         </div>

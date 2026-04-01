@@ -87,7 +87,7 @@ import {
 } from "./conversation/coolerController.js";
 import { generateFn } from "./services/llmGenerateFn.js";
 import { runRoomTurn, exportRoomSession } from "./services/coolerTalkService.js";
-import { depositTrace, getActiveTraces } from "./cooler/stigmergy.js";
+import { depositTrace, getActiveTraces, calculateSocialPotential } from "./cooler/stigmergy.js";
 
 const PIXEL_ME_URL = "http://127.0.0.1:5001";
 const KB_SERVER_URL = "http://127.0.0.1:8787";
@@ -162,25 +162,11 @@ app.get("/api/stigmergy/traces", (req, res) => {
   res.json({ traces: getActiveTraces() });
 });
 
-app.post("/api/stigmergy/deposit", (req, res) => {
-  const trace = depositTrace(req.body);
-  res.json({ success: !!trace, trace });
+app.get("/api/stigmergy/social-potential", (req, res) => {
+  const social = calculateSocialPotential();
+  res.json(social);
 });
 
-app.get("/api/cooler/topics/current", (req, res) => {
-  res.json({ topic: getTopicForConversation() });
-});
-
-app.post("/api/cooler/topics/refresh", async (req, res) => {
-  try {
-    await fetchNewsTopics();
-    res.json({ success: true, topic: getTopicForConversation() });
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Stigmergy API Routes
 app.get("/api/stigmergy/review-heat", (req, res) => {
   try {
     const activeHeat = getActiveHeat();

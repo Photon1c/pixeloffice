@@ -1,38 +1,11 @@
 [
   {
-    "id": "trace-1775000696450-146",
+    "id": "trace-1775004483496-112",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
     "roomId": "dataNodes",
-    "created_at": "2026-03-31T23:44:56.450Z",
-    "expires_at": "2026-03-31T23:54:56.450Z"
-  },
-  {
-    "id": "trace-1775000702419-29",
-    "type": "task_shadow",
-    "intensity": 0.6,
-    "agentId": "ironclaw",
-    "roomId": "dataNodes",
-    "created_at": "2026-03-31T23:45:02.419Z",
-    "expires_at": "2026-03-31T23:55:02.419Z"
-  },
-  {
-    "id": "trace-1775000726405-934",
-    "type": "task_shadow",
-    "intensity": 0.6,
-    "agentId": "ironclaw",
-    "roomId": "dataNodes",
-    "created_at": "2026-03-31T23:45:26.405Z",
-    "expires_at": "2026-03-31T23:55:26.405Z"
-  },
-  {
-    "id": "trace-1775000732411-262",
-    "type": "task_shadow",
-    "intensity": 0.6,
-    "agentId": "ironclaw",
-    "roomId": "dataNodes",
-    "created_at": "2026-03-31T23:45:32.411Z",
-    "expires_at": "2026-03-31T23:55:32.411Z"
+    "created_at": "2026-04-01T00:48:03.496Z",
+    "expires_at": "2026-04-01T00:58:03.496Z"
   }
 ]

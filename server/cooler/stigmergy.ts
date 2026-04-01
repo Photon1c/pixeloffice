@@ -3,6 +3,13 @@ import path from "path";
 
 export type TraceType = "review_heat" | "task_shadow" | "social_potential";
 
+export interface SocialPotentialResult {
+  sessionCount: number;
+  participantCount: number;
+  intensity: number;
+  recentSessions: Array<{id: string; topic: string; participants: string[]; created_at: string}>;
+}
+
 export interface StigmergyTrace {
   id: string;
   type: TraceType;
@@ -18,6 +25,106 @@ export interface StigmergyTrace {
 }
 
 const TRACES_FILE = "/home/sherlockhums/apps/pixelworld/pixel_office/data/stigmergy_traces.json";
+
+interface SocialPotentialResult {
+  sessionCount: number;
+  participantCount: number;
+  intensity: number;
+  recentSessions: Array<{id: string; topic: string; participants: string[]; created_at: string}>;
+}
+
+export function calculateSocialPotential(): SocialPotentialResult {
+  const sessionsDir = "/home/sherlockhums/apps/pixelworld/pixel_office/data/cooler_sessions";
+  const windowMs = 60 * 60 * 1000; // 60 minutes
+  const now = Date.now();
+  const windowStart = new Date(now - windowMs).toISOString();
+  
+  let sessionCount = 0;
+  let participantCount = 0;
+  const recentSessions: SocialPotentialResult["recentSessions"] = [];
+  
+  try {
+    if (fs.existsSync(sessionsDir)) {
+      const files = fs.readdirSync(sessionsDir).filter(f => f.endsWith('.json'));
+      for (const file of files) {
+        try {
+          const filePath = path.join(sessionsDir, file);
+          const raw = fs.readFileSync(filePath, 'utf-8');
+          const session = JSON.parse(raw);
+          
+          // Check created_at field, or fall back to file mtime
+          let sessionTime = session.created_at;
+          if (!sessionTime) {
+            const stats = fs.statSync(filePath);
+            sessionTime = stats.mtime.toISOString();
+          }
+          
+          // Also check if there's a startedAt field
+          if (session.startedAt && !sessionTime) {
+            sessionTime = session.startedAt;
+          }
+          
+          if (sessionTime && sessionTime > windowStart) {
+            sessionCount++;
+            const participants = session.participants || [];
+            participantCount += participants.length;
+            recentSessions.push({
+              id: session.id,
+              topic: session.topic || '',
+              participants,
+              created_at: sessionTime
+            });
+          }
+        } catch {}
+      }
+    }
+  } catch (e) {
+    console.log("[Stigmergy] Error calculating social potential:", e);
+  }
+  
+  // Normalize to [0, 1] - assume max 10 sessions with 16 participants = 160 participant-actions
+  const maxSessions = 10;
+  const maxParticipants = 160;
+  const sessionNorm = Math.min(sessionCount / maxSessions, 1);
+  const participantNorm = Math.min(participantCount / maxParticipants, 1);
+  const intensity = (sessionNorm * 0.6) + (participantNorm * 0.4);
+  
+  return { sessionCount, participantCount, intensity, recentSessions };
+}
+
+// Get agent selection weights based on task shadow intensity
+export function getAgentWeightsWithShadows(agentIds: string[]): Map<string, number> {
+  const traces = getActiveTraces();
+  const shadowTraces = traces.filter(t => t.type === 'task_shadow');
+  
+  // Group by agent
+  const agentShadows: Record<string, { count: number; totalIntensity: number }> = {};
+  shadowTraces.forEach(t => {
+    if (t.agentId) {
+      if (!agentShadows[t.agentId]) agentShadows[t.agentId] = { count: 0, totalIntensity: 0 };
+      agentShadows[t.agentId].count++;
+      agentShadows[t.agentId].totalIntensity += t.intensity;
+    }
+  });
+  
+  // Calculate weights: base weight + shadow bonus
+  const weights = new Map<string, number>();
+  const shadowBonusMultiplier = 0.3; // up to 30% bonus for high shadows
+  
+  agentIds.forEach(agentId => {
+    const baseWeight = 1.0;
+    const shadowData = agentShadows[agentId];
+    let bonus = 0;
+    if (shadowData && shadowData.count > 0) {
+      const avgIntensity = shadowData.totalIntensity / shadowData.count;
+      bonus = avgIntensity * shadowBonusMultiplier;
+      console.log(`[Stigmergy] Agent ${agentId} shadow bonus: ${bonus.toFixed(3)} (${shadowData.count} shadows, avg ${avgIntensity.toFixed(2)})`);
+    }
+    weights.set(agentId, baseWeight + bonus);
+  });
+  
+  return weights;
+}
 const DEFAULTS = {
   review_heat: { decayMs: 15 * 60 * 1000 },
   task_shadow: { decayMs: 10 * 60 * 1000 },
@@ -30,22 +137,14 @@ function ensureDataDir() {
 }
 
 export function getActiveTraces(): StigmergyTrace[] {
-  console.log("[Stigmergy] getActiveTraces called, file:", TRACES_FILE);
-  if (!fs.existsSync(TRACES_FILE)) {
-    console.log("[Stigmergy] File does not exist");
-    return [];
-  }
+  if (!fs.existsSync(TRACES_FILE)) return [];
   try {
     const raw = fs.readFileSync(TRACES_FILE, "utf-8");
-    console.log("[Stigmergy] Raw content:", raw.substring(0, 200));
     if (!raw || raw.trim() === "" || raw.trim() === "null") return [];
     const all: StigmergyTrace[] = JSON.parse(raw);
     const now = new Date().toISOString();
-    const active = all.filter(t => t.expires_at > now);
-    console.log("[Stigmergy] Active traces:", active.length);
-    return active;
+    return all.filter(t => t.expires_at > now);
   } catch (e) {
-    console.log("[Stigmergy] Error:", e);
     return [];
   }
 }

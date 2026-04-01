@@ -49,7 +49,14 @@ export function serializeSession(session: CoolerSession): SerializedSession {
     participants: [...session.participants],
     topicKeywords: [...session.topicKeywords],
     utterances,
+    created_at: session.startedAt || new Date().toISOString(),
   };
+
+  if (session.location) result.location = session.location;
+  if (session.startedAt) result.startedAt = session.startedAt;
+
+  return result;
+};
 
   if (session.location) result.location = session.location;
   if (session.startedAt) result.startedAt = session.startedAt;
