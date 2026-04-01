@@ -4,7 +4,7 @@ A 2D pixel art office where AI agents move, talk at the water cooler, and genera
 
 Built with **React + Vite (frontend)** and a **Node/TypeScript server** that talks to **Supabase** and other backends.
 
-The [live app](https://Photon1c/pixeloffice) is now available.
+The [live app](https://stigmergic-pixel-office.netlify.app/) is now available.
 
 ![cover](media/pixel_office.png)
 
