@@ -86,7 +86,52 @@ import {
   type Utterance,
 } from "./conversation/coolerController.js";
 import { generateFn } from "./services/llmGenerateFn.js";
-import { runRoomTurn, exportRoomSession } from "./services/coolerTalkService.js";
+import { runRoomTurn, exportRoomSession, persistSession } from "./services/coolerTalkService.js";
+
+// Save cooler session to markdown file (for cooler_talk_log.md)
+function writeCoolerTalkToFile(session: any): void {
+  try {
+    // Also persist to JSON (this is the main storage)
+    persistSession(session);
+    
+    // Create markdown export
+    const markdownLines: string[] = [
+      `# Cooler Talk Session`,
+      ``,
+      `**ID:** ${session.id}`,
+      `**Topic:** ${session.topic}`,
+      `**Location:** ${session.location || 'kitchen'}`,
+      `**Created:** ${session.createdAt || new Date().toISOString()}`,
+      ``,
+      `## Participants`,
+      ``,
+      ...(session.participants || []).map((p: string) => `- ${p}`),
+      ``,
+      `## Dialogue`,
+      ``,
+    ];
+    
+    if (session.utterances && session.utterances.length > 0) {
+      session.utterances.forEach((u: any, idx: number) => {
+        markdownLines.push(`### ${idx + 1}. ${u.speaker}`);
+        markdownLines.push(``);
+        markdownLines.push(u.text || "");
+        markdownLines.push(``);
+        if (u.intent) {
+          markdownLines.push(`*Intent: ${u.intent}*`);
+          markdownLines.push(``);
+        }
+      });
+    }
+    
+    // Write to markdown file
+    const markdownPath = path.resolve("data/cooler_talk_log.md");
+    fs.writeFileSync(markdownPath, markdownLines.join("\n"), "utf8");
+    console.log(`[CoolerTalk] Saved markdown log to ${markdownPath}`);
+  } catch (err) {
+    console.error("[CoolerTalk] Error writing to file:", err);
+  }
+}
 import { depositTrace, getActiveTraces, calculateSocialPotential, getAgentWeightsWithShadows } from "./cooler/stigmergy.js";
 import { getActiveHeat } from "./cooler/reviewHeat.js";
 import { createScrumSession, advanceScrumSession, type ScrumSession } from "./scrum/scrumController.js";
@@ -1015,23 +1060,33 @@ app.post("/api/chat", async (req, res) => {
     const selectedModel = model || "gemma-3-1b-it";
     
     // If NVIDIA model selected, use routeChat
-    if (selectedModel === "nvidia" && process.env.NVIDIA_API_KEY) {
+    const isNvidiaModel = selectedModel.startsWith("nvidia-");
+    if (isNvidiaModel && process.env.NVIDIA_API_KEY) {
       try {
         const { routeChat } = await import("./llm/llmRouter.js");
+        
+        // Map UI model IDs to actual NVIDIA model IDs
+        const nvidiaModelMap: Record<string, string> = {
+          "nvidia-deepseek": "deepseek-ai/deepseek-v3.1",
+          "nvidia-glm4.7": "z-ai/glm4.7",
+        };
+        const nvidiaModelId = nvidiaModelMap[selectedModel] || "deepseek-ai/deepseek-v3.1";
+        
         const messages = [
           { role: "system", content: "You are a helpful database assistant for Pixel Office." },
           ...(history || []).slice(-10),
           { role: "user", content: message }
         ];
-        const result = await routeChat(messages, { maxTokens: 1024 });
+        const result = await routeChat(messages, { maxTokens: 1024, model: nvidiaModelId });
         return res.json({ 
           reply: result.content,
           role: "assistant",
-          model: "nvidia (deepseek)"
+          model: `nvidia (${nvidiaModelId})`
         });
       } catch (nvidiaErr: any) {
         console.error("NVIDIA chat error:", nvidiaErr);
-        // Fall back to Ollama
+        res.json({ reply: `NVIDIA error: ${nvidiaErr.message || 'failed'}. Try a local model instead.`, model: "nvidia-error" });
+        return;
       }
     }
 
@@ -1116,9 +1171,17 @@ app.post("/api/agent-chat", async (req, res) => {
     const selectedModel = model || "gemma-3-1b-it";
     
     // If NVIDIA model selected, use routeChat
-    if (selectedModel === "nvidia" && process.env.NVIDIA_API_KEY) {
+    const isNvidiaModel = selectedModel.startsWith("nvidia-");
+    if (isNvidiaModel && process.env.NVIDIA_API_KEY) {
       try {
         const { routeChat } = await import("./llm/llmRouter.js");
+        
+        const nvidiaModelMap: Record<string, string> = {
+          "nvidia-deepseek": "deepseek-ai/deepseek-v3.1",
+          "nvidia-glm4.7": "z-ai/glm4.7",
+        };
+        const nvidiaModelId = nvidiaModelMap[selectedModel] || "deepseek-ai/deepseek-v3.1";
+        
         const rolePrompts: Record<string, string> = {
           receptionist: "You are FrontDesk, a friendly receptionist at Pixel Office.",
           clerk: "You are a Clerk at Pixel Office.",
@@ -1132,10 +1195,12 @@ app.post("/api/agent-chat", async (req, res) => {
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ];
-        const result = await routeChat(messages, { maxTokens: 1024 });
-        return res.json({ reply: result.content, model: "nvidia (deepseek)" });
+        const result = await routeChat(messages, { maxTokens: 1024, model: nvidiaModelId });
+        return res.json({ reply: result.content, model: `nvidia (${nvidiaModelId})` });
       } catch (nvidiaErr: any) {
         console.error("NVIDIA agent-chat error:", nvidiaErr);
+        res.json({ reply: `NVIDIA error: ${nvidiaErr.message || 'failed'}. Try a local model instead.`, model: "nvidia-error" });
+        return;
       }
     }
     
@@ -1666,8 +1731,8 @@ Keep your response very short (1-2 sentences max), casual, and in character. Som
     const response = await fetch(`${ollamaUrl}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "gemma",
+              body: JSON.stringify({
+              model: "gemma-3-1b-it",
         messages: [
           { role: "system", content: prompt },
           { role: "user", content: `You turn to talk to ${otherAgents.join(", ")} by the water cooler.` }

@@ -823,14 +823,17 @@ function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, ta
   
   console.log('[AgentCard] Current nvidiaStatus:', nvidiaStatus);
   
-  // Force include NVIDIA option for debugging
-  const nvidiaOption = nvidiaStatus?.available ? [{ id: "nvidia", name: `NVIDIA (${nvidiaStatus.modelId})` }] : [];
-  console.log('[AgentCard] NVIDIA option:', nvidiaOption);
+  // NVIDIA model options
+  const nvidiaOptions = nvidiaStatus?.available ? [
+    { id: "nvidia-deepseek", name: "NVIDIA DeepSeek v3.1" },
+    { id: "nvidia-glm4.7", name: "NVIDIA GLM-4.7" },
+  ] : [];
+  console.log('[AgentCard] NVIDIA options:', nvidiaOptions);
   
   const availableModels = [
     { id: "gemma-3-1b-it", name: "Gemma 3 (1B)" },
     { id: "PhysicsObsession/blaze-3b:latest", name: "Blaze (3B)" },
-    ...nvidiaOption,
+    ...nvidiaOptions,
   ];
 
   // Visual pipeline steps for GitHub workflows
@@ -1101,10 +1104,14 @@ function ChatOverlay({ onClose }: { onClose: () => void }) {
 
   console.log('[Chat] nvidiaStatus:', nvidiaStatus);
   
+  const nvidiaOptions = [
+    { id: "nvidia-deepseek", name: "NVIDIA DeepSeek v3.1" },
+    { id: "nvidia-glm4.7", name: "NVIDIA GLM-4.7" },
+  ];
   const availableModels = [
     { id: "gemma-3-1b-it", name: "Gemma 3 (1B)" },
     { id: "PhysicsObsession/blaze-3b:latest", name: "Blaze (3B)" },
-    ...(nvidiaStatus?.available ? [{ id: "nvidia", name: `NVIDIA (${nvidiaStatus.modelId})` }] : []),
+    ...(nvidiaStatus?.available ? nvidiaOptions : []),
   ];
 
   const sendMessage = async () => {
