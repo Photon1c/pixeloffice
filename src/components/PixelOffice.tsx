@@ -143,6 +143,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   
   const [isScrumRunning, setIsScrumRunning] = useState<boolean>(false);
   const [isCoolerTalkRunning, setIsCoolerTalkRunning] = useState<boolean>(false);
+  const [sleepMode, setSleepMode] = useState<boolean>(false);
 
   // Load agent cards on mount
   useEffect(() => {
@@ -233,7 +234,11 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       try {
         const resp = await fetch("/api/cooler/topics/current");
         const data = await resp.json();
-        if (data.topic) setCurrentTopic(data.topic);
+        // Handle both string topic and object topic
+        if (data.topic) {
+          const topicValue = typeof data.topic === 'object' ? data.topic.title : data.topic;
+          setCurrentTopic(topicValue);
+        }
       } catch {}
     };
     
@@ -281,23 +286,24 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
        return () => clearInterval(interval);
      }
  
-      if (dashboardConfig.mockMode) {
-        const interval = setInterval(
-          () => {
-            if (activeConversationZone) return;
+       if (dashboardConfig.mockMode) {
+         const interval = setInterval(
+           () => {
+             if (activeConversationZone) return;
+             if (sleepMode) return; // Skip status toggles in sleep mode
 
-            setAgents((prevAgents) =>
-              prevAgents.map((agent) => {
-                const newStatus: AgentStatus =
-                  Math.random() > 0.3 ? "working" : "idle";
-                return updateAgentStatus(agent, newStatus);
-              })
-            );
-          },
-          dashboardConfig.mockToggleSpeed
-        );
-        return () => clearInterval(interval);
-      }
+             setAgents((prevAgents) =>
+               prevAgents.map((agent) => {
+                 const newStatus: AgentStatus =
+                   Math.random() > 0.3 ? "working" : "idle";
+                 return updateAgentStatus(agent, newStatus);
+               })
+             );
+           },
+           dashboardConfig.mockToggleSpeed
+         );
+         return () => clearInterval(interval);
+       }
  
      const handleKeyDown = (e: KeyboardEvent) => {
        const leslieClaw = agents.find(agent => agent.id === "leslieclaw");
@@ -347,6 +353,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
   useEffect(() => {
     const moodInterval = setInterval(() => {
+      if (sleepMode && Math.random() > 0.3) return;
       setAgents((prevAgents) =>
         prevAgents.map((agent) => {
           const randomMood = MOOD_OPTIONS[Math.floor(Math.random() * MOOD_OPTIONS.length)];
@@ -395,7 +402,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
       setAgents((prevAgents) =>
         prevAgents.map((agent) => {
-          let updatedAgent = updateAgentPosition(agent, dashboardConfig.animationSpeed, deltaTime);
+          const effectiveSpeed = sleepMode ? dashboardConfig.animationSpeed * 0.3 : dashboardConfig.animationSpeed;
+          let updatedAgent = updateAgentPosition(agent, effectiveSpeed, deltaTime);
           updatedAgent = handleWanderLogic(updatedAgent);
           if (walkCycleTimer.current > 150 && updatedAgent.mode === "walking") {
             updatedAgent = { ...updatedAgent, frame: updatedAgent.frame === 0 ? 1 : 0 };
@@ -586,6 +594,33 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               })()}
             </div>
           )}
+          
+          {/* Office Status Panel (per grok_suggestions.md) */}
+          {LAB_MODE && (
+            <div style={{ borderTop: "1px solid rgba(150, 100, 50, 0.2)", paddingTop: "8px", marginTop: "8px" }}>
+              <div style={{ fontSize: '10px', color: '#f39c12', marginBottom: '6px', fontWeight: 600 }}>🏢 Office Status</div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ fontSize: '9px', color: '#a0a0b0' }}>Sleep Mode</span>
+                <button 
+                  onClick={() => setSleepMode(prev => !prev)}
+                  style={{
+                    padding: '2px 8px',
+                    fontSize: '8px',
+                    borderRadius: '4px',
+                    border: 'none',
+                    cursor: 'pointer',
+                    background: sleepMode ? '#27ae60' : '#2a2a3a',
+                    color: sleepMode ? '#fff' : '#666'
+                  }}
+                >
+                  {sleepMode ? 'ON' : 'OFF'}
+                </button>
+              </div>
+              <div style={{ fontSize: '8px', color: '#505060' }}>
+                {sleepMode ? '🐌 Slowed agents, less chat' : '⚡ Normal activity'}
+              </div>
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: '16px' }}>
@@ -632,9 +667,10 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         </div>
 
         <div style={{ marginBottom: '16px' }}>
-          <button id="scrum-btn" style={{...styles.paramsToggle, background: '#2ecc71', opacity: (isScrumRunning || isCoolerTalkRunning) ? 0.5 : 1}} disabled={isScrumRunning || isCoolerTalkRunning} onClick={() => {
+          <button id="scrum-btn" style={{...styles.paramsToggle, background: '#2ecc71', opacity: (isScrumRunning || isCoolerTalkRunning) ? 0.5 : 1}} disabled={isScrumRunning || isCoolerTalkRunning} onClick={async () => {
             setIsScrumRunning(true);
             setActiveConversationZone("conference");
+            
             // Move agents to conference positions
             const confAgents = agents.slice(0, 8);
             setAgents(prev => prev.map((agent, idx) => {
@@ -644,6 +680,42 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               }
               return agent;
             }));
+            
+            try {
+              // Fetch available cooler sessions
+              const sessionsRes = await fetch('/api/cooler/sessions/list');
+              const sessionsData = await sessionsRes.json();
+              const sessions = sessionsData.sessions || [];
+              
+              // Pick random session or use most recent
+              let sessionId: string | undefined;
+              let topicDisplay = "Daily standup";
+              
+              if (sessions.length > 0) {
+                const randomSession = sessions[Math.floor(Math.random() * sessions.length)];
+                sessionId = randomSession.id;
+                topicDisplay = randomSession.topic;
+                console.log(`[Test SCRUM] Using session: ${sessionId} (${topicDisplay})`);
+              }
+              
+              // Call test scrum endpoint
+              const scrumRes = await fetch('/api/scrum/test', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ coolerSessionId: sessionId })
+              });
+              const scrumData = await scrumRes.json();
+              
+              console.log('[Test SCRUM] Response:', scrumData);
+              
+              // Show test output in an alert or console
+              if (scrumData.testOutput) {
+                alert(`Test SCRUM created!\n\nSource: ${scrumData.testOutput.sourceTopic}\nParticipants: ${scrumData.testOutput.stigmergyWeighted?.join(", ") || "default"}\n\n${scrumData.testOutput.message}`);
+              }
+            } catch (err) {
+              console.error('[Test SCRUM] Error:', err);
+            }
+            
             setTimeout(() => {
               setIsScrumRunning(false);
               setActiveConversationZone(null);
@@ -667,18 +739,19 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       <div style={styles.mainContent}>
         <div style={styles.canvasWrapper} ref={containerRef}>
           <canvas ref={canvasRef} style={styles.canvas} onClick={handleCanvasClick} />
-          {selectedAgent && (
-            <AgentActionCard
-              agent={selectedAgent}
-              card={getAgentCardForRuntimeAgent(selectedAgent, agentCards)}
-              workflowState={workflowState}
-              onClose={() => setSelectedAgent(null)}
-              tasks={tasks.filter(t => t.assigneeId === selectedAgent.id)}
-              onMoodChange={(mood: any) => {
-                setAgents(prev => prev.map(a => a.id === selectedAgent.id ? updateAgentMood(a, mood) : a));
-              }}
-            />
-          )}
+            {selectedAgent && (
+              <AgentActionCard
+                agent={selectedAgent}
+                card={getAgentCardForRuntimeAgent(selectedAgent, agentCards)}
+                workflowState={workflowState}
+                setWorkflowState={setWorkflowState}
+                onClose={() => setSelectedAgent(null)}
+                tasks={tasks.filter(t => t.assigneeId === selectedAgent.id)}
+                onMoodChange={(mood: any) => {
+                  setAgents(prev => prev.map(a => a.id === selectedAgent.id ? updateAgentMood(a, mood) : a));
+                }}
+              />
+            )}
         </div>
       </div>
     </div>
@@ -725,12 +798,118 @@ function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, ta
   const unassignedTasks = tasks?.filter((t: any) => !t.assigneeId) || [];
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
   const [chatInput, setChatInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState("dash-squirrel");
+  const [selectedModel, setSelectedModel] = useState("gemma-3-1b-it");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState("");
   const [githubRepo, setGithubRepo] = useState("photon1c/pixeloffice");
+  const [githubLoading, setGithubLoading] = useState(false);
+  const [githubError, setGithubError] = useState<string | null>(null);
   
   const isReceptionist = agent.role === "receptionist";
+  
+  // Available local models (per ollama list) + NVIDIA cloud option
+  const [nvidiaStatus, setNvidiaStatus] = useState<{available: boolean; modelId?: string} | null>(null);
+  
+  useEffect(() => {
+    console.log('[AgentCard] Fetching NVIDIA status...');
+    fetch('/api/test/nvidia')
+      .then(res => res.json())
+      .then(data => {
+        console.log('[AgentCard] NVIDIA status received:', data);
+        setNvidiaStatus(data);
+      })
+      .catch(err => console.log('[AgentCard] NVIDIA check failed:', err));
+  }, []);
+  
+  console.log('[AgentCard] Current nvidiaStatus:', nvidiaStatus);
+  
+  // Force include NVIDIA option for debugging
+  const nvidiaOption = nvidiaStatus?.available ? [{ id: "nvidia", name: `NVIDIA (${nvidiaStatus.modelId})` }] : [];
+  console.log('[AgentCard] NVIDIA option:', nvidiaOption);
+  
+  const availableModels = [
+    { id: "gemma-3-1b-it", name: "Gemma 3 (1B)" },
+    { id: "PhysicsObsession/blaze-3b:latest", name: "Blaze (3B)" },
+    ...nvidiaOption,
+  ];
+
+  // Visual pipeline steps for GitHub workflows
+  const workflowSteps = [
+    { agent: "frontdesk", message: "Receptionist processing request...", delay: 2000 },
+    { agent: "openclaw", message: "Clerk routing to specialist...", delay: 2500 },
+    { agent: "zeroclaw", message: "Specialist fetching from GitHub...", delay: 3000 },
+    { agent: "hermitclaw", message: "Archivist archiving results...", delay: 2000 },
+  ];
+
+  const runVisualWorkflow = async () => {
+    if (!githubRepo.includes('/')) {
+      setGithubError("Invalid repo format. Use owner/repo");
+      return;
+    }
+    
+    const [owner, repo] = githubRepo.split('/');
+    setGithubLoading(true);
+    setGithubError(null);
+    
+    // Run visual animation
+    for (let i = 0; i < workflowSteps.length; i++) {
+      const step = workflowSteps[i];
+      if (typeof window !== 'undefined' && (window as any).setWorkflowState) {
+        (window as any).setWorkflowState({
+          taskId: "github-readme",
+          currentStep: i,
+          totalSteps: workflowSteps.length,
+          currentAgent: step.agent,
+          status: "running",
+          message: step.message
+        });
+      }
+      await new Promise(resolve => setTimeout(resolve, step.delay));
+    }
+    
+    // Now call actual API
+    try {
+      const response = await fetch('http://localhost:4173/api/workflow/github/readme', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ owner, repo })
+      });
+      
+      if (!response.ok) throw new Error(`Server error: ${response.status}`);
+      
+      const data = await response.json();
+      
+      if (typeof window !== 'undefined' && (window as any).setWorkflowState) {
+        (window as any).setWorkflowState({
+          taskId: "github-readme",
+          currentStep: workflowSteps.length,
+          totalSteps: workflowSteps.length,
+          currentAgent: "hermitclaw",
+          status: "completed",
+          message: "Workflow complete!"
+        });
+      }
+      
+      // Show result - could open a modal or display inline
+      alert(`README fetched! Length: ${data.response?.length || 0} chars`);
+      
+    } catch (err: any) {
+      console.error("GitHub workflow error:", err);
+      setGithubError(err.message || "Failed to fetch README");
+      if (typeof window !== 'undefined' && (window as any).setWorkflowState) {
+        (window as any).setWorkflowState({
+          taskId: "github-readme",
+          currentStep: 0,
+          totalSteps: workflowSteps.length,
+          currentAgent: "zeroclaw",
+          status: "failed",
+          message: "Workflow failed"
+        });
+      }
+    } finally {
+      setGithubLoading(false);
+    }
+  };
 
   const handleSendChat = () => {
     if (!chatInput.trim() || isLoading) return;
@@ -754,15 +933,6 @@ function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, ta
       setChatMessages(prev => [...prev, { role: "agent", content: `Error: ${error.message}` }]);
     });
   };
-
-  const availableModels = [
-    { id: "gemma-clerk", name: "Gemma Clerk" },
-    { id: "physics-assistant:latest", name: "Physics Assistant (Latest)" },
-    { id: "dash-squirrel", name: "Dash Squirrel" },
-    { id: "night-dreamer", name: "Night Dreamer" },
-    { id: "gemma-3-1b-it", name: "Gemma 3" },
-    { id: "smollm", name: "SmolLM" },
-  ];
 
   return (
     <div style={actionCardStyles.overlay} onClick={onClose}>
@@ -816,10 +986,15 @@ function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, ta
                 onChange={(e) => {
                   const value = e.target.value;
                   setSelectedWorkflow(value);
-                  if (value === 'readme') alert(`Fetching README for ${githubRepo}...`);
-                  else if (value === 'write-readme') alert(`Writing README Section for ${githubRepo}...`);
-                  else if (value === 'sitrep') alert('SitRep workflow - configure endpoint');
-                  else if (value === 'nightly') alert('Nightly report workflow coming soon!');
+                  if (value === 'readme') {
+                    runVisualWorkflow();
+                  } else if (value === 'write-readme') {
+                    alert('Write README workflow - implement write-readme API');
+                  } else if (value === 'sitrep') {
+                    alert('SitRep workflow - configure endpoint');
+                  } else if (value === 'nightly') {
+                    alert('Nightly report workflow coming soon!');
+                  }
                   setSelectedWorkflow("");
                 }}
               >
@@ -906,11 +1081,31 @@ function ChatOverlay({ onClose }: { onClose: () => void }) {
   const [messages, setMessages] = useState<{role: "user" | "assistant"; content: string}[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedModel, setSelectedModel] = useState("gemma-3-1b-it");
+  const [nvidiaStatus, setNvidiaStatus] = useState<{available: boolean; modelId?: string} | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    fetch('/api/test/nvidia')
+      .then(res => res.json())
+      .then(data => {
+        console.log('[Chat] NVIDIA status:', data);
+        setNvidiaStatus(data);
+      })
+      .catch(err => console.log('[Chat] NVIDIA check failed:', err));
+  }, []);
+
+  console.log('[Chat] nvidiaStatus:', nvidiaStatus);
+  
+  const availableModels = [
+    { id: "gemma-3-1b-it", name: "Gemma 3 (1B)" },
+    { id: "PhysicsObsession/blaze-3b:latest", name: "Blaze (3B)" },
+    ...(nvidiaStatus?.available ? [{ id: "nvidia", name: `NVIDIA (${nvidiaStatus.modelId})` }] : []),
+  ];
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -918,17 +1113,36 @@ function ChatOverlay({ onClose }: { onClose: () => void }) {
     setInput("");
     setIsLoading(true);
     setMessages(prev => [...prev, { role: "user", content: userMessage }]);
+    
+    // Check for delegation commands (per grok_suggestions.md)
+    let delegationNotice = "";
+    try {
+      const delRes = await fetch("/api/detect-delegation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: userMessage }),
+      });
+      const delData = await delRes.json();
+      if (delData.detected) {
+        delegationNotice = `\n\n✨ ${delData.message}`;
+        console.log("[Delegation] Detected and handled:", delData);
+      }
+    } catch (delErr) {
+      console.log("[Delegation] Check failed:", delErr);
+    }
+    
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMessage, history: messages.slice(-10) }),
+        body: JSON.stringify({ message: userMessage, history: messages.slice(-10), model: selectedModel }),
       });
       const data = await response.json();
       if (data.error) {
         setMessages(prev => [...prev, { role: "assistant", content: `Error: ${data.error}` }]);
       } else {
-        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
+        const replyContent = data.reply + (delegationNotice || "");
+        setMessages(prev => [...prev, { role: "assistant", content: replyContent }]);
       }
     } catch (error: any) {
       setMessages(prev => [...prev, { role: "assistant", content: `Failed to send message: ${error.message}` }]);
@@ -942,7 +1156,16 @@ function ChatOverlay({ onClose }: { onClose: () => void }) {
       <div style={chatStyles.container}>
         <div style={chatStyles.header}>
           <h3 style={chatStyles.title}>Chat with Agents</h3>
-          <button style={chatStyles.closeBtn} onClick={onClose}>×</button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <select 
+              value={selectedModel} 
+              onChange={(e) => setSelectedModel(e.target.value)}
+              style={{ padding: '4px 8px', background: '#1a2a3a', border: '1px solid #3a4a5a', borderRadius: '4px', color: '#e2e8f0', fontSize: '12px', cursor: 'pointer' }}
+            >
+              {availableModels.map(m => (<option key={m.id} value={m.id}>{m.name}</option>))}
+            </select>
+            <button style={chatStyles.closeBtn} onClick={onClose}>×</button>
+          </div>
         </div>
         <div style={chatStyles.messages}>
           {messages.length === 0 && (

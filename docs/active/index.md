@@ -29,10 +29,16 @@ This index tracks the implementation status of core features and recent upgrades
 - [x] **Lab Tools Section** - Gated access to Terminal, Sherlock CS, and specialized labs ✅
 - [x] **Protected Links** - External tool links restricted to authorized lab sessions ✅
 
-## 🛠️ Maintenance & Maintenance
+## 🛠️ Maintenance & Delegation Features (April 2026)
 - [x] **Favicon Support** - Character-based favicon to prevent 404s ✅
 - [x] **Automated Data Directory Management** - Auto-creation of data paths ✅
 - [x] **Handoff API** - Endpoint for local agent definitions and states ✅
+- [x] **Stigmergy-Driven Task Selection** - Agents weighted by Task Shadow intensity ✅
+- [x] **"Delegate to Office" Command** - Chat-based delegation detection → SCRUM creation ✅
+- [x] **Office Status Panel** - Lab Mode panel showing task shadows & social activity ✅
+- [x] **Sleep Mode** - Reduces agent movement & thought bubbles for rest periods ✅
+- [x] **GitHub Workflow Visualization** - 4-step pipeline animation on FrontDesk card ✅
+- [x] **Updated Local Models** - Gemma 3 (1B) and Blaze (3B) as current defaults ✅
 
 ---
-*Last Updated: April 1, 2026 (Morning Session)*
+*Last Updated: April 1, 2026 (Afternoon Session)*

@@ -1,38 +1,38 @@
 {
   "custodian": {
-    "model_name": "night-auditor",
+    "model_name": "gemma-3-1b-it",
     "provider": "ollama"
   },
   "clerk": {
-    "model_name": "physics-assistant",
+    "model_name": "gemma-3-1b-it",
     "provider": "ollama"
   },
   "specialist": {
-    "model_name": "physics-assistant",
+    "model_name": "gemma-3-1b-it",
     "provider": "ollama"
   },
   "executive": {
-    "model_name": "physics-assistant",
+    "model_name": "gemma-3-1b-it",
     "provider": "ollama"
   },
   "office_assistant": {
-    "model_name": "physics-assistant",
+    "model_name": "gemma-3-1b-it",
     "provider": "ollama"
   },
   "workload_planner": {
-    "model_name": "physics-assistant",
+    "model_name": "gemma-3-1b-it",
     "provider": "ollama"
   },
   "me_diary": {
-    "model_name": "night-auditor",
+    "model_name": "gemma-3-1b-it",
     "provider": "ollama"
   },
   "me_assistant": {
-    "model_name": "physics-assistant",
+    "model_name": "gemma-3-1b-it",
     "provider": "ollama"
   },
   "me_triage": {
-    "model_name": "night-auditor",
+    "model_name": "gemma-3-1b-it",
     "provider": "ollama"
   }
 }

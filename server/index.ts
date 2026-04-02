@@ -87,7 +87,11 @@ import {
 } from "./conversation/coolerController.js";
 import { generateFn } from "./services/llmGenerateFn.js";
 import { runRoomTurn, exportRoomSession } from "./services/coolerTalkService.js";
-import { depositTrace, getActiveTraces, calculateSocialPotential } from "./cooler/stigmergy.js";
+import { depositTrace, getActiveTraces, calculateSocialPotential, getAgentWeightsWithShadows } from "./cooler/stigmergy.js";
+import { getActiveHeat } from "./cooler/reviewHeat.js";
+import { createScrumSession, advanceScrumSession, type ScrumSession } from "./scrum/scrumController.js";
+
+let currentScrumSession: ScrumSession | null = null;
 
 const PIXEL_ME_URL = "http://127.0.0.1:5001";
 const KB_SERVER_URL = "http://127.0.0.1:8787";
@@ -105,15 +109,21 @@ app.use((req, res, next) => {
 app.post("/api/rooms/:location/cooler/run-turn", async (req, res) => {
   try {
     const { location } = req.params;
-    const { topic, participants, userMessage } = req.body;
+    let { topic, participants, userMessage } = req.body;
     
     if (!location) {
       return res.status(400).json({ error: "Location is required" });
     }
     
+    // Use stigmergy-weighted selection if no participants provided
+    if (!participants || participants.length === 0) {
+      const COOLER_PARTICIPANTS = ["FrontDesk", "OpenClaw", "IronClaw", "LeslieClaw", "ZeroClaw", "Sherlobster", "HermitClaw"];
+      participants = selectWeightedParticipants(COOLER_PARTICIPANTS, 4);
+    }
+    
     const result = await runRoomTurn(location, {
       topic: topic || "General discussion",
-      participants: participants || ["FrontDesk", "OpenClaw"],
+      participants,
       userMessage: userMessage || "",
       generateFn
     });
@@ -157,6 +167,101 @@ app.get("/api/rooms/:location/cooler/export", async (req, res) => {
   }
 });
 
+// List available cooler sessions for Test SCRUM
+app.get("/api/cooler/sessions/list", async (req, res) => {
+  try {
+    const sessionsDir = path.resolve("data/cooler_sessions");
+    if (!fs.existsSync(sessionsDir)) {
+      res.json({ sessions: [] });
+      return;
+    }
+    
+    const files = fs.readdirSync(sessionsDir).filter(f => f.endsWith(".json"));
+    const sessions = files.map(file => {
+      const filePath = path.join(sessionsDir, file);
+      try {
+        const content = JSON.parse(fs.readFileSync(filePath, "utf-8"));
+        return {
+          id: content.id || file.replace(".json", ""),
+          topic: content.topic || "Unknown",
+          participantCount: content.participants?.length || 0,
+          utteranceCount: content.utterances?.length || 0,
+          createdAt: content.createdAt || content.created_at || null,
+        };
+      } catch {
+        return { id: file.replace(".json", ""), topic: "Error reading", participantCount: 0, utteranceCount: 0 };
+      }
+    });
+    
+    // Sort by most recent
+    sessions.sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA;
+    });
+    
+    res.json({ sessions: sessions.slice(0, 20) });
+  } catch (error) {
+    console.error("Error listing cooler sessions:", error);
+    res.status(500).json({ error: "Failed to list sessions" });
+  }
+});
+
+// Test SCRUM: Create mock SCRUM from a cooler session
+app.post("/api/scrum/test", async (req, res) => {
+  try {
+    const { coolerSessionId } = req.body;
+    
+    let topic = "Test SCRUM from cooler session";
+    let participants: string[] = [];
+    let sessionData: any = null;
+    
+    if (coolerSessionId) {
+      // Load the cooler session
+      const sessionPath = path.resolve(`data/cooler_sessions/${coolerSessionId}.json`);
+      if (fs.existsSync(sessionPath)) {
+        sessionData = JSON.parse(fs.readFileSync(sessionPath, "utf-8"));
+        topic = `Test SCRUM: ${sessionData.topic || "Cooler session"}`;
+        participants = sessionData.participants || [];
+        console.log(`[Test SCRUM] Loaded cooler session: ${coolerSessionId}, participants: ${participants.join(", ")}`);
+      }
+    }
+    
+    // Use stigmergy-weighted participants if we have them, otherwise default
+    if (participants.length === 0) {
+      const SCRUM_PARTICIPANTS = ["clerk", "specialist", "executive", "archivist"];
+      participants = selectWeightedParticipants(SCRUM_PARTICIPANTS, 4);
+    }
+    
+    // Create the SCRUM session
+    currentScrumSession = createScrumSession(topic, participants);
+    
+    const { session, stageResult } = await advanceScrumSession(currentScrumSession);
+    currentScrumSession = session;
+    
+    // Add test metadata
+    const testOutput = {
+      sourceSession: coolerSessionId || "random",
+      sourceTopic: sessionData?.topic || "N/A",
+      sourceParticipants: sessionData?.participants || [],
+      stigmergyWeighted: participants,
+      message: "Test SCRUM created from cooler session with shadow-biased participant selection"
+    };
+    
+    console.log(`[Test SCRUM] Created: ${testOutput.sourceTopic}, participants: ${participants.join(", ")}`);
+    
+    res.json({
+      session,
+      stageResult,
+      testOutput,
+      message: `Test SCRUM started from cooler session: ${topic}`
+    });
+  } catch (error: any) {
+    console.error("Error creating test SCRUM:", error);
+    res.status(500).json({ error: "Failed to create test SCRUM" });
+  }
+});
+
 // Stigmergy API Routes
 app.get("/api/stigmergy/traces", (req, res) => {
   res.json({ traces: getActiveTraces() });
@@ -165,6 +270,43 @@ app.get("/api/stigmergy/traces", (req, res) => {
 app.get("/api/stigmergy/social-potential", (req, res) => {
   const social = calculateSocialPotential();
   res.json(social);
+});
+
+// NVIDIA Integration Test Endpoint
+app.get("/api/test/nvidia", async (req, res) => {
+  const apiKey = process.env.NVIDIA_API_KEY;
+  const modelId = process.env.NVIDIA_MODEL_ID || "deepseek-ai/deepseek-v3.1";
+  
+  if (!apiKey) {
+    res.json({ 
+      available: false, 
+      reason: "NVIDIA_API_KEY not configured",
+      modelId 
+    });
+    return;
+  }
+  
+  try {
+    const { nvidiaChat } = await import("./llm/nvidiaClient.js");
+    const result = await nvidiaChat([
+      { role: "user", content: "Reply with exactly: 'NVIDIA OK'" }
+    ], { maxTokens: 50 });
+    
+    res.json({
+      available: true,
+      working: true,
+      modelId,
+      response: result.content.substring(0, 100),
+      provider: "nvidia"
+    });
+  } catch (error: any) {
+    res.json({
+      available: true,
+      working: false,
+      modelId,
+      error: error.message.substring(0, 200)
+    });
+  }
 });
 
 app.get("/api/stigmergy/review-heat", (req, res) => {
@@ -177,14 +319,79 @@ app.get("/api/stigmergy/review-heat", (req, res) => {
   }
 });
 
-// SCRUM Session API Routes
+// Delegation Detection API (per grok_suggestions.md)
+// Detects delegation commands in cooler chat and triggers SCRUM creation
+const DELEGATION_PATTERNS = [
+  /handle (the )?(\w+)/i,
+  /delegate (the )?(\w+)/i,
+  /take care of/i,
+  /someone should/i,
+  /we need to/i,
+  /let's focus on/i,
+  /work on (the )?(\w+)/i,
+];
+
+app.post("/api/detect-delegation", async (req, res) => {
+  try {
+    const { message } = req.body;
+    if (!message) {
+      res.status(400).json({ error: "Message is required" });
+      return;
+    }
+
+    const isDelegation = DELEGATION_PATTERNS.some(pattern => pattern.test(message));
+    
+    if (isDelegation) {
+      console.log(`[Delegation] Detected in message: "${message.substring(0, 50)}..."`);
+      
+      // Extract potential task keywords
+      const keywords: string[] = [];
+      DELEGATION_PATTERNS.forEach(pattern => {
+        const match = message.match(pattern);
+        if (match && match[1]) keywords.push(match[1]);
+      });
+
+      // Create a SCRUM run with the extracted keywords
+      const topic = keywords.length > 0 ? `Delegated: ${keywords.join(", ")}` : "User Delegation";
+      
+      currentScrumSession = createScrumSession(
+        topic,
+        ["clerk", "specialist", "executive", "archivist"]
+      );
+      
+      const { session, stageResult } = await advanceScrumSession(currentScrumSession);
+      currentScrumSession = session;
+      
+      console.log(`[Delegation] Created SCRUM session: ${session.id} for topic: ${topic}`);
+      
+      res.json({
+        detected: true,
+        sessionId: session.id,
+        topic: topic,
+        message: `Delegation detected. Created SCRUM session: "${topic}"`
+      });
+    } else {
+      res.json({ detected: false });
+    }
+  } catch (error: any) {
+    console.error("Error detecting delegation:", error);
+    res.status(500).json({ error: "Failed to detect delegation" });
+  }
+});
+
 app.post("/api/scrum/start", async (req, res) => {
   try {
-    const { topic, participants } = req.body;
+    let { topic, participants } = req.body;
+    
+    // Use stigmergy-weighted participant selection if not provided
+    if (!participants || participants.length === 0) {
+      const SCRUM_PARTICIPANTS = ["clerk", "specialist", "executive", "archivist"];
+      participants = selectWeightedParticipants(SCRUM_PARTICIPANTS, 4);
+    }
     
     currentScrumSession = createScrumSession(
       topic || "Daily standup",
-      participants || ["clerk", "specialist", "executive", "archivist"]
+      participants
     );
     
     const { session, stageResult } = await advanceScrumSession(currentScrumSession);
@@ -487,6 +694,42 @@ const AUTO_COOLER_INTERVAL_MS = 20 * 60 * 1000; // 20 minutes
 
 const ALL_PARTICIPANTS = ["FrontDesk", "OpenClaw", "IronClaw", "LeslieClaw", "ZeroClaw", "Sherlobster", "HermitClaw", "Hercule Prawnro"];
 
+// Weighted selection based on Task Shadow intensity (per stigmergy spec)
+function selectWeightedParticipants(availableAgents: string[], numParticipants: number): string[] {
+  const weights = getAgentWeightsWithShadows(availableAgents);
+  const weightedAgents: { agent: string; weight: number }[] = availableAgents.map(agent => ({
+    agent,
+    weight: weights.get(agent) || 1.0
+  }));
+  
+  const totalWeight = weightedAgents.reduce((sum, a) => sum + a.weight, 0);
+  const selected: string[] = [];
+  
+  for (let i = 0; i < numParticipants; i++) {
+    let random = Math.random() * totalWeight;
+    for (const wa of weightedAgents) {
+      random -= wa.weight;
+      if (random <= 0) {
+        if (!selected.includes(wa.agent)) {
+          selected.push(wa.agent);
+        }
+        break;
+      }
+    }
+  }
+  
+  // Fallback: if we couldn't select enough, add random remaining agents
+  while (selected.length < numParticipants) {
+    const remaining = availableAgents.filter(a => !selected.includes(a));
+    if (remaining.length === 0) break;
+    const randomIdx = Math.floor(Math.random() * remaining.length);
+    selected.push(remaining[randomIdx]);
+  }
+  
+  console.log(`[Stigmergy] Selected ${selected.length} participants with shadow-biased weights: ${selected.join(", ")}`);
+  return selected;
+}
+
 async function runAutoCoolerSession(): Promise<void> {
   console.log("[AutoCooler] Starting automatic cooler session...");
   
@@ -494,9 +737,13 @@ async function runAutoCoolerSession(): Promise<void> {
     await fetchNewsTopics();
     const topic = getTopicForConversation();
     
+    // Select 4-6 participants with shadow-biased weights
+    const numParticipants = 4 + Math.floor(Math.random() * 3);
+    const selectedParticipants = selectWeightedParticipants(ALL_PARTICIPANTS, numParticipants);
+    
     const result = await runRoomTurn("kitchen", {
       topic,
-      participants: ALL_PARTICIPANTS,
+      participants: selectedParticipants,
       userMessage: "",
       generateFn
     });
@@ -575,6 +822,17 @@ app.get("/api/cooler/topics", async (req, res) => {
     res.json({ ok: true, topics });
   } catch (error: any) {
     res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+// Return current topic (latest from fetchNewsTopics)
+app.get("/api/cooler/topics/current", async (req, res) => {
+  try {
+    const topics = await fetchNewsTopics();
+    const currentTopic = topics.length > 0 ? topics[0] : null;
+    res.json({ topic: currentTopic, topics });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -746,11 +1004,35 @@ function formatTableData(tableName: string, data: any[]): string {
 
 app.post("/api/chat", async (req, res) => {
   try {
-    const { message, history } = req.body;
+    const { message, history, model } = req.body;
     
     if (!message) {
       res.status(400).json({ error: "Message is required" });
       return;
+    }
+
+    // Use provided model or fall back to gemma-3-1b-it
+    const selectedModel = model || "gemma-3-1b-it";
+    
+    // If NVIDIA model selected, use routeChat
+    if (selectedModel === "nvidia" && process.env.NVIDIA_API_KEY) {
+      try {
+        const { routeChat } = await import("./llm/llmRouter.js");
+        const messages = [
+          { role: "system", content: "You are a helpful database assistant for Pixel Office." },
+          ...(history || []).slice(-10),
+          { role: "user", content: message }
+        ];
+        const result = await routeChat(messages, { maxTokens: 1024 });
+        return res.json({ 
+          reply: result.content,
+          role: "assistant",
+          model: "nvidia (deepseek)"
+        });
+      } catch (nvidiaErr: any) {
+        console.error("NVIDIA chat error:", nvidiaErr);
+        // Fall back to Ollama
+      }
     }
 
     const repoCheck = isRepoQuestion(message);
@@ -831,7 +1113,31 @@ app.post("/api/agent-chat", async (req, res) => {
       return;
     }
 
-    const selectedModel = model || "dash-squirrel";
+    const selectedModel = model || "gemma-3-1b-it";
+    
+    // If NVIDIA model selected, use routeChat
+    if (selectedModel === "nvidia" && process.env.NVIDIA_API_KEY) {
+      try {
+        const { routeChat } = await import("./llm/llmRouter.js");
+        const rolePrompts: Record<string, string> = {
+          receptionist: "You are FrontDesk, a friendly receptionist at Pixel Office.",
+          clerk: "You are a Clerk at Pixel Office.",
+          executive: "You are an Executive at Pixel Office.",
+          specialist: "You are a Specialist at Pixel Office.",
+          custodian: "You are a Custodian at Pixel Office.",
+          archivist: "You are an Archivist at Pixel Office.",
+        };
+        const systemPrompt = rolePrompts[agentRole] || `You are ${agentName}, a helpful assistant.`;
+        const messages = [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: message }
+        ];
+        const result = await routeChat(messages, { maxTokens: 1024 });
+        return res.json({ reply: result.content, model: "nvidia (deepseek)" });
+      } catch (nvidiaErr: any) {
+        console.error("NVIDIA agent-chat error:", nvidiaErr);
+      }
+    }
     
     const rolePrompts: Record<string, string> = {
       receptionist: "You are FrontDesk, a friendly receptionist at Pixel Office. You help with intake, routing questions, and provide helpful information about the office. Be warm, efficient, and concise.",

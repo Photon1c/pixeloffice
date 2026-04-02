@@ -512,3 +512,96 @@ export const ACTION_VERBS: string[] = [
   "archived",
   "failed",
 ];
+
+// ============================================================================
+// Stigmergy-Driven Task Selection (per grok_suggestions.md)
+// ============================================================================
+
+export interface StigmergyTraces {
+  traces: Array<{
+    type: string;
+    intensity: number;
+    agentId?: string;
+    roomId?: string;
+    created_at: string;
+  }>;
+}
+
+export async function fetchStigmergyTraces(): Promise<StigmergyTraces> {
+  try {
+    const res = await fetch("/api/stigmergy/traces");
+    return await res.json();
+  } catch {
+    return { traces: [] };
+  }
+}
+
+export function calculateAgentTaskWeights(
+  agents: Agent[],
+  stigmergyTraces: StigmergyTraces["traces"]
+): Map<string, number> {
+  const shadowTraces = stigmergyTraces.filter(t => t.type === "task_shadow");
+  const agentShadows: Record<string, { count: number; totalIntensity: number }> = {};
+
+  shadowTraces.forEach(t => {
+    if (t.agentId) {
+      if (!agentShadows[t.agentId]) {
+        agentShadows[t.agentId] = { count: 0, totalIntensity: 0 };
+      }
+      agentShadows[t.agentId].count++;
+      agentShadows[t.agentId].totalIntensity += t.intensity;
+    }
+  });
+
+  const weights = new Map<string, number>();
+  const shadowBonusMultiplier = 0.3;
+
+  agents.forEach(agent => {
+    const baseWeight = 1.0;
+    const shadowData = agentShadows[agent.id];
+    let bonus = 0;
+    if (shadowData && shadowData.count > 0) {
+      const avgIntensity = shadowData.totalIntensity / shadowData.count;
+      bonus = avgIntensity * shadowBonusMultiplier;
+    }
+    weights.set(agent.id, baseWeight + bonus);
+  });
+
+  return weights;
+}
+
+export function selectTaskWithStigmergy(
+  agents: Agent[],
+  tasks: Task[],
+  stigmergyTraces: StigmergyTraces["traces"]
+): { agent: Agent; task: Task } | null {
+  const pendingTasks = tasks.filter(t => t.status !== "done" && t.status !== "archived");
+  if (pendingTasks.length === 0 || agents.length === 0) return null;
+
+  const weights = calculateAgentTaskWeights(agents, stigmergyTraces);
+
+  const weightedAgents: { agent: Agent; weight: number }[] = agents.map(agent => ({
+    agent,
+    weight: weights.get(agent.id) || 1.0
+  }));
+
+  const totalWeight = weightedAgents.reduce((sum, a) => sum + a.weight, 0);
+  let random = Math.random() * totalWeight;
+
+  let selectedAgent = weightedAgents[0].agent;
+  for (const wa of weightedAgents) {
+    random -= wa.weight;
+    if (random <= 0) {
+      selectedAgent = wa.agent;
+      break;
+    }
+  }
+
+  const agentTasks = pendingTasks.filter(t => t.assigneeId === selectedAgent.id);
+  const selectedTask = agentTasks.length > 0
+    ? agentTasks[0]
+    : pendingTasks[Math.floor(Math.random() * pendingTasks.length)];
+
+  console.log(`[Stigmergy] Selected agent ${selectedAgent.name} (weight: ${weights.get(selectedAgent.id)?.toFixed(2)}) for task "${selectedTask.title}"`);
+  return { agent: selectedAgent, task: selectedTask };
+}

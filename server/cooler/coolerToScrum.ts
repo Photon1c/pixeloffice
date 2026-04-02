@@ -68,6 +68,7 @@ export interface PromotionResult {
   tasksCreated: number;
   alreadyPromoted: boolean;
   reason?: string;
+  delegatedBy?: string; // per grok_suggestions.md - log who delegated
 }
 
 function detectRelevanceScore(messages: CoolerMessage[]): { score: number; themes: string[] } {

@@ -28,6 +28,18 @@ This index tracks historical implementations, feature-level completion status, a
 - [x] **Local Model Support & Fallbacks** 🟢  
   *Refs:* [LOCAL_MODEL_FALLBACK.md](./LOCAL_MODEL_FALLBACK.md), [IMPLEMENTATION_SUMMARY-LOCALMODELS.md](./IMPLEMENTATION_SUMMARY-LOCALMODELS.md)
 
+## 🟢 Stigmergy & Behavioral Fields (April 2026)
+- [x] **Stigmergy-Driven Task Selection** 🟢  
+  *Refs:* [grok_suggestions_impl.md](./grok_suggestions_impl.md) - Agents weighted by Task Shadow intensity
+- [x] **"Delegate to Office" Command** 🟢  
+  *Refs:* [grok_suggestions_impl.md](./grok_suggestions_impl.md) - Chat-based delegation → SCRUM creation
+- [x] **Office Status Panel** 🟢  
+  *Refs:* [grok_suggestions_impl.md](./grok_suggestions_impl.md) - Lab Mode panel with task shadows & social activity
+- [x] **Sleep Mode** 🟢  
+  *Refs:* [grok_suggestions_impl.md](./grok_suggestions_impl.md) - Reduces agent movement & thought bubbles
+- [x] **GitHub Workflow Visualization** 🟢  
+  *Refs:* [grok_suggestions_impl.md](./grok_suggestions_impl.md) - 4-step pipeline animation on FrontDesk card
+
 ## 🟡 Specialized Labs & Dashboards
 - [x] **Genealogy Lab** 🟢  
   *Refs:* [GENEALOGY_LAB.md](./GENEALOGY_LAB.md)
@@ -53,6 +65,14 @@ This index tracks historical implementations, feature-level completion status, a
   *Refs:* [PHASE_D_GOVERNANCE_RELAXATION.md](./PHASE_D_GOVERNANCE_RELAXATION.md), [deploy_spec_netlify_supabase.md](./deploy_spec_netlify_supabase.md)
 - [x] **Browser Console Maintenance** 🟢  
   *Refs:* [BROWSER_CONSOLE_FIXES.md](./BROWSER_CONSOLE_FIXES.md), [debug-318.md](./debug-318.md)
+
+## 🔴 Archived (Historical Reference)
+- [x] **Bug Reports (March 2026)** 🔴  
+  *Refs:* [curr_bugs.md](./curr_bugs.md), [night_bugs.md](./night_bugs.md), [live_app_error_report_2026-03.md](./live_app_error_report_2026-03.md)
+- [x] **Netlify Deployment Issues (March 2026)** 🔴  
+  *Refs:* [supabase_report_2026-03.md](./supabase_report_2026-03.md)
+- [x] **Layout Wishes (v1.1)** 🔴  
+  *Refs:* [pixel_office_layout_v1_1_wishes.md](./pixel_office_layout_v1_1_wishes.md) - Design reference only
 
 ---
 
