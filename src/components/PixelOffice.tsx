@@ -88,10 +88,30 @@ interface PixelOfficeProps {
 }
 
 export default function PixelOffice({ config = {} }: PixelOfficeProps) {
+  const [loadingStatus, setLoadingStatus] = useState<string>("Initializing...");
+  console.log("[PixelOffice] Rendering, loadingStatus:", loadingStatus);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [sidebarWidth, setSidebarWidth] = useState(280);
   const [isResizing, setIsResizing] = useState(false);
+  
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (mobile && window.innerWidth < 480) {
+        setSidebarWidth(window.innerWidth - 20);
+      } else if (mobile) {
+        setSidebarWidth(Math.min(280, window.innerWidth - 40));
+      }
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
   const [agents, setAgents] = useState<Agent[]>(INITIAL_AGENTS);
   const [agentCards, setAgentCards] = useState<AgentCard[]>([]);
   const [dashboardConfig, setDashboardConfig] = useState<DashboardConfig>({
@@ -135,7 +155,6 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     workflowStateRef.current = state;
     forceUpdate(n => n + 1);
   };
-  void setWorkflowState; // reserved for future use
   const workflowState = workflowStateRef.current;
 
   const lastFrameTime = useRef<number>(0);
@@ -176,11 +195,30 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         const rect = container.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
+        console.log("[Canvas] Size set:", rect.width, "x", rect.height);
       }
     };
     updateCanvasSize();
     window.addEventListener("resize", updateCanvasSize);
     return () => window.removeEventListener("resize", updateCanvasSize);
+  }, []);
+  
+  useEffect(() => {
+    // More descriptive loading that actually tracks initialization
+    setLoadingStatus("Loading React components...");
+    setTimeout(() => {
+      setLoadingStatus("Setting up canvas...");
+      setTimeout(() => {
+        setLoadingStatus("Initializing agent logic...");
+        setTimeout(() => {
+          setLoadingStatus("Starting render loop...");
+          setTimeout(() => {
+            setLoadingStatus("Ready!");
+            setTimeout(() => setLoadingStatus(""), 500);
+          }, 200);
+        }, 200);
+      }, 200);
+    }, 200);
   }, []);
 
   const fetchStatus = useCallback(async () => {
@@ -390,9 +428,32 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas) {
+      console.log("[Render] No canvas ref");
+      return;
+    }
     const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    if (!ctx) {
+      console.log("[Render] No 2d context");
+      return;
+    }
+
+    console.log("[Render] Starting", { w: canvas.width, h: canvas.height, agents: agents.length });
+    
+    // Force explicit size check
+    const checkSize = () => {
+      console.log("[Canvas] Dimensions:", canvas.width, canvas.height, "client:", canvas.clientWidth, canvas.clientHeight);
+    };
+    checkSize();
+
+    // Test: Fill canvas with a solid color first
+    ctx.fillStyle = "#050509";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Test rectangle
+    ctx.fillStyle = "#4ecdc4";
+    ctx.fillRect(canvas.width / 2 - 50, canvas.height / 2 - 50, 100, 100);
+    console.log("[Render] Test rectangle drawn");
 
     let animationFrameId: number;
     const render = (timestamp: number) => {
@@ -421,6 +482,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
       drawFloor(ctx);
       drawWalls(ctx);
+      console.log("[Render] Drew floor/walls");
       drawLobby(ctx);
       drawArchives(ctx);
       drawSpecialistSuite(ctx);
@@ -452,6 +514,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       }
 
       ctx.restore();
+      console.log("[Render] Frame complete, dims:", canvas.width, canvas.height);
       animationFrameId = requestAnimationFrame(render);
     };
 
@@ -487,9 +550,16 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   if (showStockForecasts) return <StockForecasts />;
 
   return (
-    <div style={styles.container}>
-      <div style={{...styles.sidebar, width: sidebarWidth}}>
-        <div style={styles.resizeHandle} onMouseDown={() => setIsResizing(true)} />
+    <div style={{
+      ...styles.container,
+      flexDirection: isMobile ? "column" : "row"
+    }}>
+      <div style={{
+        ...styles.sidebar, 
+        width: sidebarWidth,
+        ...(isMobile && styles.sidebarMobile)
+      }}>
+        {isMobile && <div style={styles.resizeHandle} />}
         
         <div style={{ marginBottom: '16px' }}>
           <button style={styles.paramsToggle} onClick={() => setShowParams(!showParams)}>
@@ -708,10 +778,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               
               console.log('[Test SCRUM] Response:', scrumData);
               
-              // Show test output in an alert or console
-              if (scrumData.testOutput) {
-                alert(`Test SCRUM created!\n\nSource: ${scrumData.testOutput.sourceTopic}\nParticipants: ${scrumData.testOutput.stigmergyWeighted?.join(", ") || "default"}\n\n${scrumData.testOutput.message}`);
-              }
+              // Show test output - UI already displays the result
+              console.log('[Test SCRUM] Created:', scrumData.testOutput);
             } catch (err) {
               console.error('[Test SCRUM] Error:', err);
             }
@@ -739,6 +807,53 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       <div style={styles.mainContent}>
         <div style={styles.canvasWrapper} ref={containerRef}>
           <canvas ref={canvasRef} style={styles.canvas} onClick={handleCanvasClick} />
+          {loadingStatus && (
+            <div style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(5, 5, 9, 0.95)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '20px',
+            }}>
+              <div style={{color: '#4ecdc4', fontSize: '24px', fontFamily: "'JetBrains Mono', monospace"}}>
+                Loading Pixel Office...
+              </div>
+              <div style={{
+                width: '300px',
+                height: '8px',
+                background: '#1a2a3a',
+                borderRadius: '4px',
+                overflow: 'hidden',
+                position: 'relative'
+              }}>
+                <div style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  height: '100%',
+                  width: '30%',
+                  background: 'linear-gradient(90deg, #4ecdc4, #26de81, #4ecdc4)',
+                  borderRadius: '4px',
+                  animation: 'loadingSlide 1.5s ease-in-out infinite',
+                }} />
+              </div>
+              <div style={{color: '#707080', fontSize: '14px'}}>
+                {loadingStatus}
+              </div>
+              <style>{`
+                @keyframes loadingSlide {
+                  0% { left: -30%; }
+                  100% { left: 100%; }
+                }
+              `}</style>
+            </div>
+          )}
             {selectedAgent && (
               <AgentActionCard
                 agent={selectedAgent}
@@ -794,7 +909,7 @@ function Dashboard({ config, onUpdate, onOpenGenealogyLab, onOpenAdminAssistant,
   );
 }
 
-function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, tasks }: any) {
+function AgentActionCard({ agent, card, workflowState, setWorkflowState, onClose, onMoodChange, tasks }: any) {
   const unassignedTasks = tasks?.filter((t: any) => !t.assigneeId) || [];
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -802,8 +917,9 @@ function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, ta
   const [isLoading, setIsLoading] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState("");
   const [githubRepo, setGithubRepo] = useState("photon1c/pixeloffice");
-  const [githubLoading, setGithubLoading] = useState(false);
-  const [githubError, setGithubError] = useState<string | null>(null);
+  const [localGithubLoading, setLocalGithubLoading] = useState(false);
+  const [localGithubError, setLocalGithubError] = useState<string | null>(null);
+  const [localGithubResult, setLocalGithubResult] = useState<any>(null);
   
   const isReceptionist = agent.role === "receptionist";
   
@@ -846,31 +962,27 @@ function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, ta
 
   const runVisualWorkflow = async () => {
     if (!githubRepo.includes('/')) {
-      setGithubError("Invalid repo format. Use owner/repo");
+      setLocalGithubError("Invalid repo format. Use owner/repo");
       return;
     }
     
     const [owner, repo] = githubRepo.split('/');
-    setGithubLoading(true);
-    setGithubError(null);
+    setLocalGithubLoading(true);
+    setLocalGithubError(null);
     
-    // Run visual animation
     for (let i = 0; i < workflowSteps.length; i++) {
       const step = workflowSteps[i];
-      if (typeof window !== 'undefined' && (window as any).setWorkflowState) {
-        (window as any).setWorkflowState({
-          taskId: "github-readme",
-          currentStep: i,
-          totalSteps: workflowSteps.length,
-          currentAgent: step.agent,
-          status: "running",
-          message: step.message
-        });
-      }
+      setWorkflowState({
+        taskId: "github-readme",
+        currentStep: i,
+        totalSteps: workflowSteps.length,
+        currentAgent: step.agent,
+        status: "running",
+        message: step.message
+      });
       await new Promise(resolve => setTimeout(resolve, step.delay));
     }
     
-    // Now call actual API
     try {
       const response = await fetch('http://localhost:4173/api/workflow/github/readme', {
         method: 'POST',
@@ -882,35 +994,31 @@ function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, ta
       
       const data = await response.json();
       
-      if (typeof window !== 'undefined' && (window as any).setWorkflowState) {
-        (window as any).setWorkflowState({
-          taskId: "github-readme",
-          currentStep: workflowSteps.length,
-          totalSteps: workflowSteps.length,
-          currentAgent: "hermitclaw",
-          status: "completed",
-          message: "Workflow complete!"
-        });
-      }
+      setWorkflowState({
+        taskId: "github-readme",
+        currentStep: workflowSteps.length,
+        totalSteps: workflowSteps.length,
+        currentAgent: "hermitclaw",
+        status: "completed",
+        message: "Workflow complete!"
+      });
       
-      // Show result - could open a modal or display inline
-      alert(`README fetched! Length: ${data.response?.length || 0} chars`);
+      console.log('[GitHub] README fetched, length:', data.response?.length || 0);
+      setLocalGithubResult(data);
       
     } catch (err: any) {
       console.error("GitHub workflow error:", err);
-      setGithubError(err.message || "Failed to fetch README");
-      if (typeof window !== 'undefined' && (window as any).setWorkflowState) {
-        (window as any).setWorkflowState({
-          taskId: "github-readme",
-          currentStep: 0,
-          totalSteps: workflowSteps.length,
-          currentAgent: "zeroclaw",
-          status: "failed",
-          message: "Workflow failed"
-        });
-      }
+      setLocalGithubError(err.message || "Failed to fetch README");
+      setWorkflowState({
+        taskId: "github-readme",
+        currentStep: 0,
+        totalSteps: workflowSteps.length,
+        currentAgent: "zeroclaw",
+        status: "failed",
+        message: "Workflow failed"
+      });
     } finally {
-      setGithubLoading(false);
+      setLocalGithubLoading(false);
     }
   };
 
@@ -992,11 +1100,11 @@ function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, ta
                   if (value === 'readme') {
                     runVisualWorkflow();
                   } else if (value === 'write-readme') {
-                    alert('Write README workflow - implement write-readme API');
+                    console.log('[Workflow] Write README - not implemented yet');
                   } else if (value === 'sitrep') {
-                    alert('SitRep workflow - configure endpoint');
+                    console.log('[Workflow] SitRep - not implemented yet');
                   } else if (value === 'nightly') {
-                    alert('Nightly report workflow coming soon!');
+                    console.log('[Workflow] Nightly report - coming soon');
                   }
                   setSelectedWorkflow("");
                 }}
@@ -1043,6 +1151,29 @@ function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, ta
           </div>
         )}
 
+        {localGithubError && (
+          <div style={actionCardStyles.section}>
+            <div style={{color: '#fc5c65', fontSize: '13px', textAlign: 'center', padding: '12px', background: '#1a0a0a', borderRadius: '6px'}}>
+              {localGithubError}
+            </div>
+          </div>
+        )}
+
+        {localGithubResult && (
+          <WorkflowResultPanel 
+            result={localGithubResult} 
+            onClose={() => setLocalGithubResult(null)} 
+          />
+        )}
+
+        {localGithubLoading && !workflowState && (
+          <div style={actionCardStyles.section}>
+            <div style={{color: '#4ecdc4', fontSize: '13px', textAlign: 'center', padding: '12px'}}>
+              Receptionist is processing your GitHub request...
+            </div>
+          </div>
+        )}
+
         {unassignedTasks.length > 0 && (
           <div style={actionCardStyles.section}>
             <h4 style={actionCardStyles.sectionTitle}>Assign Task</h4>
@@ -1075,6 +1206,244 @@ function AgentActionCard({ agent, card, workflowState, onClose, onMoodChange, ta
             <button style={actionCardStyles.chatSendBtn} onClick={handleSendChat} disabled={isLoading}>Send</button>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+const workflowResultStyles: Record<string, React.CSSProperties> = {
+  container: {
+    background: "#0f1520",
+    border: "1px solid #2a3a4a",
+    borderRadius: "8px",
+    padding: "16px",
+    marginTop: "12px",
+  },
+  header: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    marginBottom: "12px",
+    flexWrap: "wrap",
+  },
+  statusPill: {
+    padding: "3px 10px",
+    borderRadius: "12px",
+    color: "#050509",
+    fontSize: "11px",
+    fontWeight: "bold",
+    textTransform: "uppercase",
+  },
+  summary: {
+    color: "#a0a0b0",
+    fontSize: "13px",
+    flex: 1,
+  },
+  closeBtn: {
+    background: "transparent",
+    border: "none",
+    color: "#606070",
+    fontSize: "18px",
+    cursor: "pointer",
+  },
+  preview: {
+    background: "#050509",
+    borderRadius: "6px",
+    padding: "12px",
+    marginBottom: "12px",
+    maxHeight: "200px",
+    overflow: "auto",
+  },
+  previewText: {
+    margin: 0,
+    color: "#c0c0d0",
+    fontSize: "12px",
+    fontFamily: "'JetBrains Mono', monospace",
+    whiteSpace: "pre-wrap",
+    lineHeight: 1.5,
+    wordBreak: "break-word",
+  },
+  expandBtn: {
+    background: "transparent",
+    border: "none",
+    color: "#4ecdc4",
+    fontSize: "12px",
+    cursor: "pointer",
+    marginTop: "8px",
+  },
+  worklogSection: {
+    borderTop: "1px solid #2a3a4a",
+    paddingTop: "12px",
+  },
+  worklogToggle: {
+    background: "transparent",
+    border: "none",
+    color: "#707080",
+    fontSize: "12px",
+    cursor: "pointer",
+  },
+  worklogList: {
+    marginTop: "10px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+  },
+  worklogEntry: {
+    display: "flex",
+    gap: "8px",
+    fontSize: "11px",
+    alignItems: "center",
+    flexWrap: "wrap",
+  },
+  worklogTime: {
+    color: "#505060",
+    minWidth: "70px",
+  },
+  worklogAgent: {
+    color: "#4ecdc4",
+    minWidth: "80px",
+    fontWeight: "bold",
+  },
+  worklogAction: {
+    color: "#a0a0b0",
+    minWidth: "100px",
+  },
+  worklogNote: {
+    color: "#707080",
+    flex: 1,
+  },
+  expandedContainer: {
+    position: "fixed",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "90vw",
+    maxWidth: "800px",
+    height: "80vh",
+    maxHeight: "90vh",
+    background: "#0f1520",
+    border: "1px solid #2a3a4a",
+    borderRadius: "12px",
+    padding: "16px",
+    zIndex: 2000,
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+  expandedHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "16px",
+  },
+  expandedContent: {
+    flex: 1,
+    background: "#050509",
+    borderRadius: "8px",
+    padding: "16px",
+    overflow: "auto",
+  },
+  expandedText: {
+    margin: 0,
+    color: "#c0c0d0",
+    fontSize: "14px",
+    fontFamily: "'JetBrains Mono', monospace",
+    whiteSpace: "pre-wrap",
+    lineHeight: 1.6,
+    wordBreak: "break-word",
+  },
+};
+
+interface WorkflowResultPanelProps {
+  result: any;
+  onClose?: () => void;
+}
+
+function WorkflowResultPanel({ result, onClose }: WorkflowResultPanelProps) {
+  const [expanded, setExpanded] = useState(false);
+  const [showWorklog, setShowWorklog] = useState(false);
+
+  if (!result) return null;
+
+  const statusColors: Record<string, string> = {
+    pending: "#feca57",
+    in_progress: "#4ecdc4",
+    completed: "#26de81",
+    failed: "#fc5c65"
+  };
+
+  const previewContent = result.artifacts?.[0]?.content || result.response || "";
+  const previewLines = previewContent.split("\n").slice(0, 15).join("\n");
+  const isTruncated = previewContent.split("\n").length > 15;
+
+  if (expanded) {
+    return (
+      <div style={workflowResultStyles.expandedContainer} onClick={() => setExpanded(false)}>
+        <div style={workflowResultStyles.expandedHeader} onClick={e => e.stopPropagation()}>
+          <div style={{display: "flex", alignItems: "center", gap: "12px"}}>
+            <span style={{...workflowResultStyles.statusPill, background: statusColors[result.status] || "#4ecdc4"}}>
+              {result.status}
+            </span>
+            <span style={workflowResultStyles.summary}>{result.summary}</span>
+          </div>
+          <div style={{display: "flex", gap: "12px", alignItems: "center"}}>
+            <button style={workflowResultStyles.closeBtn} onClick={() => setExpanded(false)}>−</button>
+            {onClose && <button style={workflowResultStyles.closeBtn} onClick={onClose}>×</button>}
+          </div>
+        </div>
+        <div style={workflowResultStyles.expandedContent}>
+          <pre style={workflowResultStyles.expandedText}>{previewContent}</pre>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={workflowResultStyles.container}>
+      <div style={workflowResultStyles.header}>
+        <span style={{...workflowResultStyles.statusPill, background: statusColors[result.status] || "#4ecdc4"}}>
+          {result.status}
+        </span>
+        <span style={workflowResultStyles.summary}>{result.summary}</span>
+        {onClose && (
+          <button style={workflowResultStyles.closeBtn} onClick={onClose}>×</button>
+        )}
+      </div>
+
+      <div style={workflowResultStyles.preview}>
+        <pre style={workflowResultStyles.previewText}>
+          {expanded ? previewContent : previewLines}
+          {isTruncated && !expanded && "\n..."}
+        </pre>
+        {isTruncated && (
+          <button style={workflowResultStyles.expandBtn} onClick={() => setExpanded(true)}>
+            View full README (expand)
+          </button>
+        )}
+      </div>
+
+      <div style={workflowResultStyles.worklogSection}>
+        <button 
+          style={workflowResultStyles.worklogToggle} 
+          onClick={() => setShowWorklog(!showWorklog)}
+        >
+          {showWorklog ? "▼" : "▶"} Workflow timeline ({result.worklog?.length || 0} steps)
+        </button>
+        
+        {showWorklog && result.worklog && (
+          <div style={workflowResultStyles.worklogList}>
+            {result.worklog.map((entry: any, idx: number) => (
+              <div key={idx} style={workflowResultStyles.worklogEntry}>
+                <span style={workflowResultStyles.worklogTime}>
+                  {new Date(entry.timestamp).toLocaleTimeString()}
+                </span>
+                <span style={workflowResultStyles.worklogAgent}>{entry.agent}</span>
+                <span style={workflowResultStyles.worklogAction}>{entry.action}</span>
+                <span style={workflowResultStyles.worklogNote}>{entry.note}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1219,8 +1588,8 @@ const chatStyles: Record<string, React.CSSProperties> = {
 };
 
 const actionCardStyles: Record<string, React.CSSProperties> = {
-  overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 },
-  card: { width: "380px", maxHeight: "85vh", background: "rgba(15, 15, 25, 0.98)", borderRadius: "12px", border: "1px solid #2a3a4a", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" },
+  overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" },
+  card: { width: "380px", maxWidth: "calc(100vw - 40px)", maxHeight: "85vh", background: "rgba(15, 15, 25, 0.98)", borderRadius: "12px", border: "1px solid #2a3a4a", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" },
   header: { display: "flex", alignItems: "center", gap: "12px", padding: "16px", borderBottom: "1px solid #2a3a4a" },
   avatar: { width: "40px", height: "40px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: "bold", color: "#050509" },
   name: { margin: 0, fontSize: "16px", color: "#e8e8f0" },
@@ -1251,15 +1620,20 @@ const actionCardStyles: Record<string, React.CSSProperties> = {
 const styles: Record<string, React.CSSProperties> = {
   container: { display: "flex", width: "100vw", height: "100vh", background: "#050509", overflow: "hidden", color: "#e8e8f0", fontFamily: "'JetBrains Mono', monospace" },
   sidebar: { height: "100%", background: "#0a0a12", borderRight: "1px solid #1b2333", padding: "20px", display: "flex", flexDirection: "column", overflowY: "auto", position: "relative", flexShrink: 0 },
-  mainContent: { flex: 1, height: "100%", position: "relative", overflow: "hidden" },
-  canvasWrapper: { width: "100%", height: "100%", position: "relative" },
+  sidebarCollapsed: { width: "60px", padding: "10px" },
+  sidebarMobile: { position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 50, width: "85vw", maxWidth: "320px", transform: "translateX(0)", transition: "transform 0.3s ease" },
+  sidebarHidden: { transform: "translateX(-100%)" },
+  mainContent: { flex: 1, height: "100%", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" },
+  mainContentNoSidebar: { marginLeft: 0 },
+  canvasWrapper: { width: "100%", height: "100%", position: "relative", flex: 1, minHeight: 0 },
   canvas: { width: "100%", height: "100%", display: "block" },
   paramsToggle: { width: "100%", padding: "10px", background: "#1a2a2a", border: "1px solid #2a3548", color: "#4ecdc4", borderRadius: "4px", cursor: "pointer", fontSize: "13px", fontWeight: 600, textAlign: "left" },
   resizeHandle: { position: "absolute", right: 0, top: 0, bottom: 0, width: "4px", cursor: "col-resize", background: "transparent", zIndex: 10 },
   subPanel: { background: "#161625", padding: "15px", borderRadius: "8px", border: "1px solid #2a3548", marginTop: "10px" },
   commandLink: { color: "#4ecdc4", textDecoration: "none", fontSize: "12px", padding: "4px 8px", border: "1px solid #2a3548", borderRadius: "4px", background: "#0a0a12" },
   secondaryBtn: { width: "100%", padding: "8px", background: "#2a3548", color: "#fff", border: "none", borderRadius: "4px", marginTop: "8px", cursor: "pointer", fontSize: "12px" },
-  agentCard: { position: "absolute", bottom: "100px", right: "20px", width: "300px", background: "rgba(15, 15, 25, 0.95)", border: "1px solid #3a3a5a", borderRadius: "12px", padding: "20px", zIndex: 100, boxShadow: "0 10px 30px rgba(0,0,0,0.5)" },
+  agentCard: { position: "absolute", bottom: "100px", right: "20px", width: "300px", background: "rgba(15, 15, 25, 0.95)", border: "1px solid #3a3a5a", borderRadius: "12px", padding: "20px", zIndex: 100, boxShadow: "0 10px 30px rgba(0,0,0,0.5)", maxWidth: "calc(100vw - 40px)" },
+  agentCardMobile: { width: "calc(100vw - 40px)", right: "20px", left: "20px", bottom: "80px" },
   closeBtn: { background: "none", border: "none", color: "#fff", fontSize: "20px", cursor: "pointer" },
   chatBox: { height: "120px", overflowY: "auto", background: "rgba(0,0,0,0.2)", borderRadius: "4px", padding: "8px", fontSize: "11px", margin: "12px 0", border: "1px solid #2a2a3a" },
   input: { flex: 1, background: "#0a0a15", border: "1px solid #2a2a3a", color: "#fff", padding: "6px", borderRadius: "4px", fontSize: "12px" },
