@@ -39,6 +39,14 @@ This index tracks historical implementations, feature-level completion status, a
   *Refs:* [grok_suggestions_impl.md](./grok_suggestions_impl.md) - Reduces agent movement & thought bubbles
 - [x] **GitHub Workflow Visualization** 🟢  
   *Refs:* [grok_suggestions_impl.md](./grok_suggestions_impl.md) - 4-step pipeline animation on FrontDesk card
+- [x] **Cursor/Opencode Workflow** 🟢  
+  *Refs:* [cursor_workflow.md](./cursor_workflow.md) - Established conventions for agent work
+- [x] **Reliability Workflows Spec** 🟢  
+  *Refs:* [reliability_workflows_spec.md](./reliability_workflows_spec.md) - Mapping test hooks and smoke tests
+- [x] **Stigmergy Next Steps** 🟢  
+  *Refs:* [stigmergy_next_steps.md](./stigmergy_next_steps.md) - Incremental improvements to stigmergy system
+- [x] **NVIDIA Integration Spec** 🟢  
+  *Refs:* [opencode_nvidia_integration_spec.md](./opencode_nvidia_integration_spec.md) - NVIDIA model integration with adapter and routing (now using z-ai/glm4.7 as default model)
 
 ## 🟡 Specialized Labs & Dashboards
 - [x] **Genealogy Lab** 🟢  
@@ -74,12 +82,10 @@ This index tracks historical implementations, feature-level completion status, a
 - [x] **Layout Wishes (v1.1)** 🔴  
   *Refs:* [pixel_office_layout_v1_1_wishes.md](./pixel_office_layout_v1_1_wishes.md) - Design reference only
 
----
-
 ## 🔍 Human Review Requested
 1. **Stock Forecast Cockpit (port 5005)**: Please verify if the underlying python service is currently active in the user environment.
 2. **Criminology Lab**: Currently hidden due to a broken Mermaid generator; needs a decision on whether to repair or fully archive.
 
 > **Resolved:** Supabase sync and 500 errors mentioned in prior docs have been addressed; current deployment uses the corrected configuration as per `docs/active/deploy_spec_netlify_supabase.md`.
 
-*Last Reviewed: April 1, 2026 – Supabase configuration confirmed healthy in current deployment.*
+*Last Reviewed: April 2, 2026 – All OpenCode specifications processed and filed appropriately. Local models updated to gemma4:e2b and NVIDIA default set to z-ai/glm4.7 per active documentation.*

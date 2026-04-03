@@ -38,7 +38,7 @@ This index tracks the implementation status of core features and recent upgrades
 - [x] **Office Status Panel** - Lab Mode panel showing task shadows & social activity ✅
 - [x] **Sleep Mode** - Reduces agent movement & thought bubbles for rest periods ✅
 - [x] **GitHub Workflow Visualization** - 4-step pipeline animation on FrontDesk card ✅
-- [x] **Updated Local Models** - Gemma 3 (1B) and Blaze (3B) as current defaults ✅
+- [x] **Updated Local Models** - Gemma 4 (E2B) for clerk/receptionist agents and z-ai/glm4.7 for NVIDIA integration ✅
 
 ---
-*Last Updated: April 1, 2026 (Afternoon Session)*
+*Last Updated: April 2, 2026 (Afternoon Session)*

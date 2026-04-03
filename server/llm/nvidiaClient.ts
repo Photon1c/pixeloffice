@@ -25,7 +25,7 @@ export async function nvidiaChat(
   options: NvidiaChatOptions = {}
 ): Promise<{ content: string; raw: any }> {
   const apiKey = process.env.NVIDIA_API_KEY;
-  const defaultModel = process.env.NVIDIA_MODEL_ID || "deepseek-ai/deepseek-v3.1";
+  const defaultModel = process.env.NVIDIA_MODEL_ID || "z-ai/glm4.7";
   const model = options.model || defaultModel;
 
   if (!apiKey) {
