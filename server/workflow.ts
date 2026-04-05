@@ -1,7 +1,6 @@
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
-import fs from "fs";
 
 const app = express();
 const PORT = process.env.PORT || 4173;
@@ -65,9 +64,6 @@ app.get("/api/workflow/health", (req, res) => {
 import { routeChat } from "./llm/llmRouter.js";
 import { tryLocalModel, isLocalModelAvailable } from "./llm/localClient.js";
 
-const app = express();
-const PORT = process.env.PORT || 4173;
-
 // ... (middleware and helpers)
 
 // Agent chat endpoint
@@ -110,64 +106,41 @@ app.post("/api/agent-chat", async (req, res) => {
   } catch (error: any) {
     console.error("Chat error:", error);
     res.json({ reply: `Error: ${error.message}` });
-  }
-});
+   }
+ });
 
-// Main chat endpoint with database integration
-app.post("/api/chat", async (req, res) => {
-  const { message, history } = req.body;
-  
-  if (!message) {
-    res.status(400).json({ error: "Message is required" });
-    return;
-  }
+ // Main chat endpoint with database integration
+ app.post("/api/chat", async (req, res) => {
+   const { message, history } = req.body;
+   
+   if (!message) {
+     res.status(400).json({ error: "Message is required" });
+     return;
+   }
+ 
+   try {
+     // ... (database schema logic preserved)
+     
+     const systemPrompt = tableDataContext 
+       ? `You are a database assistant for Pixel Office...`
+       : `You are a helpful AI assistant for Pixel Office...`;
+ 
+     const messages = [
+       { role: "system", content: systemPrompt },
+       ...(history || []).slice(-5),
+       { role: "user", content: message }
+     ];
+ 
+     // Try Cloud Router
+     const result = await routeChat(messages);
+     res.json({ reply: result.content });
+   } catch (error: any) {
+     console.error("Chat error:", error);
+     res.json({ reply: `Error: ${error.message}` });
+   }
+ });
 
-  try {
-    // ... (database schema logic preserved)
-    
-    const systemPrompt = tableDataContext 
-      ? `You are a database assistant for Pixel Office...`
-      : `You are a helpful AI assistant for Pixel Office...`;
-
-    const messages = [
-      { role: "system", content: systemPrompt },
-      ...(history || []).slice(-5),
-      { role: "user", content: message }
-    ];
-
-    // Try Cloud Router
-    const result = await routeChat(messages);
-    res.json({ reply: result.content });
-  } catch (error: any) {
-    console.error("Chat error:", error);
-    res.json({ reply: `Error: ${error.message}` });
-  }
-});
-
-    const ollamaResponse = await Promise.race([fetchPromise, timeoutPromise]) as Response;
-
-    if (!ollamaResponse.ok) {
-      const errorText = await ollamaResponse.text();
-      console.error("Ollama error:", errorText);
-      res.json({ reply: `I'm having trouble connecting to the AI model right now. Please try again later. (Model: ${selectedModel})` });
-      return;
-    }
-
-    const ollamaData = await ollamaResponse.json();
-    const reply = ollamaData.message?.content || "I couldn't generate a response.";
-    
-    res.json({ reply });
-  } catch (error: any) {
-    console.error("Chat error:", error);
-    if (error.message === "Timeout") {
-      res.json({ reply: `The AI model is taking too long to respond. Please try again or select a different model. (Model: ${selectedModel})` });
-    } else {
-      res.json({ reply: `Error: ${error.message}` });
-    }
-  }
-});
-
-// Database helper functions for chat
+ // Database helper functions for chat
 const DB_CONFIG = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '3306'),

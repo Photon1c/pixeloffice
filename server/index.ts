@@ -74,54 +74,102 @@ import { createAnalyzer, DataSource } from "./sherlock_analysis/index.js";
 import { ConferenceRoomStorage, createConferenceRoomRouter } from "./conferenceroom/routes.js";
 import { callChatModelForRole } from "./roleModels.js";
 import { openai } from "./llm/client.js";
-import {
-  createCoolerSession,
-  buildTurnPrompt,
-  validateUtterance,
-  getNextIntent,
-  addUtteranceToHistory,
-  getRepairText,
-  sessionToMarkdown,
-  type CoolerSession,
-  type Utterance,
-} from "./conversation/coolerController.js";
-import { generateFn } from "./services/llmGenerateFn.js";
-import { runRoomTurn, exportRoomSession, persistSession } from "./services/coolerTalkService.js";
+// Flywheel imports
+import { ensureDataDir as ensureResidueDir, depositResidue, getActiveResidues } from "./flywheel/residueLogger";
+import { getActiveHeat } from "./flywheel/reviewHeatEngine";
+import { promoteResidues } from "./flywheel/promotionEngine";
 
-// Save cooler session to markdown file (for cooler_talk_log.md)
-function writeCoolerTalkToFile(session: any): void {
+// Initialize flywheel system on startup
+const initializeFlywheel = async () => {
   try {
-    // Also persist to JSON (this is the main storage)
-    persistSession(session);
-    
-    // Create markdown export
-    const markdownLines: string[] = [
-      `# Cooler Talk Session`,
-      ``,
-      `**ID:** ${session.id}`,
-      `**Topic:** ${session.topic}`,
-      `**Location:** ${session.location || 'kitchen'}`,
-      `**Created:** ${session.createdAt || new Date().toISOString()}`,
-      ``,
-      `## Participants`,
-      ``,
-      ...(session.participants || []).map((p: string) => `- ${p}`),
-      ``,
-      `## Dialogue`,
-      ``,
-    ];
-    
-    if (session.utterances && session.utterances.length > 0) {
-      session.utterances.forEach((u: any, idx: number) => {
-        markdownLines.push(`### ${idx + 1}. ${u.speaker}`);
-        markdownLines.push(``);
-        markdownLines.push(u.text || "");
-        markdownLines.push(``);
-        if (u.intent) {
-          markdownLines.push(`*Intent: ${u.intent}*`);
-          markdownLines.push(``);
-        }
-      });
+    ensureResidueDir();
+    console.log("[Flywheel] System initialized");
+  } catch (error) {
+    console.error("[Flywheel] Initialization error:", error);
+  }
+};
+
+// Initialize flywheel when server starts
+initializeFlywheel();
+
+// Health check
+app.get("/api/workflow/health", (req, res) => {
+  res.json({ 
+    status: "healthy", 
+    timestamp: new Date().toISOString()
+  });
+});
+
+// ============================================================================
+// Metrics Endpoint (Prometheus)
+// ============================================================================
+import client from "prom-client";
+
+// Create a Registry
+const register = new client.Registry();
+
+// Add default metrics
+client.collectDefaultMetrics({ register });
+
+// Custom metrics
+const httpRequestsTotal = new client.Counter({
+  name: "pixel_office_http_requests_total",
+  help: "Total number of HTTP requests",
+  labelNames: ["method", "route", "status"],
+  registers: [register]
+});
+
+const httpRequestDuration = new client.Histogram({
+  name: "pixel_office_http_request_duration_seconds",
+  help: "Duration of HTTP requests in seconds",
+  labelNames: ["method", "route"],
+  buckets: [0.05, 0.1, 0.25, 0.5, 1, 2],
+  registers: [register]
+});
+
+const llmRequestsTotal = new client.Counter({
+  name: "pixel_office_llm_requests_total",
+  help: "Total number of LLM requests",
+  labelNames: ["provider", "model"],
+  registers: [register]
+});
+
+function trackLlmRequest(provider: string, model: string) {
+  llmRequestsTotal.inc({ provider, model });
+}
+
+// Track LLM requests for chat endpoint
+
+const pixelOfficeUp = new client.Gauge({
+  name: "pixel_office_up",
+  help: "Pixel Office service up status",
+  registers: [register]
+});
+
+// Middleware to track HTTP requests
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = (Date.now() - start) / 1000;
+    const route = req.route?.path || req.path || "unknown";
+    httpRequestsTotal.inc({ method: req.method, route, status: res.statusCode.toString()[0] + "xx" });
+    httpRequestDuration.observe({ method: req.method, route }, duration);
+  });
+  next();
+});
+
+// Metrics endpoint
+app.get("/metrics", async (req, res) => {
+  try {
+    res.set("Content-Type", register.contentType);
+    res.end(await register.metrics());
+  } catch (ex) {
+    res.status(500).end(ex);
+  }
+});
+
+// Set up gauge
+pixelOfficeUp.set(1);
     }
     
     // Write to markdown file
@@ -1070,85 +1118,20 @@ app.post("/api/chat", async (req, res) => {
           "nvidia-deepseek": "deepseek-ai/deepseek-v3.1",
           "nvidia-glm4.7": "z-ai/glm4.7",
         };
-        const nvidiaModelId = nvidiaModelMap[selectedModel] || "deepseek-ai/deepseek-v3.1";
+const nvidiaModelId = nvidiaModelMap[selectedModel] || "deepseek-ai/deepseek-v3.1";
         
         const messages = [
           { role: "system", content: "You are a helpful database assistant for Pixel Office." },
           ...(history || []).slice(-10),
           { role: "user", content: message }
         ];
+        
         const result = await routeChat(messages, { maxTokens: 1024, model: nvidiaModelId });
-        return res.json({ 
-          reply: result.content,
-          role: "assistant",
-          model: `nvidia (${nvidiaModelId})`
-        });
-      } catch (nvidiaErr: any) {
-        console.error("NVIDIA chat error:", nvidiaErr);
-        res.json({ reply: `NVIDIA error: ${nvidiaErr.message || 'failed'}. Try a local model instead.`, model: "nvidia-error" });
-        return;
-      }
-    }
-
-    const repoCheck = isRepoQuestion(message);
-    if (repoCheck.isQuestion) {
-      const result = await handleRepoQuestion(message);
-      if (result.isRepoQuestion) {
-        return res.json({
-          reply: formatAnswerForOffice(result, "clerk"),
-          role: "clerk",
-          type: "repo_question",
-          questionType: result.questionType,
-          metadata: result.metadata,
-        });
-      }
-    }
-
-    const { schema: dbSchema, tables: tableNames } = await getDbSchema();
-    
-    const requestedTables = detectRequestedTables(message, tableNames);
-    let tableDataContext = "";
-    
-    if (requestedTables.length > 0) {
-      for (const table of requestedTables) {
-        try {
-          const data = await getTableData(table, 10);
-          tableDataContext += formatTableData(table, data);
-        } catch (err) {
-          tableDataContext += `\n### ${table}\nError fetching data: ${err}\n`;
-        }
-      }
-    }
-    
-    const systemPrompt = `You are a database assistant for pixel office. The user's question will include the actual database data already fetched for you.
-
-IMPORTANT: Do NOT say you'll "run", "execute", or "query" the database. The data has ALREADY been fetched and is provided below. Just analyze and display it.
-
-DATABASE SCHEMA:
-${dbSchema}
-
-${tableDataContext ? `ALREADY FETCHED DATA:\n${tableDataContext}\n\nNow analyze this data and present it to the user.` : ''}
-
-Rules:
-- NEVER mention executing queries - data is already provided
-- Show actual data in readable format
-- Be helpful and concise`;
-
-    const messages: { role: "system" | "user" | "assistant"; content: string }[] = [
-      { role: "system", content: systemPrompt }
-    ];
-
-    if (history && Array.isArray(history)) {
-      messages.push(...history);
-    }
-
-    messages.push({ role: "user", content: message });
-
-    const result = await callChatModelForRole("office_assistant", messages, {
-      temperature: 0.7,
-    });
-
-    res.json({ 
+        
+        // Track LLM request
+        trackLlmRequest("nvidia", nvidiaModelId);
+        
+        res.json({
       reply: result.response,
       role: result.role,
       model: result.model
@@ -1196,6 +1179,10 @@ app.post("/api/agent-chat", async (req, res) => {
           { role: "user", content: message }
         ];
         const result = await routeChat(messages, { maxTokens: 1024, model: nvidiaModelId });
+        
+        // Track LLM request
+        trackLlmRequest("nvidia", nvidiaModelId);
+        
         return res.json({ reply: result.content, model: `nvidia (${nvidiaModelId})` });
       } catch (nvidiaErr: any) {
         console.error("NVIDIA agent-chat error:", nvidiaErr);
@@ -1239,6 +1226,9 @@ app.post("/api/agent-chat", async (req, res) => {
 
     const ollamaData = await ollamaResponse.json();
     const reply = ollamaData.message?.content || "I couldn't generate a response.";
+    
+    // Track LLM request (local/ollama)
+    trackLlmRequest("local", selectedModel);
     
     res.json({ reply, model: selectedModel });
   } catch (error: any) {
@@ -2738,6 +2728,284 @@ app.get("/api/workflow/health", (req, res) => {
     activeTasks: workflowTasks.size,
     timestamp: new Date().toISOString()
   });
+});
+
+// ============================================================================
+// OpenCode Audit Integration
+// ============================================================================
+
+import { spawn } from "child_process";
+import * as path from "path";
+
+const OPENCODE_AUDIT_BIN = process.env.OPENCOD_AUDIT_BIN || "/home/sherlockhums/tools/opencode_audit/opencode_audit.py";
+const AUDIT_DATA_DIR = path.resolve(process.cwd(), "data/audits");
+const PROMPT_CARDS_DIR = path.resolve(process.cwd(), "data/prompt_cards");
+
+interface PromptCard {
+  id: string;
+  kind: string;
+  origin: string;
+  repo: string;
+  scope: Record<string, any>;
+  artifacts_expected: Record<string, any>;
+  constraints: Record<string, any>;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  worklog: Array<{ timestamp: string; agent: string; action: string; note: string }>;
+  artifacts: Record<string, string>;
+  error?: string;
+}
+
+function ensureDir(dir: string) {
+  const fs = require("fs");
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+function generatePromptCardId(): string {
+  return `pc-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+}
+
+// Create new audit (POST /api/audit/create)
+app.post("/api/audit/create", async (req, res) => {
+  try {
+    const { 
+      repo, 
+      scope = {}, 
+      output_format = "mermaid",
+      priority = "normal"
+    } = req.body;
+    
+    if (!repo) {
+      return res.status(400).json({ error: "repo is required" });
+    }
+    
+    ensureDir(AUDIT_DATA_DIR);
+    ensureDir(PROMPT_CARDS_DIR);
+    
+    const promptCardId = generatePromptCardId();
+    const now = new Date().toISOString();
+    
+    const promptCard: PromptCard = {
+      id: promptCardId,
+      kind: "code_audit",
+      origin: "pixel_office",
+      repo,
+      scope: {
+        file_tree_depth: scope.file_tree_depth || 4,
+        include_tests: scope.include_tests !== false,
+        exclude_patterns: scope.exclude_patterns || ["node_modules/**", ".git/**", "dist/**"]
+      },
+      artifacts_expected: {
+        audit_report: { filename: "audit_report.md", format: "md", sections: ["overview", "architecture", "patterns", "risks", "todos"] },
+        file_tree: { filename: "file_tree.md", format: "md", max_depth: scope.file_tree_depth || 4 },
+        logic_flow_diagram: { filename: "logic_flow.mmd", format: output_format }
+      },
+      constraints: {
+        max_time_minutes: scope.max_time_minutes || 30,
+        max_files: scope.max_files || 500
+      },
+      status: "queued",
+      created_at: now,
+      updated_at: now,
+      worklog: [{ timestamp: now, agent: "pixel_office", action: "created", note: "Audit requested" }],
+      artifacts: {}
+    };
+    
+    // Save prompt card
+    const cardPath = path.join(PROMPT_CARDS_DIR, `${promptCardId}.json`);
+    const fs = require("fs");
+    fs.writeFileSync(cardPath, JSON.stringify(promptCard, null, 2));
+    
+    // Emit route event to router-visualizer
+    try {
+      await fetch("http://localhost:5006/api/route", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: "PIXEL",
+          to: "OPENC",
+          route_type: "task",
+          task_type: "code_audit",
+          task_id: promptCardId
+        })
+      });
+    } catch (e) {
+      console.log("[Audit] Router visualizer not available");
+    }
+    
+    // Execute audit (fire and forget)
+    const outputDir = path.join(AUDIT_DATA_DIR, promptCardId);
+    ensureDir(outputDir);
+    
+    const child = spawn("python3", [OPENCODE_AUDIT_BIN, "--prompt-card", cardPath, "--output-dir", outputDir], {
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+    
+    child.stdout.on("data", (data) => {
+      console.log("[Audit]", data.toString().trim());
+    });
+    
+    child.stderr.on("data", (data) => {
+      console.error("[Audit Error]", data.toString().trim());
+    });
+    
+    child.on("close", (code) => {
+      // Update prompt card status
+      const fs = require("fs");
+      const updatedCard = JSON.parse(fs.readFileSync(cardPath, "utf-8"));
+      
+      if (code === 0) {
+        // Read result and update
+        try {
+          const resultPath = path.join(outputDir, "result.json");
+          if (fs.existsSync(resultPath)) {
+            const result = JSON.parse(fs.readFileSync(resultPath, "utf-8"));
+            updatedCard.artifacts = result.artifacts || {};
+            updatedCard.status = "completed";
+          } else {
+            // Check for artifacts directly
+            const artifacts: Record<string, string> = {};
+            ["audit_report.md", "file_tree.md", "logic_flow.mmd"].forEach(f => {
+              const fpath = path.join(outputDir, f);
+              if (fs.existsSync(fpath)) {
+                artifacts[f] = fpath;
+              }
+            });
+            if (Object.keys(artifacts).length > 0) {
+              updatedCard.artifacts = artifacts;
+              updatedCard.status = "completed";
+            } else {
+              updatedCard.status = "completed";
+            }
+          }
+        } catch (e) {
+          updatedCard.status = "completed";
+        }
+      } else {
+        updatedCard.status = "failed";
+        updatedCard.error = `Process exited with code ${code}`;
+      }
+      
+      updatedCard.updated_at = new Date().toISOString();
+      updatedCard.worklog.push({
+        timestamp: updatedCard.updated_at,
+        agent: "opencode_audit",
+        action: updatedCard.status,
+        note: `Audit ${updatedCard.status}`
+      });
+      
+      fs.writeFileSync(cardPath, JSON.stringify(updatedCard, null, 2));
+    });
+    
+    res.json({
+      prompt_card_id: promptCardId,
+      status: "queued",
+      repo,
+      created_at: now
+    });
+    
+  } catch (error: any) {
+    console.error("Audit create error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get audit status (GET /api/audit/:prompt_card_id)
+app.get("/api/audit/:prompt_card_id", async (req, res) => {
+  try {
+    const { prompt_card_id } = req.params;
+    const fs = require("fs");
+    
+    // Search in prompt cards dir
+    const cardPath = path.join(PROMPT_CARDS_DIR, `${prompt_card_id}.json`);
+    
+    if (!fs.existsSync(cardPath)) {
+      return res.status(404).json({ error: "Audit not found" });
+    }
+    
+    const card: PromptCard = JSON.parse(fs.readFileSync(cardPath, "utf-8"));
+    
+    // If completed, load artifact contents
+    let artifacts: Record<string, any> = {};
+    if (card.status === "completed" && card.artifacts) {
+      for (const [name, filepath] of Object.entries(card.artifacts)) {
+        if (fs.existsSync(filepath as string)) {
+          artifacts[name] = {
+            path: filepath,
+            content: fs.readFileSync(filepath as string, "utf-8").substring(0, 5000)
+          };
+        }
+      }
+    }
+    
+    res.json({
+      prompt_card_id: card.id,
+      repo: card.repo,
+      status: card.status,
+      created_at: card.created_at,
+      updated_at: card.updated_at,
+      worklog: card.worklog,
+      artifacts,
+      error: card.error
+    });
+    
+  } catch (error: any) {
+    console.error("Audit get error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// List audits (GET /api/audit)
+app.get("/api/audit", async (req, res) => {
+  try {
+    const { status, limit = 20 } = req.query;
+    const fs = require("fs");
+    
+    ensureDir(PROMPT_CARDS_DIR);
+    
+    const files = fs.readdirSync(PROMPT_CARDS_DIR).filter(f => f.endsWith(".json"));
+    let cards: PromptCard[] = [];
+    
+    for (const file of files) {
+      try {
+        const card: PromptCard = JSON.parse(fs.readFileSync(path.join(PROMPT_CARDS_DIR, file), "utf-8"));
+        if (card.kind === "code_audit") {
+          cards.push(card);
+        }
+      } catch (e) {
+        // Skip invalid files
+      }
+    }
+    
+    // Filter by status if provided
+    if (status) {
+      cards = cards.filter(c => c.status === status);
+    }
+    
+    // Sort by date, newest first
+    cards.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    
+    // Limit results
+    cards = cards.slice(0, parseInt(limit as string) || 20);
+    
+    res.json({
+      audits: cards.map(c => ({
+        prompt_card_id: c.id,
+        repo: c.repo,
+        status: c.status,
+        created_at: c.created_at,
+        updated_at: c.updated_at
+      })),
+      total: cards.length
+    });
+    
+  } catch (error: any) {
+    console.error("Audit list error:", error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 // ============================================================================

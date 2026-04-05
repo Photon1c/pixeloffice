@@ -15,6 +15,7 @@ This index tracks the implementation status of core features and recent upgrades
 - [x] **Social Potential** - Metric tracking recent cooler activity and participant density ✅
 - [x] **Social Activity Meter** - HUD indicator for office social energy (Lab Mode) ✅
 - [x] **Shadow-Biased Selection** - Backend weights biasing cooler sessions toward agents with shadows ✅
+- [x] **Flywheel System** - Python MVP for residue capture, analysis, and promotion (moved to complete) ✅
 
 ## 🔵 Interactive Features
 - [x] **Global Chat Overlay** - Centralized panel for agent/database interaction ✅
@@ -38,7 +39,7 @@ This index tracks the implementation status of core features and recent upgrades
 - [x] **Office Status Panel** - Lab Mode panel showing task shadows & social activity ✅
 - [x] **Sleep Mode** - Reduces agent movement & thought bubbles for rest periods ✅
 - [x] **GitHub Workflow Visualization** - 4-step pipeline animation on FrontDesk card ✅
-- [x] **Updated Local Models** - Gemma 4 (E2B) for clerk/receptionist agents and z-ai/glm4.7 for NVIDIA integration ✅
+- [x] **Updated Local Models** - ~~Gemma 4 (E2B) for clerk/receptionist agents~~ (removed 2026-04-03 due to RAM limits on Hostinger VPS) and z-ai/glm4.7 for NVIDIA integration ✅
 
 ---
-*Last Updated: April 2, 2026 (Afternoon Session)*
+*Last Updated: April 5, 2026*

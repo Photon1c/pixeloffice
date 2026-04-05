@@ -1,0 +1,458 @@
+[
+  {
+    "id": "task-res-1775254371730-37",
+    "trace_type": "task_residue",
+    "source_session_id": "test-session-1",
+    "task_id": "test-task-1",
+    "title": "Test task from conversation",
+    "status": "completed",
+    "created_at": "2026-04-03T22:12:51.730Z",
+    "updated_at": "2026-04-03T22:12:51.730Z",
+    "expires_at": "2026-04-04T22:12:51.730Z",
+    "outcome": {
+      "human_approved": false,
+      "artifact_created": false,
+      "dead_end": false,
+      "repeated_issue_solved": false,
+      "spawned_followup_tasks": 0
+    },
+    "related_conversations": [
+      "test-session-1"
+    ]
+  },
+  {
+    "id": "out-res-1775254371749-721",
+    "trace_type": "outcome_residue",
+    "source_session_id": "test-session-1",
+    "task_id": "test-task-1",
+    "outcome_type": "completed",
+    "success_metrics": {
+      "usefulness_score": 0.8,
+      "time_to_completion": 60,
+      "quality_indicators": {
+        "completeness": 0.9,
+        "accuracy": 0.85
+      }
+    },
+    "created_at": "2026-04-03T22:12:51.749Z",
+    "expires_at": "2026-04-04T22:12:51.749Z"
+  },
+  {
+    "id": "conv-res-1775359416-9625db1d",
+    "trace_type": "conversation_residue",
+    "source_session_id": "test-session-001",
+    "topic": "Discussing new feature implementation",
+    "location": "conference_room",
+    "participants": [
+      "Alice",
+      "Bob",
+      "Charlie"
+    ],
+    "keywords": [
+      "should",
+      "implement",
+      "feature",
+      "asap",
+      "this",
+      "absolutely",
+      "critical",
+      "need",
+      "done"
+    ],
+    "signals": {
+      "novelty": 0,
+      "agreement": 0.15,
+      "actionability": 0.4,
+      "recurrence": 0.5,
+      "urgency": 0.4,
+      "emotional_intensity": 0.1618556701030928
+    },
+    "created_at": "2026-04-04T20:23:36.293197",
+    "expires_at": "2026-04-04T21:23:36.293197"
+  },
+  {
+    "id": "task-res-1775359416-5da24383",
+    "trace_type": "task_residue",
+    "source_session_id": "test-session-001",
+    "task_id": "task-001",
+    "title": "Implement new feature",
+    "status": "in_progress",
+    "created_at": "2026-04-04T20:23:36.294805",
+    "updated_at": "2026-04-04T20:23:36.294805",
+    "expires_at": "2026-04-05T20:23:36.294805",
+    "outcome": {
+      "human_approved": false,
+      "artifact_created": false,
+      "dead_end": false,
+      "repeated_issue_solved": false,
+      "spawned_followup_tasks": 0
+    },
+    "related_conversations": [
+      "test-session-001"
+    ]
+  },
+  {
+    "id": "del-res-1775359416-85f053da",
+    "trace_type": "delegation_residue",
+    "source_session_id": "test-session-001",
+    "delegator": "Alice",
+    "delegatee": "Bob",
+    "request_type": "code_review",
+    "success_indicators": {
+      "useful_artifact_created": false,
+      "followup_requests": 0,
+      "escalation_rate": 0.0,
+      "solution_quality": 0.5
+    },
+    "created_at": "2026-04-04T20:23:36.295295",
+    "expires_at": "2026-04-04T21:23:36.295295"
+  },
+  {
+    "id": "spat-res-1775359416-318264a8",
+    "trace_type": "spatial_residue",
+    "location": "kitchen",
+    "event_type": "casual_discussion",
+    "topic": "Weekend plans",
+    "participants": [
+      "Alice",
+      "Bob"
+    ],
+    "intensity": 0.3,
+    "created_at": "2026-04-04T20:23:36.296001",
+    "expires_at": "2026-04-04T20:53:36.296001",
+    "metadata": {
+      "idea_survival_rate": 0.5,
+      "blockage_frequency": 0.3,
+      "decision_latency": 15
+    }
+  },
+  {
+    "id": "out-res-1775359416-36621046",
+    "trace_type": "outcome_residue",
+    "source_session_id": "test-session-001",
+    "task_id": "task-001",
+    "outcome_type": "completed",
+    "success_metrics": {
+      "usefulness_score": 0.9,
+      "time_to_completion": 120,
+      "quality_indicators": {
+        "code_quality": 0.8,
+        "test_coverage": 0.9
+      }
+    },
+    "created_at": "2026-04-04T20:23:36.296658",
+    "expires_at": "2026-04-05T20:23:36.296658"
+  },
+  {
+    "id": "conv-res-1775359431-9f7506fc",
+    "trace_type": "conversation_residue",
+    "source_session_id": "test-session-001",
+    "topic": "Discussing new feature implementation",
+    "location": "conference_room",
+    "participants": [
+      "Alice",
+      "Bob",
+      "Charlie"
+    ],
+    "keywords": [
+      "should",
+      "implement",
+      "feature",
+      "asap",
+      "this",
+      "absolutely",
+      "critical",
+      "need",
+      "done"
+    ],
+    "signals": {
+      "novelty": 0,
+      "agreement": 0.15,
+      "actionability": 0.4,
+      "recurrence": 0.5,
+      "urgency": 0.4,
+      "emotional_intensity": 0.1618556701030928
+    },
+    "created_at": "2026-04-04T20:23:51.017798",
+    "expires_at": "2026-04-04T21:23:51.017798"
+  },
+  {
+    "id": "task-res-1775359431-1c418e96",
+    "trace_type": "task_residue",
+    "source_session_id": "test-session-001",
+    "task_id": "task-001",
+    "title": "Implement new feature",
+    "status": "in_progress",
+    "created_at": "2026-04-04T20:23:51.018770",
+    "updated_at": "2026-04-04T20:23:51.018770",
+    "expires_at": "2026-04-05T20:23:51.018770",
+    "outcome": {
+      "human_approved": false,
+      "artifact_created": false,
+      "dead_end": false,
+      "repeated_issue_solved": false,
+      "spawned_followup_tasks": 0
+    },
+    "related_conversations": [
+      "test-session-001"
+    ]
+  },
+  {
+    "id": "del-res-1775359431-d3d9ce60",
+    "trace_type": "delegation_residue",
+    "source_session_id": "test-session-001",
+    "delegator": "Alice",
+    "delegatee": "Bob",
+    "request_type": "code_review",
+    "success_indicators": {
+      "useful_artifact_created": false,
+      "followup_requests": 0,
+      "escalation_rate": 0.0,
+      "solution_quality": 0.5
+    },
+    "created_at": "2026-04-04T20:23:51.019590",
+    "expires_at": "2026-04-04T21:23:51.019590"
+  },
+  {
+    "id": "spat-res-1775359431-76d80b82",
+    "trace_type": "spatial_residue",
+    "location": "kitchen",
+    "event_type": "casual_discussion",
+    "topic": "Weekend plans",
+    "participants": [
+      "Alice",
+      "Bob"
+    ],
+    "intensity": 0.3,
+    "created_at": "2026-04-04T20:23:51.020395",
+    "expires_at": "2026-04-04T20:53:51.020395",
+    "metadata": {
+      "idea_survival_rate": 0.5,
+      "blockage_frequency": 0.3,
+      "decision_latency": 15
+    }
+  },
+  {
+    "id": "out-res-1775359431-afc1042b",
+    "trace_type": "outcome_residue",
+    "source_session_id": "test-session-001",
+    "task_id": "task-001",
+    "outcome_type": "completed",
+    "success_metrics": {
+      "usefulness_score": 0.9,
+      "time_to_completion": 120,
+      "quality_indicators": {
+        "code_quality": 0.8,
+        "test_coverage": 0.9
+      }
+    },
+    "created_at": "2026-04-04T20:23:51.021426",
+    "expires_at": "2026-04-05T20:23:51.021426"
+  },
+  {
+    "id": "conv-res-1775359464-26615762",
+    "trace_type": "conversation_residue",
+    "source_session_id": "promo-test-001",
+    "topic": "Code review for PR #42",
+    "location": "conference_room",
+    "participants": [
+      "Alice",
+      "Bob"
+    ],
+    "keywords": [
+      "need",
+      "this",
+      "reviewed",
+      "merged",
+      "been",
+      "blocked",
+      "days",
+      "approval"
+    ],
+    "signals": {
+      "novelty": 0,
+      "agreement": 0,
+      "actionability": 0.2,
+      "recurrence": 0.5,
+      "urgency": 0,
+      "emotional_intensity": 0.043478260869565216
+    },
+    "created_at": "2026-04-04T20:24:24.965065",
+    "expires_at": "2026-04-04T21:24:24.965065"
+  },
+  {
+    "id": "conv-res-1775359464-088171af",
+    "trace_type": "conversation_residue",
+    "source_session_id": "promo-test-002",
+    "topic": "Stale backlog items",
+    "location": "kitchen",
+    "participants": [
+      "Charlie",
+      "Alice"
+    ],
+    "keywords": [
+      "there",
+      "many",
+      "stale",
+      "items",
+      "backlog",
+      "should",
+      "clean",
+      "them",
+      "asap"
+    ],
+    "signals": {
+      "novelty": 0,
+      "agreement": 0,
+      "actionability": 0.2,
+      "recurrence": 0.5,
+      "urgency": 0.2,
+      "emotional_intensity": 0.08
+    },
+    "created_at": "2026-04-04T20:24:24.966355",
+    "expires_at": "2026-04-04T21:24:24.966355"
+  },
+  {
+    "id": "task-res-1775359464-1792787d",
+    "trace_type": "task_residue",
+    "source_session_id": "promo-test-001",
+    "task_id": "task-001",
+    "title": "Fix critical bug",
+    "status": "blocked",
+    "created_at": "2026-04-04T20:24:24.967380",
+    "updated_at": "2026-04-04T20:24:24.967380",
+    "expires_at": "2026-04-05T20:24:24.967380",
+    "outcome": {
+      "human_approved": false,
+      "artifact_created": false,
+      "dead_end": false,
+      "repeated_issue_solved": false,
+      "spawned_followup_tasks": 0
+    },
+    "related_conversations": [
+      "promo-test-001"
+    ]
+  },
+  {
+    "id": "task-res-1775359464-d3c022df",
+    "trace_type": "task_residue",
+    "source_session_id": "promo-test-002",
+    "task_id": "task-002",
+    "title": "Update documentation",
+    "status": "in_progress",
+    "created_at": "2026-04-04T20:24:24.968446",
+    "updated_at": "2026-04-04T20:24:24.968446",
+    "expires_at": "2026-04-05T20:24:24.968446",
+    "outcome": {
+      "human_approved": false,
+      "artifact_created": false,
+      "dead_end": false,
+      "repeated_issue_solved": false,
+      "spawned_followup_tasks": 0
+    },
+    "related_conversations": [
+      "promo-test-002"
+    ]
+  },
+  {
+    "id": "del-res-1775359464-d8220981",
+    "trace_type": "delegation_residue",
+    "source_session_id": "promo-test-001",
+    "delegator": "Alice",
+    "delegatee": "Bob",
+    "request_type": "code_review",
+    "success_indicators": {
+      "useful_artifact_created": false,
+      "followup_requests": 0,
+      "escalation_rate": 0.0,
+      "solution_quality": 0.5
+    },
+    "created_at": "2026-04-04T20:24:24.969539",
+    "expires_at": "2026-04-04T21:24:24.969539"
+  },
+  {
+    "id": "del-res-1775359464-c11e7dbc",
+    "trace_type": "delegation_residue",
+    "source_session_id": "promo-test-002",
+    "delegator": "Charlie",
+    "delegatee": "Bob",
+    "request_type": "code_review",
+    "success_indicators": {
+      "useful_artifact_created": false,
+      "followup_requests": 0,
+      "escalation_rate": 0.0,
+      "solution_quality": 0.5
+    },
+    "created_at": "2026-04-04T20:24:24.970694",
+    "expires_at": "2026-04-04T21:24:24.970694"
+  },
+  {
+    "id": "spat-res-1775359464-93a7c7bb",
+    "trace_type": "spatial_residue",
+    "location": "kitchen",
+    "event_type": "casual_discussion",
+    "topic": "Project planning",
+    "participants": [
+      "Alice",
+      "Bob",
+      "Charlie"
+    ],
+    "intensity": 0.7,
+    "created_at": "2026-04-04T20:24:24.972254",
+    "expires_at": "2026-04-04T20:54:24.972254",
+    "metadata": {
+      "idea_survival_rate": 0.5,
+      "blockage_frequency": 0.3,
+      "decision_latency": 15
+    }
+  },
+  {
+    "id": "out-res-1775359464-8ff7dada",
+    "trace_type": "outcome_residue",
+    "source_session_id": "promo-test-001",
+    "task_id": "task-001",
+    "outcome_type": "completed",
+    "success_metrics": {
+      "usefulness_score": 0.9,
+      "time_to_completion": 60,
+      "quality_indicators": {
+        "code_quality": 0.9,
+        "test_coverage": 0.8
+      }
+    },
+    "created_at": "2026-04-04T20:24:24.973747",
+    "expires_at": "2026-04-05T20:24:24.973747"
+  },
+  {
+    "id": "out-res-1775359464-084a4967",
+    "trace_type": "outcome_residue",
+    "source_session_id": "promo-test-002",
+    "task_id": "task-002",
+    "outcome_type": "completed",
+    "success_metrics": {
+      "usefulness_score": 0.8,
+      "time_to_completion": 45,
+      "quality_indicators": {
+        "code_quality": 0.8
+      }
+    },
+    "created_at": "2026-04-04T20:24:24.975107",
+    "expires_at": "2026-04-05T20:24:24.975107"
+  },
+  {
+    "id": "out-res-1775359464-504b2901",
+    "trace_type": "outcome_residue",
+    "source_session_id": "promo-test-003",
+    "task_id": "task-003",
+    "outcome_type": "completed",
+    "success_metrics": {
+      "usefulness_score": 0.85,
+      "time_to_completion": 90,
+      "quality_indicators": {
+        "code_quality": 0.85
+      }
+    },
+    "created_at": "2026-04-04T20:24:24.976475",
+    "expires_at": "2026-04-05T20:24:24.976475"
+  }
+]

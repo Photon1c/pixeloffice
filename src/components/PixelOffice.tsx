@@ -923,9 +923,44 @@ function AgentActionCard({ agent, card, workflowState, setWorkflowState, onClose
   
   const isReceptionist = agent.role === "receptionist";
   
-  // Available local models (per ollama list) + NVIDIA cloud option
-  const [nvidiaStatus, setNvidiaStatus] = useState<{available: boolean; modelId?: string} | null>(null);
+  // Available models from agent card data
+  const availableModels = [];
   
+  // Define available Ollama models from what's actually installed
+  const availableOllamaModels = [
+    { id: "gemma-3-1b-it:latest", name: "Gemma 3 (1B)" },
+    { id: "PhysicsObsession/blaze-3b:latest", name: "Blaze (3B)" }
+  ];
+  
+  // Add the agent's primary Ollama model (configured model)
+  if (card?.models?.primary?.provider === 'ollama') {
+    availableModels.push({
+      id: card.models.primary.name,
+      name: `${card.models.primary.name.split(':')[0]} (${card.models.primary.name.split(':')[1] || 'latest'})`
+    });
+  }
+  
+  // Add the OTHER available Ollama model as an alternative option (if different from primary)
+  if (card?.models?.primary?.provider === 'ollama') {
+    const otherOllamaModel = availableOllamaModels.find(model => 
+      model.id !== card.models.primary.name
+    );
+    if (otherOllamaModel) {
+      availableModels.push(otherOllamaModel);
+    }
+  }
+  
+  // Add NVIDIA model options from agent's fallback if it's NVIDIA
+  if (card?.models?.fallback?.provider === 'nvidia') {
+    availableModels.push({
+      id: card.models.fallback.name,
+      name: `NVIDIA ${card.models.fallback.name.split('/')[1].replace('-', ' ').toUpperCase()}`
+    });
+  }
+  
+  // Also check if there's a global NVIDIA availability for additional options
+  const [nvidiaStatus, setNvidiaStatus] = useState<{available: boolean; modelId?: string} | null>(null);
+
   useEffect(() => {
     console.log('[AgentCard] Fetching NVIDIA status...');
     fetch('/api/test/nvidia')
@@ -936,21 +971,20 @@ function AgentActionCard({ agent, card, workflowState, setWorkflowState, onClose
       })
       .catch(err => console.log('[AgentCard] NVIDIA check failed:', err));
   }, []);
-  
-  console.log('[AgentCard] Current nvidiaStatus:', nvidiaStatus);
-  
-  // NVIDIA model options
-  const nvidiaOptions = nvidiaStatus?.available ? [
-    { id: "nvidia-deepseek", name: "NVIDIA DeepSeek v3.1" },
-    { id: "nvidia-glm4.7", name: "NVIDIA GLM-4.7" },
-  ] : [];
-  console.log('[AgentCard] NVIDIA options:', nvidiaOptions);
-  
-  const availableModels = [
-    { id: "gemma-3-1b-it", name: "Gemma 3 (1B)" },
-    { id: "PhysicsObsession/blaze-3b:latest", name: "Blaze (3B)" },
-    ...nvidiaOptions,
-  ];
+
+  // Add additional NVIDIA options if available globally
+  if (nvidiaStatus?.available) {
+    // Avoid duplicates by checking if we already added this model
+    const hasDeepseek = availableModels.some(model => model.id === 'deepseek-ai/deepseek-v3.1-terminus');
+    const hasGlm47 = availableModels.some(model => model.id === 'z-ai/glm4.7');
+    
+    if (!hasDeepseek) {
+      availableModels.push({ id: "deepseek-ai/deepseek-v3.1-terminus", name: "NVIDIA DeepSeek v3.1 Terminus" });
+    }
+    if (!hasGlm47) {
+      availableModels.push({ id: "z-ai/glm4.7", name: "NVIDIA GLM-4.7" });
+    }
+  }
 
   // Visual pipeline steps for GitHub workflows
   const workflowSteps = [

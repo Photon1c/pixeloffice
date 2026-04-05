@@ -5,10 +5,10 @@ This index tracks design proposals, architectural decisions, and future feature 
 ## 📋 Design Proposals & Specifications
 
 ### Agent Workspace Editor
-- [ ] **Agent Workspace Editor** - GUI for agent proposals and reviews ([agent_workspace_editor_proposal.md](#agent-workspace-editor-proposal-md))
-  - Status: Design only - implementation pending
-  - Description: Proposes a new GUI surface in OpenCode for agents to safely propose, preview, and submit workspace changes through a structured interface instead of raw terminal-only workflows.
-  - File: [agent_workspace_editor_proposal.md](./agent_workspace_editor_proposal.md)
+- [x] **Agent Workspace Editor** - GUI for agent proposals and reviews (spec now in `/complete/`)
+  - Status: Implemented as ObjectEditor.tsx + enhanced for agent self-editing
+  - Description: Provides agents with a structured GUI to safely propose, preview, and submit workspace and self-editing changes instead of raw terminal-only workflows.
+  - File: [agent_workspace_editor_proposal.md](../complete/agent_workspace_editor_proposal.md)
 
 ## 📝 Notes
 

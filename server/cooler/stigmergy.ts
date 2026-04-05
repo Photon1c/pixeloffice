@@ -1,5 +1,5 @@
-import fs from "fs";
-import path from "path";
+import * as fs from "fs";
+import * as path from "path";
 
 export type TraceType = "review_heat" | "task_shadow" | "social_potential";
 
@@ -25,13 +25,6 @@ export interface StigmergyTrace {
 }
 
 const TRACES_FILE = "/home/sherlockhums/apps/pixelworld/pixel_office/data/stigmergy_traces.json";
-
-interface SocialPotentialResult {
-  sessionCount: number;
-  participantCount: number;
-  intensity: number;
-  recentSessions: Array<{id: string; topic: string; participants: string[]; created_at: string}>;
-}
 
 export function calculateSocialPotential(): SocialPotentialResult {
   const sessionsDir = "/home/sherlockhums/apps/pixelworld/pixel_office/data/cooler_sessions";

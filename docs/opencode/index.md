@@ -5,8 +5,8 @@ This index tracks the implementation status of various OpenCode-related features
 ## 📋 Specifications & Proposals
 
 ### Agent Workspace Editor
-- [ ] **Agent Workspace Editor** - GUI for agent proposals and reviews (now in `/design/`)
-  - Status: Design only - implementation pending
+- [x] **Agent Workspace Editor** - GUI for agent proposals and reviews (now in `/active/`)
+  - Status: Implemented as ObjectEditor.tsx + enhanced for agent self-editing capabilities
 
 ### Reliability Workflows
 - [x] **Reliability Workflows Spec** - Mapping test hooks and smoke tests (now in `/complete/`)
@@ -28,6 +28,23 @@ This index tracks the implementation status of various OpenCode-related features
 - [x] **Cursor/Opencode Workflow** - Established conventions for agent work (now in `/complete/`)
   - Status: Implemented and followed
 
+### Code Audit Workflow
+- [x] **Code Audit Workflow** - OpenCode audit workflow with Prompt Card schema and CLI tool
+  - Status: **Complete** - All components implemented and tested
+  - Components:
+    - Prompt Card schema: `~/.openclaw/workspace-main/docs/opencode/schema.md`
+    - CLI interface: `~/tools/opencode_audit/opencode_audit.py`
+    - Pixel Office API: `/api/audit/create`, `/api/audit/:id`, `/api/audit`
+    - Router visualizer: `code-audit` workflow added to dropdown
+
+### Prometheus Metrics Integration
+- [x] **Metrics Endpoint** - Prometheus `/metrics` endpoint for observability
+  - Status: **Complete** - Phase 1 metrics implemented
+  - Components:
+    - Library: `prom-client` added to package.json
+    - Endpoint: `GET /metrics` on port 4173
+    - Metrics: HTTP requests, LLM requests, service uptime
+
 ## 📝 Notes
 
 - Specifications marked with `[ ]` indicate pending implementation work
@@ -35,4 +52,4 @@ This index tracks the implementation status of various OpenCode-related features
 - Check individual documents in `/complete/` and `/design/` directories for details
 - Some features may be intentionally deferred or designed for future phases
 
-*Last Updated: April 2, 2026*
+*Last Updated: April 5, 2026*

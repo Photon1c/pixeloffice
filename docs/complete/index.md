@@ -45,8 +45,16 @@ This index tracks historical implementations, feature-level completion status, a
   *Refs:* [reliability_workflows_spec.md](./reliability_workflows_spec.md) - Mapping test hooks and smoke tests
 - [x] **Stigmergy Next Steps** 🟢  
   *Refs:* [stigmergy_next_steps.md](./stigmergy_next_steps.md) - Incremental improvements to stigmergy system
+- [x] **Stigmergy Implementation** 🟢  
+  *Refs:* [stigmergy_implementation.md](./stigmergy_implementation.md) - Working prototype with Review Heat
 - [x] **NVIDIA Integration Spec** 🟢  
   *Refs:* [opencode_nvidia_integration_spec.md](./opencode_nvidia_integration_spec.md) - NVIDIA model integration with adapter and routing (now using z-ai/glm4.7 as default model)
+- [x] **Flywheel System** 🟢  
+  *Refs:* [flywheel_design.md](./flywheel_design.md) - Python MVP for residue capture, review heat, and promotion engine
+- [x] **OpenCode Audit Workflow** 🟢  
+  *Refs:* [opencode_cooler_to_scrum_bridge.md](./opencode_cooler_to_scrum_bridge.md) - Full implementation: schema, CLI tool, Pixel Office API, router-visualizer integration
+- [x] **Agent Workspace Editor** 🟢  
+  *Refs:* [src/components/ObjectEditor.tsx](./src/components/ObjectEditor.tsx), [agent_workspace_editor_proposal.md](./agent_workspace_editor_proposal.md) - GUI for agent self-editing and proposal creation
 
 ## 🟡 Specialized Labs & Dashboards
 - [x] **Genealogy Lab** 🟢  
@@ -88,4 +96,4 @@ This index tracks historical implementations, feature-level completion status, a
 
 > **Resolved:** Supabase sync and 500 errors mentioned in prior docs have been addressed; current deployment uses the corrected configuration as per `docs/active/deploy_spec_netlify_supabase.md`.
 
-*Last Reviewed: April 2, 2026 – All OpenCode specifications processed and filed appropriately. Local models updated to gemma4:e2b and NVIDIA default set to z-ai/glm4.7 per active documentation.*
+*Last Reviewed: April 4, 2026 – Agent Workspace Editor enhanced for agent self-editing capabilities. Local models updated to gemma4:e2b and NVIDIA default set to z-ai/glm4.7 per active documentation.*

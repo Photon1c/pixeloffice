@@ -84,9 +84,9 @@ async function listSessions() {
   }
 }
 
-async function findLatestSession(): Promise<string | null> {
+async function findLatestSession(): Promise<string | undefined> {
   const sessions = await getCooldownSessions(1);
-  return sessions.length > 0 ? sessions[0].id : null;
+  return sessions.length > 0 ? sessions[0].id : undefined;
 }
 
 async function main() {
