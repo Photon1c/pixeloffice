@@ -655,13 +655,20 @@ app.post("/api/scrum/test", async (req, res) => {
     currentScrumSession = session;
     
     // Save conversation transcript to cooler_talk_log.md
-    const logPath = path.resolve("cooler_talk_log.md");
+    const logPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/cooler_talk_log.md");
     const timestamp = new Date().toISOString();
-    const logEntry = `\n## ${timestamp} - Test SCRUM: ${topic}\n\n**Participants:** ${participants.join(", ")}\n\n**Source Session:** ${coolerSessionId || "random"}\n\n**Stage Result:**\n- Stage: ${stageResult?.stage || "N/A"}\n- Summary: ${stageResult?.summary || "N/A"}\n\n---\n`;
+    const logEntry = `## ${timestamp} - Test SCRUM: ${topic}\n\n**Participants:** ${participants.join(", ")}\n\n**Source Session:** ${coolerSessionId || "random"}\n\n**Stage Result:**\n- Stage: ${stageResult?.stage || "N/A"}\n- Summary: ${stageResult?.summary || "N/A"}\n\n---\n\n`;
     
     try {
-      const existingContent = fs.existsSync(logPath) ? fs.readFileSync(logPath, "utf-8") : "# Cooler Talk Log\n\n";
-      fs.writeFileSync(logPath, existingContent + logEntry, "utf-8");
+      let existingContent = "";
+      if (fs.existsSync(logPath)) {
+        existingContent = fs.readFileSync(logPath, "utf-8");
+        // Remove trailing newlines to avoid duplicates
+        existingContent = existingContent.replace(/\n+$/, "");
+      } else {
+        existingContent = "# Cooler Talk Log\n\n";
+      }
+      fs.writeFileSync(logPath, existingContent + "\n" + logEntry, "utf-8");
       console.log("[Test SCRUM] Saved transcript to cooler_talk_log.md");
     } catch (logErr) {
       console.error("[Test SCRUM] Failed to save log:", logErr);
@@ -1448,13 +1455,19 @@ async function runAutoCoolerSession(): Promise<void> {
     console.log(`[AutoCooler] Session complete. ${result.participantCount} participants, topic: "${topic}"`);
     
     // Save session transcript to cooler_talk_log.md
-    const logPath = path.resolve("cooler_talk_log.md");
+    const logPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/cooler_talk_log.md");
     const timestamp = new Date().toISOString();
-    const logEntry = `\n## ${timestamp} - Auto Cooler Session\n\n**Topic:** ${topic}\n\n**Participants:** ${selectedParticipants.join(", ")}\n\n**Participant Count:** ${result.participantCount}\n\n---\n`;
+    const logEntry = `## ${timestamp} - Auto Cooler Session\n\n**Topic:** ${topic}\n\n**Participants:** ${selectedParticipants.join(", ")}\n\n**Participant Count:** ${result.participantCount}\n\n---\n\n`;
     
     try {
-      const existingContent = fs.existsSync(logPath) ? fs.readFileSync(logPath, "utf-8") : "# Cooler Talk Log\n\n";
-      fs.writeFileSync(logPath, existingContent + logEntry, "utf-8");
+      let existingContent = "";
+      if (fs.existsSync(logPath)) {
+        existingContent = fs.readFileSync(logPath, "utf-8");
+        existingContent = existingContent.replace(/\n+$/, "");
+      } else {
+        existingContent = "# Cooler Talk Log\n\n";
+      }
+      fs.writeFileSync(logPath, existingContent + "\n" + logEntry, "utf-8");
       console.log("[AutoCooler] Saved transcript to cooler_talk_log.md");
     } catch (logErr) {
       console.error("[AutoCooler] Failed to save log:", logErr);

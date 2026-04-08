@@ -388,6 +388,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
   // Update Desk Stigmergy based on agent state
   useEffect(() => {
+    const FINISHED_STATUSES = ["done", "archived", "approved", "ready_for_delivery", "dropped"];
+    
     agents.forEach(agent => {
       const deskId = `desk-${agent.deskIndex}`;
       let updates: Record<string, number> = {};
@@ -399,10 +401,13 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         else if (loopState.state === "stalled") updates.loopHeat = 0.4;
       }
       
-      // Check if agent is working on unfinished tasks
-      const hasUnfinished = tasks.some(t => t.assigneeId === agent.id && t.status !== "done" && t.status !== "archived");
-      if (agent.status === "idle" && hasUnfinished) {
-        updates.taskShadow = 0.6;
+      // Check if agent has unfinished tasks (task shadow)
+      const agentTasks = tasks.filter(t => t.assigneeId === agent.id);
+      const unfinishedTasks = agentTasks.filter(t => !FINISHED_STATUSES.includes(t.status));
+      const isIdleWithTasks = agent.status === "idle" && unfinishedTasks.length > 0;
+      
+      if (isIdleWithTasks) {
+        updates.taskShadow = Math.min(0.6 + (unfinishedTasks.length * 0.1), 1);
       }
       
       if (Object.keys(updates).length > 0) {
