@@ -188,7 +188,7 @@ export function drawAgent(
   }
 
   if (thoughtBubble) {
-    drawThoughtBubble(ctx, x, y - 60, thoughtBubble.text);
+    drawThoughtBubble(ctx, x, y - 75, thoughtBubble.text); // Increased offset from 60 to 75
   }
 }
 
@@ -197,10 +197,10 @@ function drawThoughtBubble(ctx: CanvasRenderingContext2D, x: number, y: number, 
   ctx.textAlign = "left";
   const textWidth = ctx.measureText(text).width;
   const padding = 8;
-  const maxWidth = Math.min(textWidth + padding * 2, 180);
+  const maxWidth = Math.min(textWidth + padding * 2, 240); // Increased from 180 to 240
   const lineHeight = 16;
   const lines = wrapText(ctx, text, maxWidth - padding * 2);
-  const bubbleHeight = Math.max(lines.length * lineHeight + padding * 2, 28);
+  const bubbleHeight = Math.max(lines.length * lineHeight + padding * 2, 32); // Increased min height from 28 to 32
   const bubbleWidth = Math.min(maxWidth, textWidth + padding * 2);
   
   const bubbleX = x - bubbleWidth / 2;

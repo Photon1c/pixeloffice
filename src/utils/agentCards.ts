@@ -26,6 +26,33 @@ export interface AgentCard {
   };
 }
 
+let cachedOllamaModels: Array<{id: string; name: string}> | null = null;
+
+export async function fetchOllamaModels(): Promise<Array<{id: string; name: string}>> {
+  if (cachedOllamaModels) {
+    return cachedOllamaModels;
+  }
+
+  try {
+    const response = await fetch("/api/ollama/models");
+    if (!response.ok) {
+      console.warn("Failed to fetch Ollama models:", response.status);
+      return [];
+    }
+    
+    const data = await response.json();
+    cachedOllamaModels = data.models || [];
+    return cachedOllamaModels || [];
+  } catch (error) {
+    console.warn("Error fetching Ollama models:", error);
+    return [];
+  }
+}
+
+export function invalidateOllamaModelsCache(): void {
+  cachedOllamaModels = null;
+}
+
 let cachedAgentCards: AgentCard[] | null = null;
 
 export async function loadAgentCards(): Promise<AgentCard[]> {

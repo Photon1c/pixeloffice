@@ -15,13 +15,58 @@ const PORT = process.env.PORT || 4173;
 app.use(cors());
 app.use(express.json());
 
+// Serve available Ollama models
+app.get("/api/ollama/models", async (req, res) => {
+  try {
+    const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
+    const response = await fetch(`${ollamaUrl}/api/tags`, { 
+      signal: AbortSignal.timeout(3000) 
+    });
+    
+    if (!response.ok) {
+      res.status(500).json({ error: "Failed to fetch Ollama models" });
+      return;
+    }
+    
+    const data = await response.json();
+    const models = (data.models || []).map((m: any) => ({
+      id: m.name,
+      name: m.name.split(':')[0],
+      size: m.size
+    }));
+    
+    res.json({ models });
+  } catch (err) {
+    console.error("Failed to fetch Ollama models:", err);
+    res.status(500).json({ error: "Failed to fetch Ollama models" });
+  }
+});
+
 // Serve handoff JSON file
 app.get("/handoff/opencode-local-agents.json", (req, res) => {
   const handoffPath = "/home/sherlockhums/apps/pixelworld/.handoff/opencode-local-agents.json";
+  const publicPath = path.join(__dirname, "../public/handoff/opencode-local-agents.json");
+  
+  let data: string | null = null;
+  
   if (fs.existsSync(handoffPath)) {
-    const data = fs.readFileSync(handoffPath, "utf-8");
+    data = fs.readFileSync(handoffPath, "utf-8");
+  } else if (fs.existsSync(publicPath)) {
+    data = fs.readFileSync(publicPath, "utf-8");
+  }
+  
+  if (data) {
+    // Parse and deduplicate by id
+    const parsed = JSON.parse(data);
+    const uniqueMap = new Map();
+    for (const card of parsed) {
+      if (!uniqueMap.has(card.id)) {
+        uniqueMap.set(card.id, card);
+      }
+    }
+    const unique = Array.from(uniqueMap.values());
     res.setHeader("Content-Type", "application/json");
-    res.send(data);
+    res.send(JSON.stringify(unique));
   } else {
     res.status(404).json({ error: "Handoff file not found" });
   }
@@ -115,7 +160,7 @@ client.collectDefaultMetrics({ register });
 const httpRequestsTotal = new client.Counter({
   name: "pixel_office_http_requests_total",
   help: "Total number of HTTP requests",
-  labelNames: ["method", "route", "status"],
+  labelNames: ["method", "route", "status_code"],
   registers: [register]
 });
 
@@ -152,7 +197,7 @@ app.use((req, res, next) => {
   res.on("finish", () => {
     const duration = (Date.now() - start) / 1000;
     const route = req.route?.path || req.path || "unknown";
-    httpRequestsTotal.inc({ method: req.method, route, status: res.statusCode.toString()[0] + "xx" });
+    httpRequestsTotal.inc({ method: req.method, route, status_code: res.statusCode.toString() });
     httpRequestDuration.observe({ method: req.method, route }, duration);
   });
   next();
@@ -170,16 +215,141 @@ app.get("/metrics", async (req, res) => {
 
 // Set up gauge
 pixelOfficeUp.set(1);
+
+// Model availability metrics
+const modelStatusGauge = new client.Gauge({
+  name: "pixel_office_model_available",
+  help: "Whether a model is available (1) or not (0)",
+  labelNames: ["provider", "model", "endpoint"],
+  registers: [register]
+});
+
+const modelCountGauge = new client.Gauge({
+  name: "pixel_office_models_total",
+  help: "Total number of available models",
+  registers: [register]
+});
+
+// Agent availability metrics
+const agentStatusGauge = new client.Gauge({
+  name: "pixel_office_agent_available",
+  help: "Whether an agent is available (1) or not (0)",
+  labelNames: ["agent_id", "agent_name", "role"],
+  registers: [register]
+});
+
+const agentCountGauge = new client.Gauge({
+  name: "pixel_office_agents_total",
+  help: "Total number of agents",
+  labelNames: ["status"],
+  registers: [register]
+});
+
+// Function to check Ollama models
+async function updateModelMetrics() {
+  try {
+    const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
+    const response = await fetch(`${ollamaUrl}/api/tags`, { signal: AbortSignal.timeout(5000) });
+    if (response.ok) {
+      const data = await response.json();
+      const models = data.models || [];
+      
+      // Clear old model metrics
+      const existing = await register.getSingleMetric('pixel_office_model_available');
+      if (existing) {
+        register.removeSingleMetric(existing);
+      }
+      
+      let availableCount = 0;
+      for (const model of models) {
+        const modelName = model.name.replace(':latest', '').replace(':latest', '');
+        modelStatusGauge.set({ provider: "ollama", model: modelName, endpoint: "localhost:11434" }, 1);
+        availableCount++;
+      }
+      modelCountGauge.set(availableCount);
     }
-    
-    // Write to markdown file
-    const markdownPath = path.resolve("data/cooler_talk_log.md");
-    fs.writeFileSync(markdownPath, markdownLines.join("\n"), "utf8");
-    console.log(`[CoolerTalk] Saved markdown log to ${markdownPath}`);
   } catch (err) {
-    console.error("[CoolerTalk] Error writing to file:", err);
+    console.error("[Metrics] Failed to get Ollama models:", err);
+    modelCountGauge.set(0);
   }
 }
+
+// Function to check agent status from agent-cards.json
+async function updateAgentMetrics() {
+  try {
+    const agentCardsPath = path.resolve("config/agent-cards.json");
+    const agentData = JSON.parse(fs.readFileSync(agentCardsPath, "utf-8"));
+    const agents = agentData.agents || [];
+    
+    let activeCount = 0;
+    for (const agent of agents) {
+      const status = agent.status === "active" ? 1 : 0;
+      agentStatusGauge.set({ 
+        agent_id: agent.id, 
+        agent_name: agent.name, 
+        role: agent.role 
+      }, status);
+      if (status === 1) activeCount++;
+    }
+    
+    agentCountGauge.set({ status: "active" }, activeCount);
+    agentCountGauge.set({ status: "total" }, agents.length);
+  } catch (err) {
+    console.error("[Metrics] Failed to get agent status:", err);
+  }
+}
+
+// Update model and agent metrics periodically
+setInterval(updateModelMetrics, 30000);
+setInterval(updateAgentMetrics, 30000);
+
+// Initial update
+updateModelMetrics().then(updateAgentMetrics);
+
+// Stigmergy Metrics (per thought_speech_stigmergy.md)
+const deskStigmergyGauge = new client.Gauge({
+  name: "pixel_office_desk_stigmergy",
+  help: "Desk stigmergy heat values",
+  labelNames: ["desk_id", "heat_type"],
+  registers: [register]
+});
+
+const stigmergyTraceGauge = new client.Gauge({
+  name: "pixel_office_stigmergy_traces",
+  help: "Active stigmergy trace count by type",
+  labelNames: ["trace_type"],
+  registers: [register]
+});
+
+const loopDetectionGauge = new client.Gauge({
+  name: "pixel_office_loop_detection",
+  help: "Agent loop detection state",
+  labelNames: ["agent_id", "agent_name"],
+  registers: [register]
+});
+
+setInterval(() => {
+  // Update desk stigmergy metrics
+  Object.keys(deskStigmergyState).forEach(deskId => {
+    const state = deskStigmergyState[deskId];
+    deskStigmergyGauge.set({ desk_id: deskId, heat_type: "loopHeat" }, Math.min(1, Math.max(0, state.loopHeat)));
+    deskStigmergyGauge.set({ desk_id: deskId, heat_type: "reviewHeat" }, Math.min(1, Math.max(0, state.reviewHeat)));
+    deskStigmergyGauge.set({ desk_id: deskId, heat_type: "speechActivity" }, Math.min(1, Math.max(0, state.speechActivity)));
+    deskStigmergyGauge.set({ desk_id: deskId, heat_type: "taskShadow" }, Math.min(1, Math.max(0, state.taskShadow)));
+    deskStigmergyGauge.set({ desk_id: deskId, heat_type: "observerAttention" }, Math.min(1, Math.max(0, state.observerAttention)));
+  });
+  
+  // Update stigmergy trace counts
+  const traces = getActiveTraces();
+  const typeCounts: Record<string, number> = {};
+  traces.forEach(t => {
+    typeCounts[t.type] = (typeCounts[t.type] || 0) + 1;
+  });
+  Object.entries(typeCounts).forEach(([type, count]) => {
+    stigmergyTraceGauge.set({ trace_type: type }, count);
+  });
+}, 15000);
+
 import { depositTrace, getActiveTraces, calculateSocialPotential, getAgentWeightsWithShadows } from "./cooler/stigmergy.js";
 import { getActiveHeat } from "./cooler/reviewHeat.js";
 import { createScrumSession, advanceScrumSession, type ScrumSession } from "./scrum/scrumController.js";
@@ -332,6 +502,19 @@ app.post("/api/scrum/test", async (req, res) => {
     const { session, stageResult } = await advanceScrumSession(currentScrumSession);
     currentScrumSession = session;
     
+    // Save conversation transcript to cooler_talk_log.md
+    const logPath = path.resolve("cooler_talk_log.md");
+    const timestamp = new Date().toISOString();
+    const logEntry = `\n## ${timestamp} - Test SCRUM: ${topic}\n\n**Participants:** ${participants.join(", ")}\n\n**Source Session:** ${coolerSessionId || "random"}\n\n**Stage Result:**\n- Stage: ${stageResult?.stage || "N/A"}\n- Summary: ${stageResult?.summary || "N/A"}\n\n---\n`;
+    
+    try {
+      const existingContent = fs.existsSync(logPath) ? fs.readFileSync(logPath, "utf-8") : "# Cooler Talk Log\n\n";
+      fs.writeFileSync(logPath, existingContent + logEntry, "utf-8");
+      console.log("[Test SCRUM] Saved transcript to cooler_talk_log.md");
+    } catch (logErr) {
+      console.error("[Test SCRUM] Failed to save log:", logErr);
+    }
+    
     // Add test metadata
     const testOutput = {
       sourceSession: coolerSessionId || "random",
@@ -363,6 +546,25 @@ app.get("/api/stigmergy/traces", (req, res) => {
 app.get("/api/stigmergy/social-potential", (req, res) => {
   const social = calculateSocialPotential();
   res.json(social);
+});
+
+app.post("/api/stigmergy/deposit", (req, res) => {
+  try {
+    const { type, agentId, intensity, topic, roomId, x, y, metadata } = req.body;
+    if (!type) {
+      res.status(400).json({ error: "Missing required field: type" });
+      return;
+    }
+    const trace = depositTrace({ type, agentId, intensity, topic, roomId, x, y, metadata });
+    if (!trace) {
+      res.status(400).json({ error: "Failed to deposit trace: invalid type" });
+      return;
+    }
+    res.json({ success: true, trace });
+  } catch (err: any) {
+    console.error("[Stigmergy] Deposit error:", err);
+    res.status(500).json({ error: err.message || "Failed to deposit trace" });
+  }
 });
 
 // NVIDIA Integration Test Endpoint
@@ -410,6 +612,293 @@ app.get("/api/stigmergy/review-heat", (req, res) => {
     console.error("Error fetching review heat:", error);
     res.status(500).json({ error: "Failed to fetch review heat" });
   }
+});
+
+// Desk Stigmergy API (per thought_speech_stigmergy.md Part B)
+const deskStigmergyState: Record<string, {
+  loopHeat: number;
+  reviewHeat: number;
+  speechActivity: number;
+  taskShadow: number;
+  observerAttention: number;
+  confusionResidue: number;
+  updatedAt: string;
+}> = {};
+
+function decayDeskStigmergy(deskId: string) {
+  const state = deskStigmergyState[deskId];
+  if (!state) return;
+  const decayRate = 0.02;
+  state.loopHeat = Math.max(0, state.loopHeat - decayRate);
+  state.reviewHeat = Math.max(0, state.reviewHeat - decayRate);
+  state.speechActivity = Math.max(0, state.speechActivity - decayRate);
+  state.taskShadow = Math.max(0, state.taskShadow - decayRate);
+  state.observerAttention = Math.max(0, state.observerAttention - decayRate);
+  state.confusionResidue = Math.max(0, state.confusionResidue - decayRate);
+  state.updatedAt = new Date().toISOString();
+}
+
+app.get("/api/stigmergy/desk/:deskId", (req, res) => {
+  const { deskId } = req.params;
+  decayDeskStigmergy(deskId);
+  const state = deskStigmergyState[deskId] || {
+    loopHeat: 0,
+    reviewHeat: 0,
+    speechActivity: 0,
+    taskShadow: 0,
+    observerAttention: 0,
+    confusionResidue: 0,
+    updatedAt: new Date().toISOString()
+  };
+  res.json({ deskId, ...state });
+});
+
+app.post("/api/stigmergy/desk/:deskId/update", (req, res) => {
+  const { deskId } = req.params;
+  console.log(`[Stigmergy] POST update for deskId=${deskId}, body=${JSON.stringify(req.body)}`);
+  const { loopHeat, reviewHeat, speechActivity, taskShadow, observerAttention, confusionResidue } = req.body;
+  
+  if (!deskStigmergyState[deskId]) {
+    deskStigmergyState[deskId] = {
+      loopHeat: 0, reviewHeat: 0, speechActivity: 0, taskShadow: 0,
+      observerAttention: 0, confusionResidue: 0, updatedAt: new Date().toISOString()
+    };
+  }
+  
+  const state = deskStigmergyState[deskId];
+  if (typeof loopHeat === 'number') state.loopHeat = Math.min(1, Math.max(0, Math.floor(loopHeat * 100) / 100));
+  if (typeof reviewHeat === 'number') state.reviewHeat = Math.min(1, Math.max(0, Math.floor(reviewHeat * 100) / 100));
+  if (typeof speechActivity === 'number') state.speechActivity = Math.min(1, Math.max(0, Math.floor(speechActivity * 100) / 100));
+  if (typeof taskShadow === 'number') state.taskShadow = Math.min(1, Math.max(0, Math.floor(taskShadow * 100) / 100));
+  if (typeof observerAttention === 'number') state.observerAttention = Math.min(1, Math.max(0, Math.floor(observerAttention * 100) / 100));
+  if (typeof confusionResidue === 'number') state.confusionResidue = Math.min(1, Math.max(0, Math.floor(confusionResidue * 100) / 100));
+  state.updatedAt = new Date().toISOString();
+  
+  res.json({ success: true, deskId, ...state });
+});
+
+app.get("/api/stigmergy/desk/all", (req, res) => {
+  Object.keys(deskStigmergyState).forEach(decayDeskStigmergy);
+  res.json({ desks: deskStigmergyState });
+});
+
+app.post("/api/stigmergy/desk/reset", (req, res) => {
+  Object.keys(deskStigmergyState).forEach(key => {
+    deskStigmergyState[key] = {
+      loopHeat: 0,
+      reviewHeat: 0,
+      speechActivity: 0,
+      taskShadow: 0,
+      observerAttention: 0,
+      confusionResidue: 0,
+      updatedAt: new Date().toISOString()
+    };
+  });
+  res.json({ success: true, message: "All desk stigmergy reset" });
+});
+
+// Loop Detection API (per thought_speech_stigmergy.md Part C)
+app.post("/api/agent/detect-loop", (req, res) => {
+  try {
+    const { text, burstTokenCount, maxBurstTokens } = req.body;
+    if (!text) {
+      res.status(400).json({ error: "Text is required" });
+      return;
+    }
+    
+    // Simple token estimate (~4 chars per token)
+    const estimatedTokens = burstTokenCount || Math.ceil(text.length / 4);
+    const maxTokens = maxBurstTokens || 96;
+    
+    // Detect loop/stall
+    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    const sentenceFreq: Record<string, number> = {};
+    sentences.forEach(s => {
+      const norm = s.trim().toLowerCase().slice(0, 30);
+      sentenceFreq[norm] = (sentenceFreq[norm] || 0) + 1;
+    });
+    const maxRepeat = Math.max(...Object.values(sentenceFreq), 0);
+    
+    const words = text.toLowerCase().split(/\s+/);
+    const trigramFreq: Record<string, number> = {};
+    for (let i = 0; i < words.length - 2; i++) {
+      const trigram = words.slice(i, i + 3).join(" ");
+      trigramFreq[trigram] = (trigramFreq[trigram] || 0) + 1;
+    }
+    const maxTrigramRepeat = Math.max(...Object.values(trigramFreq), 0);
+    
+    const mid = Math.floor(text.length / 2);
+    const firstSet = new Set(text.slice(0, mid).toLowerCase().split(/\s+/).filter(w => w.length > 3));
+    const secondSet = new Set(text.slice(mid).toLowerCase().split(/\s+/).filter(w => w.length > 3));
+    const union = new Set([...firstSet, ...secondSet]);
+    const intersection = new Set([...firstSet].filter(x => secondSet.has(x)));
+    const noveltyScore = union.size > 0 ? intersection.size / union.size : 1;
+    
+    let loopScore = 0;
+    if (maxRepeat >= 3) loopScore += 0.3;
+    if (maxTrigramRepeat >= 2) loopScore += 0.25;
+    if (noveltyScore < 0.3) loopScore += 0.2;
+    if (estimatedTokens > maxTokens * 0.8) loopScore += 0.15;
+    loopScore = Math.min(loopScore, 1);
+    
+    let state: "healthy" | "stalled" | "looping" = "healthy";
+    let recommendedAction: "continue" | "interrupt" | "summarize" | "reanchor" | "handoff" = "continue";
+    
+    if (loopScore >= 0.7 || estimatedTokens >= maxTokens) {
+      state = "looping";
+      recommendedAction = "interrupt";
+    } else if (loopScore >= 0.4 || noveltyScore < 0.5) {
+      state = "stalled";
+      recommendedAction = "summarize";
+    }
+    
+    res.json({
+      state,
+      loopScore: Math.round(loopScore * 100) / 100,
+      noveltyScore: Math.round(noveltyScore * 100) / 100,
+      estimatedTokens,
+      maxTokens,
+      reason: `loopScore=${loopScore.toFixed(2)}, novelty=${noveltyScore.toFixed(2)}, tokens=${estimatedTokens}`,
+      recommendedAction
+    });
+  } catch (error: any) {
+    console.error("Loop detection error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Speech Events API (per thought_speech_stigmergy.md Part E)
+interface SpeechEvent {
+  speaker: string;
+  location: string;
+  speechText: string;
+  topicTags: string[];
+  socialWeight: number;
+  timestamp: number;
+}
+
+const recentSpeechEvents: SpeechEvent[] = [];
+
+app.post("/api/agent/speech", (req, res) => {
+  try {
+    const { speaker, location, speechText, topicTags, socialWeight } = req.body;
+    if (!speaker || !speechText) {
+      res.status(400).json({ error: "speaker and speechText required" });
+      return;
+    }
+    
+    const event: SpeechEvent = {
+      speaker,
+      location: location || "office",
+      speechText,
+      topicTags: topicTags || [],
+      socialWeight: socialWeight || 0.5,
+      timestamp: Date.now()
+    };
+    
+    recentSpeechEvents.push(event);
+    // Keep last 100 events
+    if (recentSpeechEvents.length > 100) {
+      recentSpeechEvents.shift();
+    }
+    
+    // Update desk speech activity
+    const deskId = `desk-${Math.floor(Math.random() * 9)}`;
+    const existingDesk = deskStigmergyState[deskId] || { loopHeat: 0, reviewHeat: 0, speechActivity: 0, taskShadow: 0, observerAttention: 0, confusionResidue: 0, updatedAt: new Date().toISOString() };
+    existingDesk.speechActivity = Math.min(1, existingDesk.speechActivity + 0.3);
+    existingDesk.updatedAt = new Date().toISOString();
+    deskStigmergyState[deskId] = existingDesk;
+    
+    // Check for nearby agent responses
+    const nearbyResponses = ["acknowledged", "answering", "redirecting", "ignoring"];
+    const response = Math.random() > 0.5 ? nearbyResponses[Math.floor(Math.random() * nearbyResponses.length)] : "ignored";
+    
+    res.json({ 
+      ok: true, 
+      event, 
+      nearbyResponse: response 
+    });
+  } catch (error: any) {
+    console.error("Speech event error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/agent/speech/recent", (req, res) => {
+  const limit = parseInt(req.query.limit as string) || 20;
+  const recent = recentSpeechEvents.slice(-limit);
+  res.json({ events: recent });
+});
+
+// Observer Intervention API (per thought_speech_stigmergy.md Part D)
+interface ObserverIntervention {
+  id: string;
+  targetAgent: string;
+  state: "healthy" | "stalled" | "looping";
+  lastValidPoint: string;
+  action: "continue" | "interrupt" | "reanchor" | "handoff" | "escalate";
+  nextPrompt: string;
+  timestamp: number;
+}
+
+const observerHistory: ObserverIntervention[] = [];
+
+app.post("/api/agent/observer/intervene", (req, res) => {
+  try {
+    const { targetAgent, state, lastValidPoint, action } = req.body;
+    if (!targetAgent) {
+      res.status(400).json({ error: "targetAgent required" });
+      return;
+    }
+    
+    // Generate intervention based on state
+    let nextPrompt = "";
+    let actualAction: ObserverIntervention["action"] = action || "continue";
+    
+    if (state === "looping") {
+      nextPrompt = "Let's pause and summarize what we've achieved so far.";
+      actualAction = "interrupt";
+    } else if (state === "stalled") {
+      nextPrompt = "Let's reanchor to the original task and try a different approach.";
+      actualAction = "reanchor";
+    } else {
+      nextPrompt = "Good progress, continue with the current approach.";
+      actualAction = "continue";
+    }
+    
+    const intervention: ObserverIntervention = {
+      id: `obs-${Date.now()}`,
+      targetAgent,
+      state: state || "healthy",
+      lastValidPoint: lastValidPoint || "Current task progress",
+      action: actualAction,
+      nextPrompt,
+      timestamp: Date.now()
+    };
+    
+    observerHistory.push(intervention);
+    if (observerHistory.length > 50) {
+      observerHistory.shift();
+    }
+    
+    // Update desk observer attention
+    const deskId = `desk-${Math.floor(Math.random() * 9)}`;
+    const existingDesk = deskStigmergyState[deskId] || { loopHeat: 0, reviewHeat: 0, speechActivity: 0, taskShadow: 0, observerAttention: 0, confusionResidue: 0, updatedAt: new Date().toISOString() };
+    existingDesk.observerAttention = Math.min(1, existingDesk.observerAttention + 0.4);
+    existingDesk.updatedAt = new Date().toISOString();
+    deskStigmergyState[deskId] = existingDesk;
+    
+    res.json({ ok: true, intervention });
+  } catch (error: any) {
+    console.error("Observer intervention error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/agent/observer/history", (req, res) => {
+  const limit = parseInt(req.query.limit as string) || 20;
+  const recent = observerHistory.slice(-limit);
+  res.json({ interventions: recent });
 });
 
 // Delegation Detection API (per grok_suggestions.md)
@@ -784,44 +1273,7 @@ import { getTopicForConversation, fetchNewsTopics } from "./services/newsTopics.
 
 let autoCoolerInterval: NodeJS.Timeout | null = null;
 const AUTO_COOLER_INTERVAL_MS = 20 * 60 * 1000; // 20 minutes
-
-const ALL_PARTICIPANTS = ["FrontDesk", "OpenClaw", "IronClaw", "LeslieClaw", "ZeroClaw", "Sherlobster", "HermitClaw", "Hercule Prawnro"];
-
-// Weighted selection based on Task Shadow intensity (per stigmergy spec)
-function selectWeightedParticipants(availableAgents: string[], numParticipants: number): string[] {
-  const weights = getAgentWeightsWithShadows(availableAgents);
-  const weightedAgents: { agent: string; weight: number }[] = availableAgents.map(agent => ({
-    agent,
-    weight: weights.get(agent) || 1.0
-  }));
-  
-  const totalWeight = weightedAgents.reduce((sum, a) => sum + a.weight, 0);
-  const selected: string[] = [];
-  
-  for (let i = 0; i < numParticipants; i++) {
-    let random = Math.random() * totalWeight;
-    for (const wa of weightedAgents) {
-      random -= wa.weight;
-      if (random <= 0) {
-        if (!selected.includes(wa.agent)) {
-          selected.push(wa.agent);
-        }
-        break;
-      }
-    }
-  }
-  
-  // Fallback: if we couldn't select enough, add random remaining agents
-  while (selected.length < numParticipants) {
-    const remaining = availableAgents.filter(a => !selected.includes(a));
-    if (remaining.length === 0) break;
-    const randomIdx = Math.floor(Math.random() * remaining.length);
-    selected.push(remaining[randomIdx]);
-  }
-  
-  console.log(`[Stigmergy] Selected ${selected.length} participants with shadow-biased weights: ${selected.join(", ")}`);
-  return selected;
-}
+const AUTO_SCRUM_ENABLED = process.env.AUTO_SCRUM_ENABLED === "true";
 
 async function runAutoCoolerSession(): Promise<void> {
   console.log("[AutoCooler] Starting automatic cooler session...");
@@ -842,6 +1294,37 @@ async function runAutoCoolerSession(): Promise<void> {
     });
     
     console.log(`[AutoCooler] Session complete. ${result.participantCount} participants, topic: "${topic}"`);
+    
+    // Save session transcript to cooler_talk_log.md
+    const logPath = path.resolve("cooler_talk_log.md");
+    const timestamp = new Date().toISOString();
+    const logEntry = `\n## ${timestamp} - Auto Cooler Session\n\n**Topic:** ${topic}\n\n**Participants:** ${selectedParticipants.join(", ")}\n\n**Participant Count:** ${result.participantCount}\n\n---\n`;
+    
+    try {
+      const existingContent = fs.existsSync(logPath) ? fs.readFileSync(logPath, "utf-8") : "# Cooler Talk Log\n\n";
+      fs.writeFileSync(logPath, existingContent + logEntry, "utf-8");
+      console.log("[AutoCooler] Saved transcript to cooler_talk_log.md");
+    } catch (logErr) {
+      console.error("[AutoCooler] Failed to save log:", logErr);
+    }
+    
+    // Trigger automatic Scrum after cooler session (if enabled)
+    if (AUTO_SCRUM_ENABLED) {
+      setTimeout(async () => {
+        try {
+          console.log("[AutoCooler] Triggering automatic Scrum after cooler session...");
+          const scrumRes = await fetch('/api/scrum/test', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ coolerSessionId: null }) // Will use random session
+          });
+          const scrumData = await scrumRes.json();
+          console.log("[AutoCooler] Auto-Scrum triggered:", scrumData.message);
+        } catch (scrumErr) {
+          console.error("[AutoCooler] Failed to trigger auto-scrum:", scrumErr);
+        }
+      }, 5000); // 5 second delay after cooler session
+    }
   } catch (error) {
     console.error("[AutoCooler] Error running session:", error);
   }
@@ -1107,35 +1590,83 @@ app.post("/api/chat", async (req, res) => {
     // Use provided model or fall back to gemma-3-1b-it
     const selectedModel = model || "gemma-3-1b-it";
     
-    // If NVIDIA model selected, use routeChat
-    const isNvidiaModel = selectedModel.startsWith("nvidia-");
-    if (isNvidiaModel && process.env.NVIDIA_API_KEY) {
-      try {
-        const { routeChat } = await import("./llm/llmRouter.js");
-        
-        // Map UI model IDs to actual NVIDIA model IDs
-        const nvidiaModelMap: Record<string, string> = {
-          "nvidia-deepseek": "deepseek-ai/deepseek-v3.1",
-          "nvidia-glm4.7": "z-ai/glm4.7",
-        };
-const nvidiaModelId = nvidiaModelMap[selectedModel] || "deepseek-ai/deepseek-v3.1";
-        
-        const messages = [
-          { role: "system", content: "You are a helpful database assistant for Pixel Office." },
-          ...(history || []).slice(-10),
-          { role: "user", content: message }
-        ];
-        
-        const result = await routeChat(messages, { maxTokens: 1024, model: nvidiaModelId });
-        
-        // Track LLM request
-        trackLlmRequest("nvidia", nvidiaModelId);
-        
-        res.json({
-      reply: result.response,
-      role: result.role,
-      model: result.model
-    });
+    const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
+    
+    // Check if model is likely a larger model that needs more time
+    const isLargeModel = selectedModel.includes("7b") || selectedModel.includes("8b") || selectedModel.includes("70b");
+    const timeoutMs = isLargeModel ? 60000 : 30000; // 60s for large models, 30s otherwise
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    
+    try {
+      // Use streaming for faster perceived response
+      const ollamaResponse = await fetch(`${ollamaUrl}/api/chat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: selectedModel,
+          messages: [
+            { role: "system", content: "You are a helpful assistant at Pixel Office." },
+            ...(history || []).slice(-10),
+            { role: "user", content: message }
+          ],
+          stream: true, // Enable streaming for faster response
+          options: { num_predict: isLargeModel ? 100 : 50, temperature: 0.7 }
+        }),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!ollamaResponse.ok) {
+        const errorText = await ollamaResponse.text();
+        res.json({ reply: `I'm having trouble connecting to the AI model right now. Please try again later. (Model: ${selectedModel})` });
+        return;
+      }
+
+      // Handle streaming response
+      const reader = ollamaResponse.body?.getReader();
+      const decoder = new TextDecoder();
+      let fullResponse = "";
+      
+      if (reader) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n').filter(line => line.trim());
+            for (const line of lines) {
+              try {
+                const parsed = JSON.parse(line);
+                if (parsed.message?.content) {
+                  fullResponse += parsed.message.content;
+                }
+              } catch {}
+            }
+          }
+        } catch (streamErr) {
+          console.error("Stream error:", streamErr);
+        }
+      }
+      
+      const reply = fullResponse || "I couldn't generate a response.";
+      
+      // Track LLM request only after successful response
+      trackLlmRequest("ollama", selectedModel);
+      
+      res.json({ reply, model: selectedModel });
+    } catch (ollamaErr: any) {
+      clearTimeout(timeoutId);
+      if (ollamaErr.name === 'AbortError') {
+        console.error("Ollama timeout:", ollamaErr);
+        res.json({ reply: "The AI model is taking too long to respond. Please try again.", model: "timeout" });
+      } else {
+        console.error("Ollama error:", ollamaErr);
+        res.json({ reply: "I'm having trouble connecting to the AI model right now. Please try again later.", model: "error" });
+      }
+    }
   } catch (error: any) {
     console.error("Chat error:", error);
     res.status(500).json({ error: error.message || "Internal server error" });
@@ -1204,6 +1735,9 @@ app.post("/api/agent-chat", async (req, res) => {
 
     const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
     
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 20000);
+    
     const ollamaResponse = await fetch(`${ollamaUrl}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -1214,8 +1748,11 @@ app.post("/api/agent-chat", async (req, res) => {
           { role: "user", content: message }
         ],
         stream: false
-      })
+      }),
+      signal: controller.signal
     });
+
+    clearTimeout(timeoutId);
 
     if (!ollamaResponse.ok) {
       const errorText = await ollamaResponse.text();
@@ -1232,8 +1769,14 @@ app.post("/api/agent-chat", async (req, res) => {
     
     res.json({ reply, model: selectedModel });
   } catch (error: any) {
-    console.error("Agent chat error:", error);
-    res.status(500).json({ error: error.message || "Failed to chat with agent" });
+    if (typeof timeoutId !== 'undefined') clearTimeout(timeoutId);
+    if (error.name === 'AbortError') {
+      console.error("Agent chat Ollama timeout:", error);
+      res.json({ reply: "The AI model is taking too long to respond. Please try again.", model: "timeout" });
+    } else {
+      console.error("Agent chat error:", error);
+      res.status(500).json({ error: error.message || "Failed to chat with agent" });
+    }
   }
 });
 
@@ -3018,7 +3561,6 @@ import {
   formatAnswerForOffice,
   type RepoQuestionResult 
 } from "./services/repoQuestionHandler.js";
-import { tasksV2 } from "../src/pixel_memory/index.js";
 
 app.post("/api/repo/ask", async (req, res) => {
   try {

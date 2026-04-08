@@ -11,12 +11,48 @@ const MOOD_EMOJIS: Record<AgentMood, string> = {
 };
 
 const MOOD_THOUGHTS: Record<AgentMood, string[]> = {
-  happy: ["Great day!", "Feeling good!", "Love this vibe"],
-  neutral: ["So it goes...", "Just another day", "Hmm..."],
-  thinking: ["Interesting...", "Need to ponder this", "What if..."],
-  excited: ["Can't wait!", "This is awesome!", "New ideas!"],
-  tired: ["Need coffee...", "So sleepy...", "Almost done"],
-  frustrated: ["Not working...", "Why??", "This is hard"],
+  happy: [
+    "Great day at the office! Everyone seems so productive today.",
+    "Feeling good about this sprint! The team is really clicking.",
+    "Love this vibe in the office. Great energy everywhere!",
+    "What a wonderful morning! The coffee is perfect and work is flowing.",
+    "So glad to be working with such talented colleagues today!",
+  ],
+  neutral: [
+    "So it goes... another day in the pixel world office.",
+    "Just another regular day at work, nothing special happening.",
+    "Hmm... I should probably check on those pending tasks soon.",
+    "The office is quiet today, everyone seems focused on their work.",
+    "Need to organize my desk and review what needs to be done next.",
+  ],
+  thinking: [
+    "Interesting... I need to figure out the best approach to this problem.",
+    "Let me ponder this for a moment. There's a better way to solve this.",
+    "What if we tried a different strategy? The current approach seems slow.",
+    "This is a complex task. Let me break it down into smaller steps.",
+    "I should review the documentation before making any changes.",
+  ],
+  excited: [
+    "Can't wait to start this new project! It's going to be amazing!",
+    "This is awesome! The new feature will change everything!",
+    "New ideas are flowing! Let me capture them before I forget.",
+    "The client loved our proposal! Time to celebrate this success!",
+    "This opportunity is exactly what I've been waiting for!",
+  ],
+  tired: [
+    "Need coffee... my brain is running on empty right now.",
+    "So sleepy... maybe a short break would help refresh my mind.",
+    "Almost done with this task. Just need to push through to the end.",
+    "It's been a long day. Only a few more hours until I can rest.",
+    "My focus is fading. This task requires more energy than I have left.",
+  ],
+  frustrated: [
+    "Not working... why is this code failing again?!",
+    "Why?? This should be simple but something keeps breaking!",
+    "This is harder than expected. I need to ask for help.",
+    "The deadline is approaching and I'm still stuck on this issue.",
+    "Nothing seems to work the way it's supposed to today!",
+  ],
 };
 
 export const MOOD_OPTIONS: AgentMood[] = ["happy", "neutral", "thinking", "excited", "tired", "frustrated"];

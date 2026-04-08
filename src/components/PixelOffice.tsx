@@ -17,7 +17,7 @@ import {
   MOOD_OPTIONS,
   getMoodEmoji,
 } from "../utils/agentLogic";
-import { loadAgentCards, AgentCard, getAgentCardForRuntimeAgent } from "../utils/agentCards";
+import { loadAgentCards, fetchOllamaModels, AgentCard, getAgentCardForRuntimeAgent } from "../utils/agentCards";
 import {
   drawFloor,
   drawWalls,
@@ -43,6 +43,8 @@ import {
   CHAIR_POSITIONS,
   getZoneAtPosition,
 } from "../utils/layout";
+
+// Loop detection available at: import { detectLoopOrStall } from "../utils/loopDetection";
 
 function getKitchenPosition(agentIndex: number): { x: number; y: number } {
   const positions = [
@@ -132,6 +134,48 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [stigmergyTraces, setStigmergyTraces] = useState<any[]>([]);
   const [socialPotential, setSocialPotential] = useState<{sessionCount: number; participantCount: number; intensity: number} | null>(null);
   const [currentTopic, setCurrentTopic] = useState<string>("");
+  
+  // Thought Burst / Loop Detection State
+  const [thoughtBurstConfig] = useState({
+    maxBurstTokens: 96,
+    loopThreshold: 0.7,
+    noveltyThreshold: 0.3,
+    speechEnabled: true,
+  });
+  const [agentLoopStates, setAgentLoopStates] = useState<Record<string, {
+    state: "healthy" | "stalled" | "looping";
+    loopScore: number;
+    noveltyScore: number;
+    recommendedAction: string;
+    lastChecked: number;
+  }>>({});
+  const [deskStigmergy, setDeskStigmergy] = useState<Record<string, {
+    loopHeat: number;
+    reviewHeat: number;
+    speechActivity: number;
+    taskShadow: number;
+    observerAttention: number;
+    confusionResidue: number;
+  }>>({});
+  
+  // Speech Events & Observer State
+  const [recentSpeechEvents, setRecentSpeechEvents] = useState<Array<{
+    speaker: string;
+    speechText: string;
+    topicTags: string[];
+    socialWeight: number;
+    timestamp: number;
+    nearbyResponse?: string;
+  }>>([]);
+  const [observerHistory, setObserverHistory] = useState<Array<{
+    id: string;
+    targetAgent: string;
+    state: string;
+    action: string;
+    nextPrompt: string;
+    timestamp: number;
+  }>>([]);
+  
   const [tasks] = useState<Task[]>([
     { id: "1", title: "Review pull requests", description: "Check pending PRs from team", status: "in_progress", priority: "high", assigneeId: "ironclaw", createdAt: Date.now() - 86400000 },
     { id: "2", title: "Update documentation", description: "Add new API endpoints to docs", status: "todo", priority: "medium", createdAt: Date.now() - 172800000 },
@@ -290,6 +334,83 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     return () => clearInterval(interval);
   }, []);
 
+  // Fetch Desk Stigmergy State (per thought_speech_stigmergy.md Part B)
+  useEffect(() => {
+    const fetchDeskStigmergy = async () => {
+      try {
+        const resp = await fetch("/api/stigmergy/desk/all");
+        const data = await resp.json();
+        if (data.desks) setDeskStigmergy(data.desks);
+      } catch (err) {
+        console.warn("Failed to fetch desk stigmergy", err);
+      }
+    };
+
+    fetchDeskStigmergy();
+    const interval = setInterval(fetchDeskStigmergy, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch Speech Events & Observer History (per thought_speech_stigmergy.md Parts D & E)
+  useEffect(() => {
+    const fetchSpeechEvents = async () => {
+      try {
+        const resp = await fetch("/api/agent/speech/recent?limit=10");
+        const data = await resp.json();
+        if (data.events) setRecentSpeechEvents(data.events);
+      } catch (err) {
+        console.warn("Failed to fetch speech events", err);
+      }
+    };
+
+    const fetchObserverHistory = async () => {
+      try {
+        const resp = await fetch("/api/agent/observer/history?limit=10");
+        const data = await resp.json();
+        if (data.interventions) setObserverHistory(data.interventions);
+      } catch (err) {
+        console.warn("Failed to fetch observer history", err);
+      }
+    };
+
+    fetchSpeechEvents();
+    fetchObserverHistory();
+    const interval = setInterval(() => {
+      fetchSpeechEvents();
+      fetchObserverHistory();
+    }, 8000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Update Desk Stigmergy based on agent state
+  useEffect(() => {
+    agents.forEach(agent => {
+      const deskId = `desk-${agent.deskIndex}`;
+      let updates: Record<string, number> = {};
+      
+      // Check agent loop state
+      const loopState = agentLoopStates[agent.id];
+      if (loopState) {
+        if (loopState.state === "looping") updates.loopHeat = 0.8;
+        else if (loopState.state === "stalled") updates.loopHeat = 0.4;
+      }
+      
+      // Check if agent is working on unfinished tasks
+      const hasUnfinished = tasks.some(t => t.assigneeId === agent.id && t.status !== "done" && t.status !== "archived");
+      if (agent.status === "idle" && hasUnfinished) {
+        updates.taskShadow = 0.6;
+      }
+      
+      if (Object.keys(updates).length > 0) {
+        fetch(`/api/stigmergy/desk/${deskId}/update`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates)
+        }).catch(() => {});
+      }
+    });
+  }, [agents, agentLoopStates, tasks]);
+
   // STIGMERGY: Detect Task Shadows (abandoned work)
   useEffect(() => {
     const now = Date.now();
@@ -403,6 +524,61 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     }, 4000);
     return () => clearInterval(moodInterval);
   }, []);
+
+  // Thought Burst Loop Detection (per thought_speech_stigmergy.md Part C)
+  useEffect(() => {
+    const runLoopDetection = async () => {
+      setAgentLoopStates(prev => {
+        const next = { ...prev };
+        agents.forEach(agent => {
+          // Simulate occasional "thinking" text
+          if (agent.status === "working" && agent.thoughtBubble) {
+            const text = agent.thoughtBubble.text;
+            fetch("/api/agent/detect-loop", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ 
+                text, 
+                burstTokenCount: Math.floor(Math.random() * 100),
+                maxBurstTokens: thoughtBurstConfig.maxBurstTokens
+              })
+            })
+            .then(res => res.json())
+            .then(data => {
+              setAgentLoopStates(prev => ({
+                ...prev,
+                [agent.id]: {
+                  state: data.state || "healthy",
+                  loopScore: data.loopScore || 0,
+                  noveltyScore: data.noveltyScore || 1,
+                  recommendedAction: data.recommendedAction || "continue",
+                  lastChecked: Date.now()
+                }
+              }));
+              
+              // Update desk loop heat based on detection
+              if (data.state === "looping") {
+                const deskId = `desk-${agent.deskIndex}`;
+                fetch(`/api/stigmergy/desk/${deskId}/update`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ loopHeat: 0.8 })
+                }).catch(() => {});
+              }
+            })
+            .catch(() => {});
+          } else {
+            // Reset to healthy when not working
+            next[agent.id] = { state: "healthy", loopScore: 0, noveltyScore: 1, recommendedAction: "continue", lastChecked: Date.now() };
+          }
+        });
+        return next;
+      });
+    };
+
+    const loopInterval = setInterval(runLoopDetection, 8000);
+    return () => clearInterval(loopInterval);
+  }, [agents, thoughtBurstConfig]);
 
   useEffect(() => {
     const zoneInterval = setInterval(() => {
@@ -691,6 +867,108 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               </div>
             </div>
           )}
+          
+          {/* Observer / Thought Burst Panel - Lab Mode Only */}
+          {LAB_MODE && (
+            <div style={{ borderTop: "1px solid rgba(100, 200, 255, 0.2)", paddingTop: "8px", marginTop: "8px" }}>
+              <div style={{ fontSize: '10px', color: '#6495ed', marginBottom: '6px', fontWeight: 600 }}>🧠 Thought Bursts</div>
+              
+              {/* Loop Detection Status */}
+              {Object.keys(agentLoopStates).length > 0 && (
+                <div style={{ marginBottom: '8px' }}>
+                  {agents.slice(0, 4).map(agent => {
+                    const loopState = agentLoopStates[agent.id];
+                    if (!loopState) return null;
+                    const stateColor = loopState.state === 'looping' ? '#ff6b6b' : loopState.state === 'stalled' ? '#feca57' : '#26de81';
+                    return (
+                      <div key={agent.id} style={{ fontSize: '8px', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '3px' }}>
+                        <span style={{ color: '#a0a0b0', minWidth: '60px' }}>{agent.name}</span>
+                        <span style={{ 
+                          padding: '1px 4px', 
+                          borderRadius: '2px', 
+                          background: stateColor + '33',
+                          color: stateColor,
+                          textTransform: 'uppercase',
+                          fontSize: '7px'
+                        }}>{loopState.state}</span>
+                        <span style={{ color: '#606070' }}>L:{loopState.loopScore.toFixed(2)} N:{loopState.noveltyScore.toFixed(2)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              
+              {/* Desk Stigmergy Indicators */}
+              {Object.keys(deskStigmergy).length > 0 && (
+                <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(100, 200, 255, 0.1)' }}>
+                  <div style={{ fontSize: '8px', color: '#808090', marginBottom: '4px' }}>Desk Heat</div>
+                  {Object.entries(deskStigmergy).slice(0, 6).map(([deskId, heat]) => {
+                    const totalHeat = heat.loopHeat + heat.reviewHeat + heat.speechActivity + heat.taskShadow + heat.observerAttention;
+                    if (totalHeat < 0.1) return null;
+                    
+                    // Hotspot glow effect for high heat
+                    const isHotspot = totalHeat > 1.5;
+                    const glowStyle = isHotspot ? {
+                      boxShadow: `0 0 ${Math.min(totalHeat * 4, 12)}px rgba(255, 107, 107, ${Math.min(totalHeat / 3, 0.6)})`,
+                      borderRadius: '4px',
+                      padding: '3px',
+                      background: 'rgba(255, 107, 107, 0.1)'
+                    } : {};
+                    
+                    return (
+                      <div key={deskId} style={{ marginBottom: '6px', ...glowStyle }}>
+                        <div style={{ fontSize: '7px', color: '#606070', marginBottom: '3px', display: 'flex', justifyContent: 'space-between' }}>
+                          <span>{deskId}</span>
+                          <span style={{ color: isHotspot ? '#ff6b6b' : '#808090' }}>{totalHeat.toFixed(1)}</span>
+                        </div>
+                        <div style={{ display: 'flex', gap: '3px', height: '6px' }}>
+                          <div style={{ flex: heat.loopHeat || 0.1, background: heat.loopHeat > 0.3 ? '#ff6b6b' : '#2a3a4a', borderRadius: '2px', minWidth: '2px' }} title={`loopHeat: ${heat.loopHeat.toFixed(2)}`} />
+                          <div style={{ flex: heat.reviewHeat || 0.1, background: heat.reviewHeat > 0.3 ? '#feca57' : '#2a3a4a', borderRadius: '2px', minWidth: '2px' }} title={`reviewHeat: ${heat.reviewHeat.toFixed(2)}`} />
+                          <div style={{ flex: heat.speechActivity || 0.1, background: heat.speechActivity > 0.3 ? '#4ecdc4' : '#2a3a4a', borderRadius: '2px', minWidth: '2px' }} title={`speechActivity: ${heat.speechActivity.toFixed(2)}`} />
+                          <div style={{ flex: heat.taskShadow || 0.1, background: heat.taskShadow > 0.3 ? '#a55eea' : '#2a3a4a', borderRadius: '2px', minWidth: '2px' }} title={`taskShadow: ${heat.taskShadow.toFixed(2)}`} />
+                          <div style={{ flex: heat.observerAttention || 0.1, background: heat.observerAttention > 0.3 ? '#26de81' : '#2a3a4a', borderRadius: '2px', minWidth: '2px' }} title={`observerAttention: ${heat.observerAttention.toFixed(2)}`} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              
+              <div style={{ fontSize: '8px', color: '#505060', marginTop: '6px' }}>
+                Max tokens: {thoughtBurstConfig.maxBurstTokens} • Loop threshold: {thoughtBurstConfig.loopThreshold}
+              </div>
+              
+              {/* Recent Speech Events */}
+              {recentSpeechEvents.length > 0 && (
+                <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '1px solid rgba(100, 200, 100, 0.1)' }}>
+                  <div style={{ fontSize: '8px', color: '#4ecdc4', marginBottom: '4px' }}>💬 Recent Speech</div>
+                  {recentSpeechEvents.slice(-3).map((event, idx) => (
+                    <div key={idx} style={{ fontSize: '7px', color: '#a0a0b0', marginBottom: '3px', borderLeft: '2px solid #4ecdc4', paddingLeft: '4px' }}>
+                      <span style={{ color: '#4ecdc4' }}>{event.speaker}:</span> {event.speechText.slice(0, 40)}...
+                      {event.nearbyResponse && (
+                        <span style={{ color: '#feca57', marginLeft: '4px' }}>→ {event.nearbyResponse}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Observer Interventions */}
+              {observerHistory.length > 0 && (
+                <div style={{ marginTop: '8px', paddingTop: '6px', borderTop: '1px solid rgba(200, 100, 100, 0.1)' }}>
+                  <div style={{ fontSize: '8px', color: '#ff6b6b', marginBottom: '4px' }}>👁️ Observer</div>
+                  {observerHistory.slice(-2).map((obs, idx) => {
+                    const actionColor = obs.action === 'interrupt' ? '#ff6b6b' : obs.action === 'reanchor' ? '#feca57' : '#26de81';
+                    return (
+                      <div key={idx} style={{ fontSize: '7px', color: '#a0a0b0', marginBottom: '3px' }}>
+                        <span style={{ color: actionColor }}>{obs.action}</span> on {obs.targetAgent}: {obs.nextPrompt.slice(0, 30)}...
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: '16px' }}>
@@ -920,17 +1198,22 @@ function AgentActionCard({ agent, card, workflowState, setWorkflowState, onClose
   const [localGithubLoading, setLocalGithubLoading] = useState(false);
   const [localGithubError, setLocalGithubError] = useState<string | null>(null);
   const [localGithubResult, setLocalGithubResult] = useState<any>(null);
+  const [ollamaModels, setOllamaModels] = useState<Array<{id: string; name: string}>>([]);
+  
+  useEffect(() => {
+    fetchOllamaModels().then(setOllamaModels);
+  }, []);
   
   const isReceptionist = agent.role === "receptionist";
   
   // Available models from agent card data
   const availableModels = [];
   
-  // Define available Ollama models from what's actually installed
-  const availableOllamaModels = [
-    { id: "gemma-3-1b-it:latest", name: "Gemma 3 (1B)" },
-    { id: "PhysicsObsession/blaze-3b:latest", name: "Blaze (3B)" }
-  ];
+  // Use actual Ollama models from the server
+  const availableOllamaModels = ollamaModels.map(m => ({
+    id: m.id,
+    name: `${m.name}`
+  }));
   
   // Add the agent's primary Ollama model (configured model)
   if (card?.models?.primary?.provider === 'ollama') {
@@ -1489,6 +1772,7 @@ function ChatOverlay({ onClose }: { onClose: () => void }) {
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("gemma-3-1b-it");
   const [nvidiaStatus, setNvidiaStatus] = useState<{available: boolean; modelId?: string} | null>(null);
+  const [ollamaModels, setOllamaModels] = useState<Array<{id: string; name: string}>>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -1503,6 +1787,7 @@ function ChatOverlay({ onClose }: { onClose: () => void }) {
         setNvidiaStatus(data);
       })
       .catch(err => console.log('[Chat] NVIDIA check failed:', err));
+    fetchOllamaModels().then(setOllamaModels);
   }, []);
 
   console.log('[Chat] nvidiaStatus:', nvidiaStatus);
@@ -1512,8 +1797,7 @@ function ChatOverlay({ onClose }: { onClose: () => void }) {
     { id: "nvidia-glm4.7", name: "NVIDIA GLM-4.7" },
   ];
   const availableModels = [
-    { id: "gemma-3-1b-it", name: "Gemma 3 (1B)" },
-    { id: "PhysicsObsession/blaze-3b:latest", name: "Blaze (3B)" },
+    ...ollamaModels.map(m => ({ id: m.id, name: m.name.split(':')[0] })),
     ...(nvidiaStatus?.available ? nvidiaOptions : []),
   ];
 

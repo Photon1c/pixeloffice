@@ -127,9 +127,9 @@ describe("exportSession", () => {
     assert.ok(exported.markdown.includes("kitchen"));
     assert.ok(exported.markdown.includes("Alice") || exported.markdown.includes("Bob"));
 
-    assert.equal(exportedon.topic, "basement noise");
-    assert.equal(exportedon.location, "kitchen");
-    assert.equal(exportedon.utterances.length, 4);
+    assert.equal(exported.topic, "basement noise");
+    assert.equal(exported.location, "kitchen");
+    assert.equal(exported.utterances.length, 4);
   });
 
   it("json matches serializeSession output", async () => {
@@ -141,7 +141,7 @@ describe("exportSession", () => {
     const exported = exportSession(session);
     const direct = serializeSession(session);
 
-    assert.deepEqual(exportedon, direct);
+    assert.deepEqual(exported, direct);
   });
 });
 
@@ -164,7 +164,7 @@ describe("location propagation end-to-end", () => {
     assert.equal(restored.location, "exec_suite");
 
     const exported = exportSession(restored);
-    assert.equal(exportedon.location, "exec_suite");
+    assert.equal(exported.location, "exec_suite");
     assert.ok(exported.markdown.includes("exec_suite"));
   });
 
@@ -181,7 +181,7 @@ describe("location propagation end-to-end", () => {
     assert.equal(restored.location, undefined);
 
     const exported = exportSession(restored);
-    assert.equal(exportedon.location, undefined);
+    assert.equal(exported.location, undefined);
     assert.ok(!exported.markdown.includes("Location:"));
   });
 });

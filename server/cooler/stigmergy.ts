@@ -153,6 +153,21 @@ export function depositTrace(trace: Partial<StigmergyTrace>) {
   const decay = DEFAULTS[trace.type].decayMs;
   const expires = new Date(now.getTime() + (trace.metadata?.ttl || decay));
 
+  // Deduplication: don't deposit if same type+agent+room exists within cooldown period
+  if (trace.agentId && trace.roomId) {
+    const active = getActiveTraces();
+    const recentDuplicate = active.find(t => 
+      t.type === trace.type && 
+      t.agentId === trace.agentId && 
+      t.roomId === trace.roomId &&
+      new Date(t.created_at).getTime() > now.getTime() - 5 * 60 * 1000 // 5 min cooldown
+    );
+    if (recentDuplicate) {
+      console.log(`[Stigmergy] Skipping duplicate deposit: ${trace.type} for ${trace.agentId} in ${trace.roomId}`);
+      return null;
+    }
+  }
+  
   const newTrace: StigmergyTrace = {
     id: `trace-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     type: trace.type,

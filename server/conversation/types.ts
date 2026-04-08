@@ -76,6 +76,7 @@ export interface SerializedSession {
   participants: string[];
   topicKeywords: string[];
   utterances: SerializedUtterance[];
+  created_at?: string;
   startedAt?: string;
   endedAt?: string;
 }

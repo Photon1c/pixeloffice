@@ -17,6 +17,62 @@ export type TaskPriority = "low" | "normal" | "high" | "urgent" | "medium";
 
 export type AgentMood = "happy" | "neutral" | "thinking" | "excited" | "tired" | "frustrated";
 
+export type CognitiveState = "idle" | "thinking" | "thought_ready" | "speaking" | "observed" | "stalled" | "looping" | "interrupted" | "handoff_pending";
+
+export type ThoughtBurstConfig = {
+  maxBurstTokens: number;
+  loopThreshold: number;
+  noveltyThreshold: number;
+  observerCadence: number;
+  speechEnabled: boolean;
+  observerAutoInterrupt: boolean;
+  interventionMode: "passive" | "warn" | "auto_summarize" | "auto_reanchor" | "auto_handoff";
+};
+
+export interface DeskStigmergy {
+  deskId: string;
+  loopHeat: number;
+  reviewHeat: number;
+  speechActivity: number;
+  taskShadow: number;
+  observerAttention: number;
+  confusionResidue: number;
+  updatedAt: string;
+}
+
+export interface AgentCognitiveState {
+  agentId: string;
+  state: CognitiveState;
+  burstIndex: number;
+  loopScore: number;
+  noveltyScore: number;
+  speakCandidate: boolean;
+  observerAttached: boolean;
+  lastValidPoint: string;
+  currentThought: string;
+  speechText: string | null;
+  confidence: number;
+}
+
+export interface SpeechEvent {
+  speaker: string;
+  location: string;
+  speechText: string;
+  topicTags: string[];
+  socialWeight: number;
+  timestamp: number;
+}
+
+export interface ObserverIntervention {
+  id: string;
+  targetAgent: string;
+  state: "healthy" | "stalled" | "looping";
+  lastValidPoint: string;
+  action: "continue" | "interrupt" | "reanchor" | "handoff" | "escalate";
+  nextPrompt: string;
+  timestamp: number;
+}
+
 export type AgentRole =
   | "receptionist"
   | "clerk"

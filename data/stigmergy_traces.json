@@ -1,11 +1,11 @@
 [
   {
-    "id": "trace-1775004483496-112",
+    "id": "trace-1775608182593-665",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
     "roomId": "dataNodes",
-    "created_at": "2026-04-01T00:48:03.496Z",
-    "expires_at": "2026-04-01T00:58:03.496Z"
+    "created_at": "2026-04-08T00:29:42.592Z",
+    "expires_at": "2026-04-08T00:39:42.592Z"
   }
 ]
