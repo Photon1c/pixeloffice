@@ -1,4 +1,4 @@
-import type { Agent, Room, Event, AgentStatus, RoomStatus, AgendaItem } from "./models.js";
+import type { Agent, Room, Event, AgentStatus, RoomStatus } from "./models.js";
 
 export class ConferenceRoomStorage {
   private agents: Map<string, Agent> = new Map();

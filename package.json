@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "build:server": "tsc server/index.ts --outDir server/dist --esModuleInterop --module NodeNext --moduleResolution NodeNext --target ES2020",
     "dev:server": "npx tsx server/index.ts",

@@ -16,7 +16,7 @@ app.use(cors());
 app.use(express.json());
 
 // Serve available Ollama models
-app.get("/api/ollama/models", async (req, res) => {
+app.get("/api/ollama/models", async (_req, res) => {
   try {
     const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
     const response = await fetch(`${ollamaUrl}/api/tags`, { 
@@ -43,7 +43,7 @@ app.get("/api/ollama/models", async (req, res) => {
 });
 
 // Serve handoff JSON file
-app.get("/handoff/opencode-local-agents.json", (req, res) => {
+app.get("/handoff/opencode-local-agents.json", (_req, res) => {
   const handoffPath = "/home/sherlockhums/apps/pixelworld/.handoff/opencode-local-agents.json";
   const publicPath = path.join(__dirname, "../public/handoff/opencode-local-agents.json");
   
@@ -118,11 +118,11 @@ import { fetchCurrentPrice, fetchPriceForDate } from "./services/priceFeed.js";
 import { createAnalyzer, DataSource } from "./sherlock_analysis/index.js";
 import { ConferenceRoomStorage, createConferenceRoomRouter } from "./conferenceroom/routes.js";
 import { callChatModelForRole } from "./roleModels.js";
-import { openai } from "./llm/client.js";
-// Flywheel imports
-import { ensureDataDir as ensureResidueDir, depositResidue, getActiveResidues } from "./flywheel/residueLogger";
-import { getActiveHeat } from "./flywheel/reviewHeatEngine";
-import { promoteResidues } from "./flywheel/promotionEngine";
+// Flywheel imports (keep for potential future use)
+// import { openai } from "./llm/client.js";
+// import { ensureDataDir as ensureResidueDir, depositResidue, getActiveResidues } from "./flywheel/residueLogger";
+// import { getActiveHeat } from "./flywheel/reviewHeatEngine";
+// import { promoteResidues } from "./flywheel/promotionEngine";
 
 // Initialize flywheel system on startup
 const initializeFlywheel = async () => {
@@ -138,7 +138,7 @@ const initializeFlywheel = async () => {
 initializeFlywheel();
 
 // Health check
-app.get("/api/workflow/health", (req, res) => {
+app.get("/api/workflow/health", (_req, res) => {
   res.json({ 
     status: "healthy", 
     timestamp: new Date().toISOString()
@@ -204,7 +204,7 @@ app.use((req, res, next) => {
 });
 
 // Metrics endpoint
-app.get("/metrics", async (req, res) => {
+app.get("/metrics", async (_req, res) => {
   try {
     res.set("Content-Type", register.contentType);
     res.end(await register.metrics());
@@ -321,12 +321,7 @@ const stigmergyTraceGauge = new client.Gauge({
   registers: [register]
 });
 
-const loopDetectionGauge = new client.Gauge({
-  name: "pixel_office_loop_detection",
-  help: "Agent loop detection state",
-  labelNames: ["agent_id", "agent_name"],
-  registers: [register]
-});
+// Note: loopDetectionGauge removed - can add when loop state tracking is needed
 
 setInterval(() => {
   // Update desk stigmergy metrics

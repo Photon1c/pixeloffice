@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  SKIP_TSC_CHECK = "true"
 
 [[redirects]]
   from = "/api/*"

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from "express";
-import {
+import type {
   Agent,
   AgentStatus,
   AgendaItem,
@@ -7,10 +7,8 @@ import {
   EventType,
   Room,
   RoomStatus,
-  generateRoomId,
-  generateEventId,
-  getCurrentUtc,
 } from "./models.js";
+import { generateRoomId, generateEventId, getCurrentUtc } from "./models.js";
 import { ConferenceRoomStorage } from "./storage.js";
 
 export { ConferenceRoomStorage };
