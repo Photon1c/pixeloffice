@@ -1,20 +1,20 @@
 [
   {
-    "id": "trace-1775612930647-896",
+    "id": "trace-1775615515692-723",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
     "roomId": "dataNodes",
-    "created_at": "2026-04-08T01:48:50.647Z",
-    "expires_at": "2026-04-08T01:58:50.647Z"
+    "created_at": "2026-04-08T02:31:55.692Z",
+    "expires_at": "2026-04-08T02:41:55.692Z"
   },
   {
-    "id": "trace-1775613243690-357",
+    "id": "trace-1775615816695-88",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
-    "roomId": "openOffice",
-    "created_at": "2026-04-08T01:54:03.690Z",
-    "expires_at": "2026-04-08T02:04:03.690Z"
+    "roomId": "dataNodes",
+    "created_at": "2026-04-08T02:36:56.695Z",
+    "expires_at": "2026-04-08T02:46:56.695Z"
   }
 ]

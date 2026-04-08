@@ -118,15 +118,125 @@ import { fetchCurrentPrice, fetchPriceForDate } from "./services/priceFeed.js";
 import { createAnalyzer, DataSource } from "./sherlock_analysis/index.js";
 import { ConferenceRoomStorage, createConferenceRoomRouter } from "./conferenceroom/routes.js";
 import { callChatModelForRole } from "./roleModels.js";
+
 // Flywheel imports (keep for potential future use)
 // import { openai } from "./llm/client.js";
 // import { ensureDataDir as ensureResidueDir, depositResidue, getActiveResidues } from "./flywheel/residueLogger";
 // import { getActiveHeat } from "./flywheel/reviewHeatEngine";
 // import { promoteResidues } from "./flywheel/promotionEngine";
 
+// Cooler Talk Session Storage (PostgreSQL/MySQL)
+async function ensureCoolerSessionsTable() {
+  try {
+    const pool = await getPool();
+    const dbType = getConfig().db.type;
+    
+    if (dbType === "postgres") {
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS cooler_sessions (
+          id SERIAL PRIMARY KEY,
+          session_id VARCHAR(255) UNIQUE NOT NULL,
+          session_type VARCHAR(50) NOT NULL,
+          topic VARCHAR(500),
+          participants TEXT[],
+          utterances JSONB,
+          metadata JSONB,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+    } else {
+      await (pool as any).query(`
+        CREATE TABLE IF NOT EXISTS cooler_sessions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          session_id VARCHAR(255) UNIQUE NOT NULL,
+          session_type VARCHAR(50) NOT NULL,
+          topic VARCHAR(500),
+          participants TEXT,
+          utterances JSON,
+          metadata JSON,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+    }
+    console.log("[Cooler] cooler_sessions table ready");
+  } catch (err) {
+    console.warn("[Cooler] Could not create sessions table:", err);
+  }
+}
+
+async function saveCoolerSession(
+  sessionId: string,
+  sessionType: "scrum" | "cooler",
+  topic: string,
+  participants: string[],
+  utterances: Array<{agentId: string; text: string; timestamp: number}>,
+  metadata?: Record<string, any>
+) {
+  try {
+    const pool = await getPool();
+    const dbType = getConfig().db.type;
+    const metadataJson = JSON.stringify(metadata || {});
+    const utterancesJson = JSON.stringify(utterances);
+    
+    if (dbType === "postgres") {
+      await pool.query(
+        `INSERT INTO cooler_sessions (session_id, session_type, topic, participants, utterances, metadata, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW())
+         ON CONFLICT (session_id) DO UPDATE SET
+           topic = $3, participants = $4, utterances = $5, metadata = $6, updated_at = NOW()`,
+        [sessionId, sessionType, topic, participants, utterancesJson, metadataJson]
+      );
+    } else {
+      await (pool as any).query(
+        `INSERT INTO cooler_sessions (session_id, session_type, topic, participants, utterances, metadata, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, NOW())
+         ON DUPLICATE KEY UPDATE
+           topic = VALUES(topic), participants = VALUES(participants), utterances = VALUES(utterances), 
+           metadata = VALUES(metadata), updated_at = NOW()`,
+        [sessionId, sessionType, topic, participants.join(","), utterancesJson, metadataJson]
+      );
+    }
+    console.log(`[Cooler] Saved session ${sessionId} to database`);
+  } catch (err) {
+    console.error("[Cooler] Failed to save session:", err);
+  }
+}
+
+async function getCoolerSessions(limit = 20, sessionType?: "scrum" | "cooler") {
+  try {
+    const pool = await getPool();
+    const dbType = getConfig().db.type;
+    let query = "SELECT * FROM cooler_sessions";
+    const params: any[] = [];
+    
+    if (sessionType) {
+      query += " WHERE session_type = ?";
+      params.push(sessionType);
+    }
+    query += " ORDER BY created_at DESC LIMIT ?";
+    params.push(limit);
+    
+    if (dbType === "postgres") {
+      query = query.replace("?", (i) => `$${i}`);
+      const result = await pool.query(query, params);
+      return result.rows;
+    } else {
+      const [rows] = await (pool as any).query(query, params);
+      return rows;
+    }
+  } catch (err) {
+    console.error("[Cooler] Failed to get sessions:", err);
+    return [];
+  }
+}
+
 // Initialize flywheel system on startup
 const initializeFlywheel = async () => {
   try {
+    ensureCoolerSessionsTable();
+  } catch {
     ensureResidueDir();
     console.log("[Flywheel] System initialized");
   } catch (error) {
@@ -386,6 +496,24 @@ app.post("/api/rooms/:location/cooler/run-turn", async (req, res) => {
       generateFn
     });
     
+    // Save session to database
+    if (result.session) {
+      const utterances = result.session.utterances?.map((u: any) => ({
+        agentId: u.utterance?.speaker || "",
+        text: u.utterance?.text || "",
+        timestamp: u.utterance?.created_at || Date.now()
+      })) || [];
+      
+      saveCoolerSession(
+        result.session.id,
+        "cooler",
+        result.session.topic || topic,
+        result.session.participants || participants,
+        utterances,
+        { location, turnCount: result.session.utterances?.length || 0 }
+      );
+    }
+    
     res.json({
       turnResult: result.turnResult,
       sessionId: result.session.id,
@@ -462,6 +590,35 @@ app.get("/api/cooler/sessions/list", async (req, res) => {
   } catch (error) {
     console.error("Error listing cooler sessions:", error);
     res.status(500).json({ error: "Failed to list sessions" });
+  }
+});
+
+// Get sessions from database (cooler or scrum)
+app.get("/api/cooler/sessions/db", async (req, res) => {
+  try {
+    const sessionType = req.query.type as "cooler" | "scrum" | undefined;
+    const sessions = await getCoolerSessions(20, sessionType);
+    res.json({ sessions });
+  } catch (error) {
+    console.error("Error fetching DB sessions:", error);
+    res.status(500).json({ error: "Failed to fetch sessions from database" });
+  }
+});
+
+// Get single session details from database
+app.get("/api/cooler/sessions/db/:sessionId", async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const sessions = await getCoolerSessions(100);
+    const session = sessions.find((s: any) => s.session_id === sessionId);
+    if (!session) {
+      res.status(404).json({ error: "Session not found" });
+      return;
+    }
+    res.json({ session });
+  } catch (error) {
+    console.error("Error fetching session:", error);
+    res.status(500).json({ error: "Failed to fetch session" });
   }
 });
 

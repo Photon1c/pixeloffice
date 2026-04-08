@@ -129,6 +129,10 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [showScrum, setShowScrum] = useState<boolean>(false);
   const [showChat, setShowChat] = useState<boolean>(false);
   const [showEditor, setShowEditor] = useState<boolean>(false);
+  const [showConvoViewer, setShowConvoViewer] = useState<boolean>(false);
+  const [convoViewerType, setConvoViewerType] = useState<"cooler" | "scrum">("cooler");
+  const [convoSessions, setConvoSessions] = useState<any[]>([]);
+  const [selectedSession, setSelectedSession] = useState<any>(null);
   const [zoneActivity, setZoneActivity] = useState<Map<string, ZoneActivity>>(new Map());
   const [activeConversationZone, setActiveConversationZone] = useState<string | null>(null);
   const [stigmergyTraces, setStigmergyTraces] = useState<any[]>([]);
@@ -410,6 +414,25 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       }
     });
   }, [agents, agentLoopStates, tasks]);
+
+  // Fetch conversation sessions for convo viewer
+  useEffect(() => {
+    if (!showConvoViewer) return;
+    
+    const fetchSessions = async () => {
+      try {
+        const resp = await fetch(`/api/cooler/sessions/db?type=${convoViewerType}`);
+        const data = await resp.json();
+        setConvoSessions(data.sessions || []);
+      } catch (err) {
+        console.warn("Failed to fetch convo sessions", err);
+      }
+    };
+    
+    fetchSessions();
+    const interval = setInterval(fetchSessions, 15000);
+    return () => clearInterval(interval);
+  }, [showConvoViewer, convoViewerType]);
 
   // STIGMERGY: Detect Task Shadows (abandoned work)
   useEffect(() => {
@@ -724,6 +747,18 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   if (showGenealogyLab) return <GenealogyLab onNavigate={() => setShowGenealogyLab(false)} />;
   if (showAdminAssistant) return <AdminAssistant onNavigate={() => setShowAdminAssistant(false)} />;
   if (showStockForecasts) return <StockForecasts />;
+  if (showConvoViewer) {
+    return (
+      <ConvoViewer 
+        sessions={convoSessions} 
+        selectedSession={selectedSession}
+        onSelectSession={setSelectedSession}
+        type={convoViewerType}
+        onChangeType={setConvoViewerType}
+        onClose={() => setShowConvoViewer(false)} 
+      />
+    );
+  }
 
   return (
     <div style={{
@@ -1076,7 +1111,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           }}>Test SCRUM</button>
         </div>
 
-        {showParams && <Dashboard config={dashboardConfig} onUpdate={updateConfig} onOpenGenealogyLab={() => setShowGenealogyLab(true)} onOpenAdminAssistant={() => setShowAdminAssistant(true)} onOpenStockForecasts={() => setShowStockForecasts(true)} />}
+        {showParams && <Dashboard config={dashboardConfig} onUpdate={updateConfig} onOpenGenealogyLab={() => setShowGenealogyLab(true)} onOpenAdminAssistant={() => setShowAdminAssistant(true)} onOpenStockForecasts={() => setShowStockForecasts(true)} onOpenConvoViewer={() => { setConvoViewerType("cooler"); setShowConvoViewer(true); }} />}
         {showTimeTasks && <TimeTasksPanel onClose={() => setShowTimeTasks(false)} />}
         {showScrum && <ScrumPanel />}
         {showChat && <ChatOverlay onClose={() => setShowChat(false)} />}
@@ -1155,7 +1190,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 // SUB-COMPONENTS
 // ============================================================================
 
-function Dashboard({ config, onUpdate, onOpenGenealogyLab, onOpenAdminAssistant, onOpenStockForecasts }: any) {
+function Dashboard({ config, onUpdate, onOpenGenealogyLab, onOpenAdminAssistant, onOpenStockForecasts, onOpenConvoViewer }: any) {
   return (
     <div style={styles.subPanel}>
       {LAB_MODE && (
@@ -1181,6 +1216,7 @@ function Dashboard({ config, onUpdate, onOpenGenealogyLab, onOpenAdminAssistant,
           <button style={styles.secondaryBtn} onClick={onOpenGenealogyLab}>Genealogy Lab</button>
           <button style={styles.secondaryBtn} onClick={onOpenAdminAssistant}>Admin Assistant</button>
           <button style={styles.secondaryBtn} onClick={onOpenStockForecasts}>Stock Forecasts</button>
+          <button style={styles.secondaryBtn} onClick={onOpenConvoViewer}>Convo Viewer</button>
         </>
       )}
     </div>
@@ -1962,3 +1998,145 @@ const styles: Record<string, React.CSSProperties> = {
   modelStatus: { display: 'flex', alignItems: 'center', margin: '8px 0' },
   formGroup: { marginBottom: '8px' }
 };
+
+// ConvoViewer Component - displays stored cooler/scrum conversations
+function ConvoViewer({ sessions, selectedSession, onSelectSession, type, onChangeType, onClose }: {
+  sessions: any[];
+  selectedSession: any;
+  onSelectSession: (s: any) => void;
+  type: "cooler" | "scrum";
+  onChangeType: (t: "cooler" | "scrum") => void;
+  onClose: () => void;
+}) {
+  const [expandedUtterances, setExpandedUtterances] = useState<Record<number, boolean>>({});
+  
+  const toggleUtterance = (idx: number) => {
+    setExpandedUtterances(prev => ({ ...prev, [idx]: !prev[idx] }));
+  };
+  
+  const parseUtterances = (session: any) => {
+    try {
+      if (typeof session.utterances === 'string') {
+        return JSON.parse(session.utterances);
+      }
+      return session.utterances || [];
+    } catch {
+      return [];
+    }
+  };
+  
+  const formatDate = (date: any) => {
+    if (!date) return "Unknown";
+    try {
+      return new Date(date).toLocaleString();
+    } catch {
+      return String(date);
+    }
+  };
+  
+  return (
+    <div style={{ 
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, 
+      background: '#0a0a12', zIndex: 1000, overflow: 'auto',
+      padding: '20px'
+    }}>
+      <div style={{ maxWidth: '900px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <h2 style={{ color: '#4ecdc4', margin: 0 }}>💬 Convo Viewer</h2>
+          <button onClick={onClose} style={{ background: '#2a2a3a', border: '1px solid #4ecdc4', color: '#4ecdc4', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer' }}>✕ Close</button>
+        </div>
+        
+        <div style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+          <button 
+            onClick={() => onChangeType("cooler")}
+            style={{ 
+              background: type === 'cooler' ? '#4ecdc4' : '#2a2a3a', 
+              color: type === 'cooler' ? '#000' : '#4ecdc4',
+              border: '1px solid #4ecdc4', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer'
+            }}
+          >
+            Cooler
+          </button>
+          <button 
+            onClick={() => onChangeType("scrum")}
+            style={{ 
+              background: type === 'scrum' ? '#feca57' : '#2a2a3a', 
+              color: type === 'scrum' ? '#000' : '#feca57',
+              border: '1px solid #feca57', padding: '8px 16px', borderRadius: '4px', cursor: 'pointer'
+            }}
+          >
+            Scrum
+          </button>
+        </div>
+        
+        {sessions.length === 0 ? (
+          <div style={{ color: '#808090', textAlign: 'center', padding: '40px' }}>
+            No {type} sessions found. Run some conversations first!
+          </div>
+        ) : !selectedSession ? (
+          <div style={{ display: 'grid', gap: '10px' }}>
+            {sessions.slice(0, 20).map((session: any, idx: number) => (
+              <div 
+                key={idx}
+                onClick={() => onSelectSession(session)}
+                style={{ 
+                  background: '#1a1a2a', border: '1px solid #2a2a3a', padding: '12px', borderRadius: '6px', 
+                  cursor: 'pointer', transition: 'border-color 0.2s'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.borderColor = '#4ecdc4'}
+                onMouseLeave={(e) => e.currentTarget.style.borderColor = '#2a2a3a'}
+              >
+                <div style={{ fontSize: '12px', color: '#4ecdc4', marginBottom: '4px' }}>{session.topic || "Untitled"}</div>
+                <div style={{ fontSize: '10px', color: '#606070' }}>
+                  {session.participants?.join?.(", ") || "No participants"} • {formatDate(session.created_at)}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div>
+            <button onClick={() => onSelectSession(null)} style={{ background: '#2a2a3a', border: 'none', color: '#4ecdc4', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}>
+              ← Back to list
+            </button>
+            
+            <div style={{ background: '#1a1a2a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+              <div style={{ fontSize: '14px', color: '#4ecdc4', marginBottom: '8px' }}>{selectedSession.topic || "Untitled"}</div>
+              <div style={{ fontSize: '11px', color: '#606070' }}>
+                Type: {selectedSession.session_type} • Created: {formatDate(selectedSession.created_at)} • Updated: {formatDate(selectedSession.updated_at)}
+              </div>
+            </div>
+            
+            <div style={{ display: 'grid', gap: '8px' }}>
+              {parseUtterances(selectedSession).map((utterance: any, idx: number) => (
+                <div 
+                  key={idx}
+                  style={{ 
+                    background: '#1a1a2a', border: '1px solid #2a2a3a', borderRadius: '6px', padding: '12px'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '11px', color: '#feca57', fontWeight: 'bold' }}>{utterance.agentId || "Unknown"}</span>
+                    <span style={{ fontSize: '10px', color: '#404050' }}>{formatDate(utterance.timestamp)}</span>
+                  </div>
+                  <div style={{ fontSize: '12px', color: '#a0a0b0', marginTop: '6px' }}>
+                    {utterance.text?.length > 100 && !expandedUtterances[idx] 
+                      ? utterance.text.slice(0, 100) + "..." 
+                      : utterance.text || "(no text)"}
+                    {utterance.text?.length > 100 && (
+                      <button 
+                        onClick={() => toggleUtterance(idx)}
+                        style={{ background: 'none', border: 'none', color: '#4ecdc4', cursor: 'pointer', marginLeft: '8px', fontSize: '10px' }}
+                      >
+                        {expandedUtterances[idx] ? "collapse" : "expand"}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
