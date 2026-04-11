@@ -2,6 +2,10 @@
 
 This index tracks the implementation status of core features and recent upgrades in the Pixel Office environment.
 
+## Currently Active Docs
+- [ghost_executive.md](./ghost_executive.md) - User role concept
+- [onboarding_models.md](./onboarding_models.md) - Model reference
+
 ## 🟢 Core Infrastructure
 - [x] **Live Server (Node/Express)** - Unified backend for API and socket management ✅
 - [x] **Vite Frontend** - High-performance React + Canvas engine ✅
@@ -30,7 +34,7 @@ This index tracks the implementation status of core features and recent upgrades
 - [x] **Lab Tools Section** - Gated access to Terminal, Sherlock CS, and specialized labs ✅
 - [x] **Protected Links** - External tool links restricted to authorized lab sessions ✅
 
-## 🛠️ Maintenance & Delegation Features (April 2026)
+## 🛠️ Maintenance & Delegation Features
 - [x] **Favicon Support** - Character-based favicon to prevent 404s ✅
 - [x] **Automated Data Directory Management** - Auto-creation of data paths ✅
 - [x] **Handoff API** - Endpoint for local agent definitions and states ✅
@@ -39,7 +43,17 @@ This index tracks the implementation status of core features and recent upgrades
 - [x] **Office Status Panel** - Lab Mode panel showing task shadows & social activity ✅
 - [x] **Sleep Mode** - Reduces agent movement & thought bubbles for rest periods ✅
 - [x] **GitHub Workflow Visualization** - 4-step pipeline animation on FrontDesk card ✅
-- [x] **Updated Local Models** - ~~Gemma 4 (E2B) for clerk/receptionist agents~~ (removed 2026-04-03 due to RAM limits on Hostinger VPS) and z-ai/glm4.7 for NVIDIA integration ✅
+- [x] **Updated Local Models** - z-ai/glm4.7 for NVIDIA integration ✅
+
+## 📊 Observability (April 8, 2026)
+- [x] **Prometheus Metrics Endpoint** - `/metrics` on port 4173 scraped by Alloy ✅
+- [x] **Grafana Integration** - Metrics sent to Grafana Cloud via Alloy ✅
+- [x] **HTTP Request Metrics** - `pixel_office_http_requests_total`, `pixel_office_http_request_duration_seconds` ✅
+- [x] **LLM Request Counter** - `pixel_office_llm_requests_total` by provider/model ✅
+- [x] **Loop Detection Gauge** - `pixel_office_loop_detection` per agent ✅
+- [x] **Stigmergy Deposit Counter** - `pixel_office_stigmergy_deposit_total` by type/status ✅
+- [x] **Cooler Run-Turn Counter** - `pixel_office_cooler_run_turn_total` by location/status ✅
+- [x] **Desk Stigmergy Gauges** - `pixel_office_desk_stigmergy` with heat types ✅
 
 ---
-*Last Updated: April 5, 2026*
+*Last Updated: April 8, 2026*

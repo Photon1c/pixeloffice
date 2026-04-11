@@ -25,7 +25,9 @@ export async function nvidiaChat(
   options: NvidiaChatOptions = {}
 ): Promise<{ content: string; raw: any }> {
   const apiKey = process.env.NVIDIA_API_KEY;
-  const defaultModel = process.env.NVIDIA_MODEL_ID || "z-ai/glm4.7";
+  // Best performer from HR benchmarks: Kimi K2 (5/5 passed, avg 1571ms)
+  // Other good options: Phi-3 Mini, Gemma 7B, Solar 10.7B (all 5/5, ~1600-1700ms)
+  const defaultModel = process.env.NVIDIA_MODEL_ID || "moonshotai/kimi-k2-instruct-0905";
   const model = options.model || defaultModel;
 
   if (!apiKey) {

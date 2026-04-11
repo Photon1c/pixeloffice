@@ -1,20 +1,20 @@
 [
   {
-    "id": "trace-1775616932727-793",
+    "id": "trace-1775928261668-128",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
-    "roomId": "kitchen",
-    "created_at": "2026-04-08T02:55:32.727Z",
-    "expires_at": "2026-04-08T03:05:32.727Z"
+    "roomId": "warRoom",
+    "created_at": "2026-04-11T17:24:21.668Z",
+    "expires_at": "2026-04-11T17:34:21.668Z"
   },
   {
-    "id": "trace-1775617245788-846",
+    "id": "trace-1775928585655-657",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
-    "roomId": "kitchen",
-    "created_at": "2026-04-08T03:00:45.788Z",
-    "expires_at": "2026-04-08T03:10:45.788Z"
+    "roomId": "warRoom",
+    "created_at": "2026-04-11T17:29:45.655Z",
+    "expires_at": "2026-04-11T17:39:45.655Z"
   }
 ]

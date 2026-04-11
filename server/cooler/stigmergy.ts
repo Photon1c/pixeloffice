@@ -116,11 +116,16 @@ export function getAgentWeightsWithShadows(agentIds: string[]): Map<string, numb
   
   return weights;
 }
-const DEFAULTS = {
+const DEFAULTS: Record<string, { decayMs: number }> = {
   review_heat: { decayMs: 15 * 60 * 1000 },
   task_shadow: { decayMs: 10 * 60 * 1000 },
   social_potential: { decayMs: 5 * 60 * 1000 },
+  loop_heat: { decayMs: 8 * 60 * 1000 },
+  observer_attention: { decayMs: 10 * 60 * 1000 },
+  speech_activity: { decayMs: 5 * 60 * 1000 },
 };
+
+const DEFAULT_DECAY_MS = 5 * 60 * 1000;
 
 function ensureDataDir() {
   const dir = path.dirname(TRACES_FILE);
@@ -150,7 +155,8 @@ export function depositTrace(trace: Partial<StigmergyTrace>) {
   if (!trace.type) return null;
   
   const now = new Date();
-  const decay = DEFAULTS[trace.type].decayMs;
+  const decayConfig = DEFAULTS[trace.type] || { decayMs: DEFAULT_DECAY_MS };
+  const decay = decayConfig.decayMs;
   const expires = new Date(now.getTime() + (trace.metadata?.ttl || decay));
 
   // Deduplication: don't deposit if same type+agent+room exists within cooldown period

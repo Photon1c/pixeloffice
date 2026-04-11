@@ -15,6 +15,16 @@ const PORT = process.env.PORT || 4173;
 app.use(cors());
 app.use(express.json());
 
+// Serve static files from public directory
+const PUBLIC_DIR = path.resolve(__dirname, "../../public");
+app.use(express.static(PUBLIC_DIR));
+
+// Model Health Dashboard page
+app.get("/model-health", (_req, res) => {
+  const htmlPath = path.join(process.cwd(), "public", "model-health.html");
+  res.sendFile(htmlPath);
+});
+
 // Serve available Ollama models
 app.get("/api/ollama/models", async (_req, res) => {
   try {
@@ -166,6 +176,35 @@ async function ensureCoolerSessionsTable() {
   }
 }
 
+function updateIndexFile(dirPath: string, filename: string, title: string) {
+  try {
+    const indexPath = path.join(dirPath, "index.md");
+    let content = "";
+    
+    if (fs.existsSync(indexPath)) {
+      content = fs.readFileSync(indexPath, "utf-8");
+    } else {
+      content = "# Index\n\n";
+    }
+    
+    // Check if entry already exists
+    const entryLink = `- [${title}](./${filename})`;
+    if (!content.includes(entryLink)) {
+      // Add entry after the title line
+      const lines = content.split("\n");
+      const insertIdx = lines.findIndex(l => l.startsWith("# "));
+      if (insertIdx !== -1) {
+        lines.splice(insertIdx + 1, 0, "", entryLink);
+        content = lines.join("\n");
+        fs.writeFileSync(indexPath, content, "utf-8");
+        console.log(`[Index] Updated ${indexPath}`);
+      }
+    }
+  } catch (err) {
+    console.error(`[Index] Failed to update ${dirPath}/index.md:`, err);
+  }
+}
+
 async function saveCoolerSession(
   sessionId: string,
   sessionType: "scrum" | "cooler",
@@ -236,11 +275,10 @@ async function getCoolerSessions(limit = 20, sessionType?: "scrum" | "cooler") {
 const initializeFlywheel = async () => {
   try {
     ensureCoolerSessionsTable();
-  } catch {
+  } catch (err) {
     ensureResidueDir();
     console.log("[Flywheel] System initialized");
-  } catch (error) {
-    console.error("[Flywheel] Initialization error:", error);
+    console.error("[Flywheel] Initialization error:", err);
   }
 };
 
@@ -286,6 +324,27 @@ const llmRequestsTotal = new client.Counter({
   name: "pixel_office_llm_requests_total",
   help: "Total number of LLM requests",
   labelNames: ["provider", "model"],
+  registers: [register]
+});
+
+const stigmergyDepositTotal = new client.Counter({
+  name: "pixel_office_stigmergy_deposit_total",
+  help: "Total number of stigmergy deposits",
+  labelNames: ["type", "status"],
+  registers: [register]
+});
+
+const coolerRunTurnTotal = new client.Counter({
+  name: "pixel_office_cooler_run_turn_total",
+  help: "Total number of cooler run-turn requests",
+  labelNames: ["location", "status"],
+  registers: [register]
+});
+
+const loopDetectionGauge = new client.Gauge({
+  name: "pixel_office_loop_detection",
+  help: "Loop detection status per agent (0=healthy, 1=looping)",
+  labelNames: ["agent_id", "agent_name"],
   registers: [register]
 });
 
@@ -442,6 +501,11 @@ setInterval(() => {
     deskStigmergyGauge.set({ desk_id: deskId, heat_type: "speechActivity" }, Math.min(1, Math.max(0, state.speechActivity)));
     deskStigmergyGauge.set({ desk_id: deskId, heat_type: "taskShadow" }, Math.min(1, Math.max(0, state.taskShadow)));
     deskStigmergyGauge.set({ desk_id: deskId, heat_type: "observerAttention" }, Math.min(1, Math.max(0, state.observerAttention)));
+    
+    // Also update loop detection gauge (1 = looping, 0 = healthy)
+    const agentId = deskId.replace("desk-", "agent-");
+    const isLooping = state.loopHeat > 0.5 ? 1 : 0;
+    loopDetectionGauge.set({ agent_id: agentId, agent_name: deskId }, isLooping);
   });
   
   // Update stigmergy trace counts
@@ -456,8 +520,18 @@ setInterval(() => {
 }, 15000);
 
 import { depositTrace, getActiveTraces, calculateSocialPotential, getAgentWeightsWithShadows } from "./cooler/stigmergy.js";
+
+function selectWeightedParticipants(participants: string[], count: number): string[] {
+  if (participants.length <= count) return participants;
+  const weights = getAgentWeightsWithShadows(participants);
+  const weighted = participants.map(p => ({ name: p, weight: weights.get(p.toLowerCase().replace(/ /g, "-")) || 1 }));
+  weighted.sort((a, b) => b.weight - a.weight);
+  return weighted.slice(0, count).map(w => w.name);
+}
 import { getActiveHeat } from "./cooler/reviewHeat.js";
 import { createScrumSession, advanceScrumSession, type ScrumSession } from "./scrum/scrumController.js";
+import { runRoomTurn, exportRoomSession } from "./services/coolerTalkService.js";
+import { generateFn } from "./services/llmGenerateFn.js";
 
 let currentScrumSession: ScrumSession | null = null;
 
@@ -475,11 +549,12 @@ app.use((req, res, next) => {
 
 // Cooler Talk API Routes
 app.post("/api/rooms/:location/cooler/run-turn", async (req, res) => {
+  const { location } = req.params;
   try {
-    const { location } = req.params;
     let { topic, participants, userMessage } = req.body;
     
     if (!location) {
+      coolerRunTurnTotal.inc({ location: "unknown", status: "400" });
       return res.status(400).json({ error: "Location is required" });
     }
     
@@ -514,6 +589,7 @@ app.post("/api/rooms/:location/cooler/run-turn", async (req, res) => {
       );
     }
     
+    coolerRunTurnTotal.inc({ location, status: "200" });
     res.json({
       turnResult: result.turnResult,
       sessionId: result.session.id,
@@ -523,8 +599,78 @@ app.post("/api/rooms/:location/cooler/run-turn", async (req, res) => {
       assignments: result.assignments,
       dialogues: result.dialogues
     });
+    
+    // Save markdown file for the session
+    try {
+      let exportData = exportRoomSession(location);
+      console.log(`[CoolerTalk] exportRoomSession(${location}) returned:`, exportData ? "data" : "null");
+      console.log(`[CoolerTalk] result.session.id:`, result.session.id);
+      
+      // If exportData is null but we have a session, try to get markdown from result
+      if (!exportData || !exportData.markdown) {
+        // Build markdown from result data
+        const utterances = result.session.utterances || [];
+        const md = utterances.map((u: any) => 
+          `- **${u.utterance?.speaker || 'Unknown'}**: ${u.utterance?.text || ''}`
+        ).join('\n');
+        
+        exportData = {
+          markdown: `## Conversation\n\n${md}\n\n**Participants:** ${(result.session.participants || []).join(', ')}\n**Topic:** ${result.session.topic || topic || 'General discussion'}`,
+          json: result.session
+        };
+        console.log(`[CoolerTalk] Built markdown from result`);
+      }
+      
+      if (exportData && exportData.markdown) {
+        const dateStr = new Date().toISOString().split('T')[0];
+        const sessionId = result.session.id;
+        const filename = `${dateStr}_cooler-${sessionId}.md`;
+        
+        // Save to docs/cooler folder
+        const coolerDocPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler");
+        const opencodeDocPath = path.resolve("/home/sherlockhums/.openclaw/workspace-main/docs/opencode");
+        
+        // Ensure directories exist
+        [opencodeDocPath, coolerDocPath].forEach(dir => {
+          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        });
+        
+        const mdContent = exportData.markdown;
+        const timestamp = new Date().toISOString();
+        const frontmatter = `---
+title: "Cooler Talk - ${result.session.topic || location}"
+date: "${timestamp}"
+participants: "${(result.session.participants || []).join(', ')}"
+location: "${location}"
+session_id: "${sessionId}"
+---
+
+${mdContent}
+
+---
+*Generated from Pixel Office Cooler Talk - ${timestamp}*
+`;
+        
+        // Write to opencode docs
+        const opencodePath = path.join(opencodeDocPath, filename);
+        fs.writeFileSync(opencodePath, frontmatter, "utf-8");
+        console.log(`[CoolerTalk] Saved markdown to ${opencodePath}`);
+        
+        // Write to docs/cooler
+        const coolerPath = path.join(coolerDocPath, filename);
+        fs.writeFileSync(coolerPath, frontmatter, "utf-8");
+        console.log(`[CoolerTalk] Saved markdown to ${coolerPath}`);
+        
+        // Update index.md files
+        updateIndexFile(opencodeDocPath, filename, result.session.topic || `Cooler Talk - ${location}`);
+        updateIndexFile(coolerDocPath, filename, result.session.topic || `Cooler Talk - ${location}`);
+      }
+    } catch (mdErr) {
+      console.error("[CoolerTalk] Failed to save markdown:", mdErr);
+    }
   } catch (error) {
     console.error("Error in cooler talk run-turn:", error);
+    coolerRunTurnTotal.inc({ location: location || "unknown", status: "500" });
     res.status(500).json({ error: "Failed to run cooler turn" });
   }
 });
@@ -654,24 +800,58 @@ app.post("/api/scrum/test", async (req, res) => {
     const { session, stageResult } = await advanceScrumSession(currentScrumSession);
     currentScrumSession = session;
     
-    // Save conversation transcript to cooler_talk_log.md
-    const logPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/cooler_talk_log.md");
-    const timestamp = new Date().toISOString();
-    const logEntry = `## ${timestamp} - Test SCRUM: ${topic}\n\n**Participants:** ${participants.join(", ")}\n\n**Source Session:** ${coolerSessionId || "random"}\n\n**Stage Result:**\n- Stage: ${stageResult?.stage || "N/A"}\n- Summary: ${stageResult?.summary || "N/A"}\n\n---\n\n`;
+    // Save conversation transcript to docs/scrum
+    const scrumDocPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/scrum");
+    if (!fs.existsSync(scrumDocPath)) fs.mkdirSync(scrumDocPath, { recursive: true });
     
+    const dateStr = new Date().toISOString().split('T')[0];
+    const sessionId = session?.id || `scrum-${Date.now()}`;
+    const filename = `${dateStr}_scrum-${sessionId}.md`;
+    const timestamp = new Date().toISOString();
+    
+    const frontmatter = `---
+title: "Test SCRUM: ${topic}"
+date: "${timestamp}"
+participants: "${participants.join(', ')}"
+source_session: "${coolerSessionId || 'random'}"
+---
+
+## ${timestamp}
+
+**Participants:** ${participants.join(", ")}
+
+**Source Session:** ${coolerSessionId || "random"}
+
+**Stage:** ${stageResult?.stage || "N/A"}
+**Summary:** ${stageResult?.summary || "N/A"}
+
+---
+*Generated from Pixel Office Test SCRUM*
+`;
+    
+    const scrumPath = path.join(scrumDocPath, filename);
     try {
-      let existingContent = "";
-      if (fs.existsSync(logPath)) {
-        existingContent = fs.readFileSync(logPath, "utf-8");
-        // Remove trailing newlines to avoid duplicates
-        existingContent = existingContent.replace(/\n+$/, "");
-      } else {
-        existingContent = "# Cooler Talk Log\n\n";
+      fs.writeFileSync(scrumPath, frontmatter, "utf-8");
+      console.log(`[Test SCRUM] Saved markdown to ${scrumPath}`);
+    } catch (err: any) {
+      console.error(`[Test SCRUM] Failed to save to ${scrumPath}:`, err.message);
+    }
+    
+    // Also save to opencode docs
+    const opencodeDocPath = path.resolve("/home/sherlockhums/.openclaw/workspace-main/docs/opencode");
+    if (!fs.existsSync(opencodeDocPath)) {
+      try {
+        fs.mkdirSync(opencodeDocPath, { recursive: true });
+      } catch (err: any) {
+        console.error(`[Test SCRUM] Failed to create opencode dir:`, err.message);
       }
-      fs.writeFileSync(logPath, existingContent + "\n" + logEntry, "utf-8");
-      console.log("[Test SCRUM] Saved transcript to cooler_talk_log.md");
-    } catch (logErr) {
-      console.error("[Test SCRUM] Failed to save log:", logErr);
+    }
+    const opencodePath = path.join(opencodeDocPath, filename);
+    try {
+      fs.writeFileSync(opencodePath, frontmatter, "utf-8");
+      console.log(`[Test SCRUM] Saved markdown to ${opencodePath}`);
+    } catch (err: any) {
+      console.error(`[Test SCRUM] Failed to save to ${opencodePath}:`, err.message);
     }
     
     // Add test metadata
@@ -685,10 +865,33 @@ app.post("/api/scrum/test", async (req, res) => {
     
     console.log(`[Test SCRUM] Created: ${testOutput.sourceTopic}, participants: ${participants.join(", ")}`);
     
+    // Map roles to actual agent IDs
+    const roleToAgentId: Record<string, string> = {
+      "receptionist": "frontdesk",
+      "clerk": "openclaw",
+      "custodian": "ironclaw",
+      "specialist": "zeroclaw",
+      "archivist": "hermitclaw",
+      "executive": "leslieclaw",
+    };
+    
+    // Generate conference room positions for agents
+    const scrumAssignments = participants.slice(0, 8).map((name, idx) => {
+      // Try to find matching agent by role name or use the name directly
+      const agentId = roleToAgentId[name.toLowerCase()] || name.toLowerCase().replace(/ /g, "-");
+      return {
+        agentId,
+        name,
+        targetX: CONFERENCE_ROOM_POSITIONS[idx].x,
+        targetY: CONFERENCE_ROOM_POSITIONS[idx].y,
+      };
+    });
+    
     res.json({
       session,
       stageResult,
       testOutput,
+      assignments: scrumAssignments,
       message: `Test SCRUM started from cooler session: ${topic}`
     });
   } catch (error: any) {
@@ -711,17 +914,21 @@ app.post("/api/stigmergy/deposit", (req, res) => {
   try {
     const { type, agentId, intensity, topic, roomId, x, y, metadata } = req.body;
     if (!type) {
+      stigmergyDepositTotal.inc({ type: "unknown", status: "400" });
       res.status(400).json({ error: "Missing required field: type" });
       return;
     }
     const trace = depositTrace({ type, agentId, intensity, topic, roomId, x, y, metadata });
     if (!trace) {
+      stigmergyDepositTotal.inc({ type, status: "400" });
       res.status(400).json({ error: "Failed to deposit trace: invalid type" });
       return;
     }
+    stigmergyDepositTotal.inc({ type, status: "200" });
     res.json({ success: true, trace });
   } catch (err: any) {
     console.error("[Stigmergy] Deposit error:", err);
+    stigmergyDepositTotal.inc({ type: "unknown", status: "500" });
     res.status(500).json({ error: err.message || "Failed to deposit trace" });
   }
 });
@@ -729,7 +936,8 @@ app.post("/api/stigmergy/deposit", (req, res) => {
 // NVIDIA Integration Test Endpoint
 app.get("/api/test/nvidia", async (req, res) => {
   const apiKey = process.env.NVIDIA_API_KEY;
-  const modelId = process.env.NVIDIA_MODEL_ID || "deepseek-ai/deepseek-v3.1";
+  // Best performer from HR benchmarks: Kimi K2
+  const modelId = process.env.NVIDIA_MODEL_ID || "moonshotai/kimi-k2-instruct-0905";
   
   if (!apiKey) {
     res.json({ 
@@ -761,6 +969,93 @@ app.get("/api/test/nvidia", async (req, res) => {
       error: error.message.substring(0, 200)
     });
   }
+});
+
+// Model Health Dashboard Endpoint
+app.get("/api/models/health", async (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.setTimeout(30000);
+  
+  const models: Array<{
+    name: string;
+    id: string;
+    provider: string;
+    status: "online" | "lagging" | "offline";
+    latency?: number;
+    lastCheck: string;
+    error?: string;
+  }> = [];
+  
+  const now = new Date().toISOString();
+  
+  // Check Ollama models (just list, no latency check to avoid slowdowns)
+  try {
+    const ollamaRes = await fetch("http://localhost:11434/api/tags", { method: "GET" });
+    if (ollamaRes.ok) {
+      const data = await ollamaRes.json();
+      for (const model of data.models || []) {
+        models.push({
+          name: model.name.replace(":latest", "").split(":")[0],
+          id: model.name,
+          provider: "ollama",
+          status: "online",
+          latency: 0,
+          lastCheck: now,
+        });
+      }
+    }
+  } catch (e) {
+    console.warn("[ModelHealth] Ollama not available:", e);
+  }
+  
+  // Check NVIDIA models
+  const nvidiaModels = [
+    { name: "Kimi K2", id: "moonshotai/kimi-k2-instruct-0905" },
+    { name: "DeepSeek V3.1", id: "deepseek-ai/deepseek-v3.1-terminus" },
+    { name: "DeepSeek V3.2", id: "deepseek-ai/deepseek-v3.2" },
+    { name: "Mistral Large 3", id: "mistralai/mistral-large-3-675b-instruct-2512" },
+    { name: "Gemma 7B", id: "google/gemma-7b" },
+    { name: "Phi-3 Mini", id: "microsoft/phi-3-mini-128k-instruct" },
+    { name: "Solar 10.7B", id: "upstage/solar-10.7b-instruct" },
+  ];
+  
+  const apiKey = process.env.NVIDIA_API_KEY;
+  if (apiKey) {
+    // Just list NVIDIA models as available since API key is configured
+    // Individual model latency checks are expensive, so we just mark them available
+    for (const model of nvidiaModels) {
+      models.push({
+        name: model.name,
+        id: model.id,
+        provider: "nvidia",
+        status: "online",
+        latency: 0,
+        lastCheck: now,
+      });
+    }
+  } else {
+    for (const model of nvidiaModels) {
+      models.push({
+        name: model.name,
+        id: model.id,
+        provider: "nvidia",
+        status: "offline",
+        lastCheck: now,
+        error: "NVIDIA_API_KEY not configured",
+      });
+    }
+  }
+  
+  res.json({
+    timestamp: now,
+    summary: {
+      total: models.length,
+      online: models.filter(m => m.status === "online").length,
+      lagging: models.filter(m => m.status === "lagging").length,
+      offline: models.filter(m => m.status === "offline").length,
+    },
+    models,
+  });
 });
 
 app.get("/api/stigmergy/review-heat", (req, res) => {
@@ -1454,23 +1749,53 @@ async function runAutoCoolerSession(): Promise<void> {
     
     console.log(`[AutoCooler] Session complete. ${result.participantCount} participants, topic: "${topic}"`);
     
-    // Save session transcript to cooler_talk_log.md
-    const logPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/cooler_talk_log.md");
-    const timestamp = new Date().toISOString();
-    const logEntry = `## ${timestamp} - Auto Cooler Session\n\n**Topic:** ${topic}\n\n**Participants:** ${selectedParticipants.join(", ")}\n\n**Participant Count:** ${result.participantCount}\n\n---\n\n`;
+    // Save session transcript to docs/cooler
+    const coolerDocPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler");
+    if (!fs.existsSync(coolerDocPath)) fs.mkdirSync(coolerDocPath, { recursive: true });
     
-    try {
-      let existingContent = "";
-      if (fs.existsSync(logPath)) {
-        existingContent = fs.readFileSync(logPath, "utf-8");
-        existingContent = existingContent.replace(/\n+$/, "");
-      } else {
-        existingContent = "# Cooler Talk Log\n\n";
-      }
-      fs.writeFileSync(logPath, existingContent + "\n" + logEntry, "utf-8");
-      console.log("[AutoCooler] Saved transcript to cooler_talk_log.md");
-    } catch (logErr) {
-      console.error("[AutoCooler] Failed to save log:", logErr);
+    const dateStr = new Date().toISOString().split('T')[0];
+    const sessionId = result.session?.id || `auto-${Date.now()}`;
+    const filename = `${dateStr}_cooler-${sessionId}.md`;
+    const timestamp = new Date().toISOString();
+    
+    const exportData = exportRoomSession("kitchen");
+    if (exportData && exportData.markdown) {
+      const frontmatter = `---
+title: "Auto Cooler Session"
+date: "${timestamp}"
+topic: "${topic}"
+participants: "${selectedParticipants.join(', ')}"
+---
+
+${exportData.markdown}
+
+---
+*Generated from Pixel Office Auto Cooler*
+`;
+      const coolerPath = path.join(coolerDocPath, filename);
+      fs.writeFileSync(coolerPath, frontmatter, "utf-8");
+      console.log(`[AutoCooler] Saved markdown to ${coolerPath}`);
+    } else {
+      // Fallback: just save the basic entry
+      const logEntry = `---
+title: "Auto Cooler Session"
+date: "${timestamp}"
+topic: "${topic}"
+participants: "${selectedParticipants.join(', ')}"
+---
+
+**Topic:** ${topic}
+
+**Participants:** ${selectedParticipants.join(", ")}
+
+**Participant Count:** ${result.participantCount}
+
+---
+*Generated from Pixel Office Auto Cooler*
+`;
+      const coolerPath = path.join(coolerDocPath, filename);
+      fs.writeFileSync(coolerPath, logEntry, "utf-8");
+      console.log(`[AutoCooler] Saved markdown to ${coolerPath}`);
     }
     
     // Trigger automatic Scrum after cooler session (if enabled)
@@ -1757,6 +2082,32 @@ app.post("/api/chat", async (req, res) => {
     
     const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
     
+    // Check if this is a NVIDIA model (by model ID pattern)
+    const isNvidiaModel = selectedModel.includes("/") && !selectedModel.includes(":");
+    
+    if (isNvidiaModel) {
+      // Route to NVIDIA API
+      try {
+        const { nvidiaChat } = await import("./llm/nvidiaClient.js");
+        const result = await nvidiaChat([
+          { role: "system", content: "You are a helpful assistant at Pixel Office." },
+          ...(history || []).slice(-10).map((m: any) => ({ role: m.role, content: m.content })),
+          { role: "user", content: message }
+        ], { 
+          model: selectedModel,
+          maxTokens: 256
+        });
+        
+        trackLlmRequest("nvidia", selectedModel);
+        res.json({ reply: result.content, model: selectedModel });
+        return;
+      } catch (nvidiaErr: any) {
+        console.error("NVIDIA chat error:", nvidiaErr);
+        res.json({ reply: `NVIDIA model failed: ${nvidiaErr.message}. Please try a different model.`, model: selectedModel });
+        return;
+      }
+    }
+    
     // Check if model is likely a larger model that needs more time
     const isLargeModel = selectedModel.includes("7b") || selectedModel.includes("8b") || selectedModel.includes("70b");
     const timeoutMs = isLargeModel ? 60000 : 30000; // 60s for large models, 30s otherwise
@@ -1849,17 +2200,11 @@ app.post("/api/agent-chat", async (req, res) => {
 
     const selectedModel = model || "gemma-3-1b-it";
     
-    // If NVIDIA model selected, use routeChat
-    const isNvidiaModel = selectedModel.startsWith("nvidia-");
+    // If NVIDIA model selected (detected by / in model ID), use routeChat
+    const isNvidiaModel = selectedModel.includes("/") && !selectedModel.includes(":");
     if (isNvidiaModel && process.env.NVIDIA_API_KEY) {
       try {
         const { routeChat } = await import("./llm/llmRouter.js");
-        
-        const nvidiaModelMap: Record<string, string> = {
-          "nvidia-deepseek": "deepseek-ai/deepseek-v3.1",
-          "nvidia-glm4.7": "z-ai/glm4.7",
-        };
-        const nvidiaModelId = nvidiaModelMap[selectedModel] || "deepseek-ai/deepseek-v3.1";
         
         const rolePrompts: Record<string, string> = {
           receptionist: "You are FrontDesk, a friendly receptionist at Pixel Office.",
@@ -1874,12 +2219,12 @@ app.post("/api/agent-chat", async (req, res) => {
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
         ];
-        const result = await routeChat(messages, { maxTokens: 1024, model: nvidiaModelId });
+        const result = await routeChat(messages, { maxTokens: 1024, model: selectedModel });
         
         // Track LLM request
-        trackLlmRequest("nvidia", nvidiaModelId);
+        trackLlmRequest("nvidia", selectedModel);
         
-        return res.json({ reply: result.content, model: `nvidia (${nvidiaModelId})` });
+        return res.json({ reply: result.content, model: `nvidia (${selectedModel})` });
       } catch (nvidiaErr: any) {
         console.error("NVIDIA agent-chat error:", nvidiaErr);
         res.json({ reply: `NVIDIA error: ${nvidiaErr.message || 'failed'}. Try a local model instead.`, model: "nvidia-error" });
@@ -2383,6 +2728,18 @@ app.post("/api/agentlightning/train", async (req, res) => {
     });
   }
 });
+
+// Conference Room positions for SCRUM (col 3, row 0 - two doors right of Sherlock)
+const CONFERENCE_ROOM_POSITIONS = [
+  { x: 750, y: 85 },   // Chair 1 - top row
+  { x: 800, y: 85 },   // Chair 2 - top row  
+  { x: 850, y: 85 },   // Chair 3 - top row
+  { x: 750, y: 205 },  // Chair 4 - bottom row
+  { x: 800, y: 205 },  // Chair 5 - bottom row
+  { x: 850, y: 205 },  // Chair 6 - bottom row
+  { x: 740, y: 145 },  // Chair 7 - left side
+  { x: 860, y: 145 },  // Chair 8 - right side
+];
 
 // Cooler Talk Endpoint - Agents gather in kitchen for casual chat
 const KITCHEN_COOLER_POSITIONS = [

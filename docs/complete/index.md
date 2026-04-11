@@ -55,6 +55,12 @@ This index tracks historical implementations, feature-level completion status, a
   *Refs:* [opencode_cooler_to_scrum_bridge.md](./opencode_cooler_to_scrum_bridge.md) - Full implementation: schema, CLI tool, Pixel Office API, router-visualizer integration
 - [x] **Agent Workspace Editor** 🟢  
   *Refs:* [src/components/ObjectEditor.tsx](./src/components/ObjectEditor.tsx), [agent_workspace_editor_proposal.md](./agent_workspace_editor_proposal.md) - GUI for agent self-editing and proposal creation
+- [x] **Prometheus/Grafana Metrics Integration (April 8, 2026)** 🟢  
+  *Refs:* [session_summary_apple.md](./session_summary_apple.md) - Added stigmergy deposit counter, cooler run-turn counter, loop detection gauge
+- [x] **Ghost Executive Role** 🟢  
+  *Refs:* [ghost_executive.md](./ghost_executive.md) - User role concept for stigmergy-based system
+- [x] **Onboarding Models Reference** 🟢  
+  *Refs:* [onboarding_models.md](./onboarding_models.md) - Model configuration reference
 
 ## 🟡 Specialized Labs & Dashboards
 - [x] **Genealogy Lab** 🟢  
@@ -96,4 +102,4 @@ This index tracks historical implementations, feature-level completion status, a
 
 > **Resolved:** Supabase sync and 500 errors mentioned in prior docs have been addressed; current deployment uses the corrected configuration as per `docs/active/deploy_spec_netlify_supabase.md`.
 
-*Last Reviewed: April 4, 2026 – Agent Workspace Editor enhanced for agent self-editing capabilities. Local models updated to gemma4:e2b and NVIDIA default set to z-ai/glm4.7 per active documentation.*
+*Last Reviewed: April 8, 2026 – Added Prometheus/Grafana metrics integration. Session summaries consolidated.*

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { Agent, DashboardConfig, AgentStatus, AgentVisibility, Task, ZoneActivity } from "../types";
 import { LAB_MODE } from "../config/env";
+import { setupConsoleMonitor } from "../utils/consoleMonitor";
+import { StabilityMonitor } from "./StabilityMonitor";
 import GenealogyLab from "./GenealogyLab";
 import AdminAssistant from "./AdminAssistant";
 import StockForecasts from "./StockForecasts";
@@ -18,6 +20,7 @@ import {
   getMoodEmoji,
 } from "../utils/agentLogic";
 import { loadAgentCards, fetchOllamaModels, AgentCard, getAgentCardForRuntimeAgent } from "../utils/agentCards";
+import { createLogger } from "../utils/consoleMonitor";
 import {
   drawFloor,
   drawWalls,
@@ -60,14 +63,14 @@ function getKitchenPosition(agentIndex: number): { x: number; y: number } {
 
 function getConferencePosition(agentIndex: number): { x: number; y: number } {
   const positions = [
-    { x: 350, y: 95 },
-    { x: 410, y: 95 },
-    { x: 470, y: 95 },
-    { x: 350, y: 145 },
-    { x: 410, y: 145 },
-    { x: 470, y: 145 },
-    { x: 350, y: 195 },
-    { x: 410, y: 195 },
+    { x: 750, y: 85 },
+    { x: 800, y: 85 },
+    { x: 850, y: 85 },
+    { x: 750, y: 205 },
+    { x: 800, y: 205 },
+    { x: 850, y: 205 },
+    { x: 740, y: 145 },
+    { x: 860, y: 145 },
   ];
   return positions[agentIndex % positions.length];
 }
@@ -91,7 +94,14 @@ interface PixelOfficeProps {
 
 export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [loadingStatus, setLoadingStatus] = useState<string>("Initializing...");
-  console.log("[PixelOffice] Rendering, loadingStatus:", loadingStatus);
+  const log = createLogger("PixelOffice");
+  const renderLog = createLogger("Render");
+  
+  useEffect(() => {
+    setupConsoleMonitor();
+    log.info("Initializing Pixel Office");
+  }, []);
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -243,7 +253,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         const rect = container.getBoundingClientRect();
         canvas.width = rect.width;
         canvas.height = rect.height;
-        console.log("[Canvas] Size set:", rect.width, "x", rect.height);
+        renderLog.info("Canvas size set", { w: rect.width, h: rect.height });
       }
     };
     updateCanvasSize();
@@ -633,20 +643,20 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) {
-      console.log("[Render] No canvas ref");
+      log.warn("No canvas ref");
       return;
     }
     const ctx = canvas.getContext("2d");
     if (!ctx) {
-      console.log("[Render] No 2d context");
+      log.warn("No 2d context");
       return;
     }
 
-    console.log("[Render] Starting", { w: canvas.width, h: canvas.height, agents: agents.length });
+    log.info("Starting render", { w: canvas.width, h: canvas.height, agents: agents.length });
     
     // Force explicit size check
     const checkSize = () => {
-      console.log("[Canvas] Dimensions:", canvas.width, canvas.height, "client:", canvas.clientWidth, canvas.clientHeight);
+      renderLog.debug("Canvas dimensions:", { w: canvas.width, h: canvas.height, clientW: canvas.clientWidth, clientH: canvas.clientHeight });
     };
     checkSize();
 
@@ -657,7 +667,6 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     // Test rectangle
     ctx.fillStyle = "#4ecdc4";
     ctx.fillRect(canvas.width / 2 - 50, canvas.height / 2 - 50, 100, 100);
-    console.log("[Render] Test rectangle drawn");
 
     let animationFrameId: number;
     const render = (timestamp: number) => {
@@ -686,7 +695,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
       drawFloor(ctx);
       drawWalls(ctx);
-      console.log("[Render] Drew floor/walls");
+      renderLog.debug("Drew floor/walls");
       drawLobby(ctx);
       drawArchives(ctx);
       drawSpecialistSuite(ctx);
@@ -718,7 +727,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       }
 
       ctx.restore();
-      console.log("[Render] Frame complete, dims:", canvas.width, canvas.height);
+      renderLog.debug("Frame complete", { w: canvas.width, h: canvas.height });
       animationFrameId = requestAnimationFrame(render);
     };
 
@@ -1095,9 +1104,19 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               const scrumData = await scrumRes.json();
               
               console.log('[Test SCRUM] Response:', scrumData);
-              
-              // Show test output - UI already displays the result
               console.log('[Test SCRUM] Created:', scrumData.testOutput);
+              
+              // Move agents to conference room for SCRUM
+              if (scrumData.assignments && scrumData.assignments.length > 0) {
+                const assignmentMap = new Map(scrumData.assignments.map((a: any) => [a.agentId, { x: a.targetX, y: a.targetY }]));
+                setAgents(prev => prev.map(agent => {
+                  const assignment = assignmentMap.get(agent.id);
+                  if (assignment) {
+                    return { ...agent, targetX: assignment.x, targetY: assignment.y, mode: "standing" as const };
+                  }
+                  return agent;
+                }));
+              }
             } catch (err) {
               console.error('[Test SCRUM] Error:', err);
             }
@@ -1125,6 +1144,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       <div style={styles.mainContent}>
         <div style={styles.canvasWrapper} ref={containerRef}>
           <canvas ref={canvasRef} style={styles.canvas} onClick={handleCanvasClick} />
+          <StabilityMonitor visible={LAB_MODE} />
           {loadingStatus && (
             <div style={{
               position: 'absolute',
@@ -1296,18 +1316,25 @@ function AgentActionCard({ agent, card, workflowState, setWorkflowState, onClose
       .catch(err => console.log('[AgentCard] NVIDIA check failed:', err));
   }, []);
 
+  // All available NVIDIA models from benchmarks (best performers first)
+  const nvidiaModels = [
+    { id: "moonshotai/kimi-k2-instruct-0905", name: "NVIDIA Kimi K2 (Best)" },
+    { id: "microsoft/phi-3-mini-128k-instruct", name: "NVIDIA Phi-3 Mini" },
+    { id: "google/gemma-7b", name: "NVIDIA Gemma 7B" },
+    { id: "upstage/solar-10.7b-instruct", name: "NVIDIA Solar 10.7B" },
+    { id: "deepseek-ai/deepseek-v3.1-terminus", name: "NVIDIA DeepSeek V3.1" },
+    { id: "deepseek-ai/deepseek-v3.2", name: "NVIDIA DeepSeek V3.2" },
+    { id: "mistralai/mistral-large-3-675b-instruct-2512", name: "NVIDIA Mistral Large 3" },
+  ];
+
   // Add additional NVIDIA options if available globally
   if (nvidiaStatus?.available) {
-    // Avoid duplicates by checking if we already added this model
-    const hasDeepseek = availableModels.some(model => model.id === 'deepseek-ai/deepseek-v3.1-terminus');
-    const hasGlm47 = availableModels.some(model => model.id === 'z-ai/glm4.7');
-    
-    if (!hasDeepseek) {
-      availableModels.push({ id: "deepseek-ai/deepseek-v3.1-terminus", name: "NVIDIA DeepSeek v3.1 Terminus" });
-    }
-    if (!hasGlm47) {
-      availableModels.push({ id: "z-ai/glm4.7", name: "NVIDIA GLM-4.7" });
-    }
+    nvidiaModels.forEach(nvModel => {
+      const exists = availableModels.some(m => m.id === nvModel.id);
+      if (!exists) {
+        availableModels.push(nvModel);
+      }
+    });
   }
 
   // Visual pipeline steps for GitHub workflows
@@ -1833,9 +1860,15 @@ function ChatOverlay({ onClose }: { onClose: () => void }) {
 
   console.log('[Chat] nvidiaStatus:', nvidiaStatus);
   
+  // All available NVIDIA models from benchmarks (best performers first)
   const nvidiaOptions = [
-    { id: "nvidia-deepseek", name: "NVIDIA DeepSeek v3.1" },
-    { id: "nvidia-glm4.7", name: "NVIDIA GLM-4.7" },
+    { id: "moonshotai/kimi-k2-instruct-0905", name: "NVIDIA Kimi K2 (Best)" },
+    { id: "microsoft/phi-3-mini-128k-instruct", name: "NVIDIA Phi-3 Mini" },
+    { id: "google/gemma-7b", name: "NVIDIA Gemma 7B" },
+    { id: "upstage/solar-10.7b-instruct", name: "NVIDIA Solar 10.7B" },
+    { id: "deepseek-ai/deepseek-v3.1-terminus", name: "NVIDIA DeepSeek V3.1" },
+    { id: "deepseek-ai/deepseek-v3.2", name: "NVIDIA DeepSeek V3.2" },
+    { id: "mistralai/mistral-large-3-675b-instruct-2512", name: "NVIDIA Mistral Large 3" },
   ];
   const availableModels = [
     ...ollamaModels.map(m => ({ id: m.id, name: m.name.split(':')[0] })),
