@@ -1,0 +1,24 @@
+// KB Server Metrics Configuration
+// Add KB server metrics to the scrape targets
+
+prometheus.remote_write "metrics_service" {
+  endpoint {
+    url = "https://prometheus-prod-67-prod-us-west-0.grafana.net/api/prom/push"
+
+    basic_auth {
+      username = "3091448"
+      password = sys.env("GCLOUD_RW_API_KEY")
+    }
+  }
+}
+
+prometheus.scrape "local_services" {  
+  targets = [  
+    {"__address__" = "localhost:9090", "job" = "prometheus"},  
+    {"__address__" = "localhost:5006", "job" = "router_visualizer", "environment" = "vps"},  
+    {"__address__" = "localhost:4173", "job" = "pixel_office", "environment" = "vps"},
+    {"__address__" = "localhost:8787", "job" = "kb_server", "environment" = "vps"},
+    {"__address__" = "localhost:9100", "job" = "node_exporter", "environment" = "vps"},
+  ]  
+  forward_to = [prometheus.remote_write.metrics_service.receiver]  
+}

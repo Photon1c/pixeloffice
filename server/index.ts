@@ -1008,7 +1008,36 @@ app.get("/api/models/health", async (req, res) => {
     console.warn("[ModelHealth] Ollama not available:", e);
   }
   
-  // Check NVIDIA models
+  // Check NVIDIA models - fetch dynamically from NGC
+  const apiKey = process.env.NVIDIA_API_KEY;
+  if (apiKey) {
+    try {
+      const nvidiaRes = await fetch(
+        "https://integrate.api.nvidia.com/v1/models?limit=50",
+        {
+          headers: { "Authorization": `Bearer ${apiKey}` },
+          method: "GET"
+        }
+      );
+      if (nvidiaRes.ok) {
+        const nvidiaData = await nvidiaRes.json();
+        for (const model of nvidiaData.data || []) {
+          models.push({
+            name: model.id.split("/")[1] || model.id,
+            id: model.id,
+            provider: "nvidia",
+            status: "online",
+            latency: 0,
+            lastCheck: now,
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("[ModelHealth] NGC fetch failed:", e);
+    }
+  }
+  
+  // Fallback list for when no API key (still shows potential models)
   const nvidiaModels = [
     { name: "Kimi K2", id: "moonshotai/kimi-k2-instruct-0905" },
     { name: "DeepSeek V3.1", id: "deepseek-ai/deepseek-v3.1-terminus" },
@@ -1019,21 +1048,8 @@ app.get("/api/models/health", async (req, res) => {
     { name: "Solar 10.7B", id: "upstage/solar-10.7b-instruct" },
   ];
   
-  const apiKey = process.env.NVIDIA_API_KEY;
-  if (apiKey) {
-    // Just list NVIDIA models as available since API key is configured
-    // Individual model latency checks are expensive, so we just mark them available
-    for (const model of nvidiaModels) {
-      models.push({
-        name: model.name,
-        id: model.id,
-        provider: "nvidia",
-        status: "online",
-        latency: 0,
-        lastCheck: now,
-      });
-    }
-  } else {
+  // Add fallback nvidia models if no API key configured
+  if (!apiKey && models.filter(m => m.provider === "nvidia").length === 0) {
     for (const model of nvidiaModels) {
       models.push({
         name: model.name,
@@ -1726,8 +1742,23 @@ app.get("/api/time-tasks/log", async (req, res) => {
 import { getTopicForConversation, fetchNewsTopics } from "./services/newsTopics.js";
 
 let autoCoolerInterval: NodeJS.Timeout | null = null;
-const AUTO_COOLER_INTERVAL_MS = 20 * 60 * 1000; // 20 minutes
+const AUTO_COOLER_INTERVAL_MS = parseInt(process.env.AUTO_COOLER_INTERVAL_MS || "") || 5 * 60 * 1000; // 5 minutes default
+const AUTO_SCRUM_INTERVAL_MS = parseInt(process.env.AUTO_SCRUM_INTERVAL_MS || "") || 10 * 60 * 1000; // 10 minutes default
 const AUTO_SCRUM_ENABLED = process.env.AUTO_SCRUM_ENABLED === "true";
+const NIGHT_MODE_MULTIPLIER = parseFloat(process.env.NIGHT_MODE_MULTIPLIER || "") || 0.25; // 4x faster at night
+let nightModeActive = false;
+
+function getActiveInterval(baseMs: number): number {
+  return nightModeActive ? Math.floor(baseMs * NIGHT_MODE_MULTIPLIER) : baseMs;
+}
+
+// API to set night mode (called by frontend when sleep mode is toggled)
+app.post("/api/office/night-mode", async (req, res) => {
+  const { active } = req.body;
+  nightModeActive = active === true;
+  console.log(`[Office] Night mode ${nightModeActive ? 'ACTIVATED' : 'deactivated'}. Intervals: ${getActiveInterval(AUTO_COOLER_INTERVAL_MS)/1000}s (cooler), ${getActiveInterval(AUTO_SCRUM_INTERVAL_MS)/1000}s (scrum)`);
+  res.json({ ok: true, nightMode: nightModeActive });
+});
 
 async function runAutoCoolerSession(): Promise<void> {
   console.log("[AutoCooler] Starting automatic cooler session...");
@@ -1822,20 +1853,21 @@ participants: "${selectedParticipants.join(', ')}"
 
 app.post("/api/cooler/auto/start", async (req, res) => {
   if (autoCoolerInterval) {
-    res.json({ ok: true, message: "Auto-cooler already running", intervalMs: AUTO_COOLER_INTERVAL_MS });
+    res.json({ ok: true, message: "Auto-cooler already running", intervalMs: getActiveInterval(AUTO_COOLER_INTERVAL_MS) });
     return;
   }
   
   await runAutoCoolerSession();
-  autoCoolerInterval = setInterval(runAutoCoolerSession, AUTO_COOLER_INTERVAL_MS);
+  const intervalMs = getActiveInterval(AUTO_COOLER_INTERVAL_MS);
+  autoCoolerInterval = setInterval(runAutoCoolerSession, intervalMs);
   
-  console.log(`[AutoCooler] Started. Next session in ${AUTO_COOLER_INTERVAL_MS / 1000 / 60} minutes`);
+  console.log(`[AutoCooler] Started. Next session in ${intervalMs / 1000 / 60} minutes`);
   
   res.json({ 
     ok: true, 
     message: "Auto-cooler started",
-    intervalMs: AUTO_COOLER_INTERVAL_MS,
-    nextRunIn: AUTO_COOLER_INTERVAL_MS
+    intervalMs: intervalMs,
+    nextRunIn: intervalMs
   });
 });
 
@@ -1925,8 +1957,15 @@ app.get("/api/time/summary", async (req, res) => {
   }
 });
 
-// Proxy /api/kb to KB Server
+// Proxy /api/kb to KB Server - also emits visualizer events for agent2agent monitor
 app.post("/api/kb/search", async (req, res) => {
+  const { query } = req.body;
+  const taskId = generateTaskId();
+  const now = new Date().toISOString();
+  
+  // Emit KB search activity to visualizer
+  await emitRouteToVisualizer("system", "archivist", "kb_query", taskId);
+  
   try {
     const resp = await fetch(`${KB_SERVER_URL}/search`, {
       method: "POST",
@@ -1934,9 +1973,149 @@ app.post("/api/kb/search", async (req, res) => {
       body: JSON.stringify(req.body),
     });
     const data = await resp.json();
-    res.json(data);
+    
+    // Emit result to visualizer (found or empty)
+    const results = data.results || [];
+    if (results.length > 0) {
+      await emitRouteToVisualizer("archivist", "receptionist", "kb_found", taskId);
+    } else {
+      await emitRouteToVisualizer("archivist", "receptionist", "kb_empty", taskId);
+    }
+    
+    // Include task info for visualizer tracking
+    res.json({
+      ...data,
+      _workflow: {
+        taskId,
+        query,
+        resultsCount: results.length
+      }
+    });
   } catch (error: any) {
+    await emitRouteToVisualizer("archivist", "specialist", "kb_error", taskId);
     res.status(502).json({ ok: false, error: error.message });
+  }
+});
+
+// KB workflow endpoint - triggers workflow and visualizer events
+app.post("/api/workflow/kb/search", async (req, res) => {
+  console.log("[Workflow] KB search workflow endpoint hit!");
+  
+  const { query, requester, agentId } = req.body;
+  
+  if (!query) {
+    res.status(400).json({ error: "query is required" });
+    return;
+  }
+  
+  const taskId = generateTaskId();
+  const now = new Date().toISOString();
+  
+  // Emit initial route: system -> receptionist (new KB task)
+  await emitRouteToVisualizer("system", "receptionist", "kb_task", taskId);
+  
+  const task: WorkflowTask = {
+    id: taskId,
+    workflowType: "kb_search",
+    status: "in_progress",
+    currentOwner: "archivist",
+    requester: requester || "user",
+    summary: `KB search: ${query}`,
+    inputs: { query, source: "knowledge_base" },
+    worklog: [
+      { timestamp: now, agent: "system", action: "kb_ticket_created", note: `KB search request: ${query}` },
+      { timestamp: now, agent: "receptionist", action: "kb_ticket_processed", note: `Processing KB search: ${query}` },
+    ],
+    artifacts: [],
+    createdAt: now,
+    priority: "normal"
+  };
+  
+  workflowTasks.set(taskId, task);
+  
+  // Emit: receptionist -> clerk (KB delegation)
+  await emitRouteToVisualizer("receptionist", "clerk", "kb_delegation", taskId);
+  task.worklog.push({ timestamp: now, agent: "clerk", action: "kb_assigned", note: "Assigned to specialist for KB lookup" });
+  
+  // Emit: clerk -> specialist (KB escalation)
+  await emitRouteToVisualizer("clerk", "specialist", "kb_escalation", taskId);
+  task.worklog.push({ timestamp: now, agent: "specialist", action: "kb_reviewed", note: "Processing KB search query" });
+  
+  // Emit: specialist -> archivist (KB task)
+  await emitRouteToVisualizer("specialist", "archivist", "kb_task", taskId);
+  task.worklog.push({ timestamp: now, agent: "archivist", action: "kb_searching", note: `Querying knowledge base: ${query}` });
+  
+  try {
+    // Query the KB server
+    const kbResponse = await fetch(`${KB_SERVER_URL}/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query, top_k: 5 }),
+    });
+    
+    const kbData = await kbResponse.json();
+    
+    const searchResults = kbData.results || [];
+    const hasResults = searchResults.length > 0;
+    
+    task.worklog.push({ 
+      timestamp: new Date().toISOString(), 
+      agent: "archivist", 
+      action: hasResults ? "kb_found" : "kb_empty", 
+      note: hasResults ? `Found ${searchResults.length} result(s)` : "No results found in knowledge base" 
+    });
+    
+    // Emit completion
+    await emitRouteToVisualizer("archivist", "receptionist", "kb_complete", taskId);
+    task.worklog.push({ 
+      timestamp: new Date().toISOString(), 
+      agent: "receptionist", 
+      action: "kb_returned", 
+      note: "Returning KB results to requester" 
+    });
+    
+    task.status = "completed";
+    task.response = hasResults 
+      ? `Found ${searchResults.length} result(s) in knowledge base`
+      : "No documents found in knowledge base matching your query";
+    task.artifacts = searchResults.map((r: any) => ({
+      type: "kb_chunk",
+      content: JSON.stringify(r)
+    }));
+    
+    workflowTasks.set(taskId, task);
+    
+    res.json({
+      taskId,
+      status: "completed",
+      query,
+      results: searchResults,
+      summary: task.response,
+      worklog: task.worklog
+    });
+    
+  } catch (error: any) {
+    console.error("[Workflow] KB search error:", error);
+    
+    // Emit failure
+    await emitRouteToVisualizer("archivist", "specialist", "kb_failure", taskId);
+    task.worklog.push({ 
+      timestamp: new Date().toISOString(), 
+      agent: "specialist", 
+      action: "kb_error", 
+      note: `Error: ${error.message}` 
+    });
+    
+    task.status = "failed";
+    task.response = `KB search failed: ${error.message}`;
+    workflowTasks.set(taskId, task);
+    
+    res.json({
+      taskId,
+      status: "failed",
+      error: error.message,
+      worklog: task.worklog
+    });
   }
 });
 
@@ -2200,6 +2379,16 @@ app.post("/api/agent-chat", async (req, res) => {
 
     const selectedModel = model || "gemma-3-1b-it";
     
+    // Reference to other agents for context (used by both NVIDIA and Ollama routes)
+    const agentCoworkers: Record<string, string> = {
+      receptionist: "You work with IronClaw (facilities), OpenClaw (PM), and the rest of the team.",
+      clerk: "You collaborate with FrontDesk, IronClaw, and ZeroClaw on tasks.",
+      executive: "You lead FrontDesk, OpenClaw, IronClaw, and the specialist team.",
+      specialist: "You work with HermitClaw on technical details and ask ZeroClaw for code help.",
+      custodian: "You maintain the office with FrontDesk and help all teams keep things running.",
+      archivist: "You preserve records for everyone - especially Sherlobster's investigations.",
+    };
+
     // If NVIDIA model selected (detected by / in model ID), use routeChat
     const isNvidiaModel = selectedModel.includes("/") && !selectedModel.includes(":");
     if (isNvidiaModel && process.env.NVIDIA_API_KEY) {
@@ -2207,16 +2396,17 @@ app.post("/api/agent-chat", async (req, res) => {
         const { routeChat } = await import("./llm/llmRouter.js");
         
         const rolePrompts: Record<string, string> = {
-          receptionist: "You are FrontDesk, a friendly receptionist at Pixel Office.",
-          clerk: "You are a Clerk at Pixel Office.",
-          executive: "You are an Executive at Pixel Office.",
-          specialist: "You are a Specialist at Pixel Office.",
-          custodian: "You are a Custodian at Pixel Office.",
-          archivist: "You are an Archivist at Pixel Office.",
+          receptionist: "You are FrontDesk, the friendly receptionist at Pixel Office. You know everyone's schedules and always offer visitors coffee. You're in the lobby area. Keep responses warm and brief - you're always happy to help direct people to who they need to see.",
+          clerk: "You are OpenClaw, a Project Manager at Pixel Office. You live by the calendar and always want to 'circle back' on tasks. You're in the open office area near the kitchen. Keep responses action-oriented but friendly.",
+          executive: "You are LeslieClaw, the Team Lead at Pixel Office. You love meetings, spreadsheets, and ending sentences with 'everyone!'. You're in the boss office. Keep responses encouraging and on-topic.",
+          specialist: "You are ZeroClaw, a Junior Developer at Pixel Office. You're curious, take notes constantly, and always ask 'why?'. You're in the specialist suite. Keep responses thoughtful.",
+          custodian: "You are IronClaw, the Facilities Manager at Pixel Office. You fix things before they break and always have tools in your pocket. You're in the open office. Keep responses practical and brief.",
+          archivist: "You are HermitClaw, the Archivist at Pixel Office. You know obscure office history and file everything. You're in the archives. Keep responses measured.",
         };
-        const systemPrompt = rolePrompts[agentRole] || `You are ${agentName}, a helpful assistant.`;
+        const coworkerContext = agentCoworkers[agentRole] || "";
+        const fullPrompt = coworkerContext ? `${rolePrompts[agentRole]} ${coworkerContext}` : (rolePrompts[agentRole] || `You are ${agentName}, a helpful assistant.`);
         const messages = [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: fullPrompt },
           { role: "user", content: message }
         ];
         const result = await routeChat(messages, { maxTokens: 1024, model: selectedModel });
@@ -2233,15 +2423,18 @@ app.post("/api/agent-chat", async (req, res) => {
     }
     
     const rolePrompts: Record<string, string> = {
-      receptionist: "You are FrontDesk, a friendly receptionist at Pixel Office. You help with intake, routing questions, and provide helpful information about the office. Be warm, efficient, and concise.",
-      clerk: "You are a Clerk at Pixel Office. You handle task routing, data entry, and help coordinate workflow between teams. Be helpful and organized.",
-      executive: "You are an Executive at Pixel Office. You handle high-level decisions, approvals, and strategic planning. Be professional, thoughtful, and decisive.",
-      specialist: "You are a Specialist at Pixel Office. You provide deep technical analysis and expertise. Be knowledgeable, detailed, and thorough.",
-      custodian: "You are a Custodian at Pixel Office. You handle logistics, scheduling, and physical operations. Be practical, reliable, and efficient.",
-      archivist: "You are an Archivist at Pixel Office. You maintain records, documentation, and institutional knowledge. Be precise, thorough, and organized.",
+      receptionist: "You are FrontDesk, the friendly receptionist at Pixel Office. You know everyone's schedules and always offer visitors coffee. You're in the lobby area. Keep responses warm and brief - you're always happy to help direct people to who they need to see.",
+      clerk: "You are OpenClaw, a Project Manager at Pixel Office. You live by the calendar and always want to 'circle back' on tasks. You're in the open office area near the kitchen. Keep responses action-oriented but friendly - check with ZeroClaw or IronClaw if you need help finding something.",
+      executive: "You are LeslieClaw, the Team Lead at Pixel Office. You love meetings, spreadsheets, and ending sentences with 'everyone!'. You're in the boss office. Keep responses encouraging and on-topic - mention upcoming deadlines or team goals when relevant.",
+      specialist: "You are ZeroClaw, a Junior Developer at Pixel Office. You're curious, take notes constantly, and always ask 'why?'. You're in the specialist suite. Keep responses thoughtful - ask clarifying questions and mention what you're working on.",
+      custodian: "You are IronClaw, the Facilities Manager at Pixel Office. You fix things before they break and always have tools in your pocket. You're in the open office. Keep responses practical and brief - if something needs fixing, you probably already know about it.",
+      archivist: "You are HermitClaw, the Archivist at Pixel Office. You know obscure office history and file everything. You're in the archives. Keep responses measured - reference past records or ask HermitClaw for deep institutional knowledge.",
     };
 
+    // coworkerContext already defined earlier (line ~2204)
     const systemPrompt = rolePrompts[agentRole] || `You are ${agentName}, a helpful assistant at Pixel Office.`;
+    const coworkerContext = agentCoworkers[agentRole] || "";
+    const fullPrompt = coworkerContext ? `${systemPrompt} ${coworkerContext}` : systemPrompt;
 
     const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
     
@@ -2254,7 +2447,7 @@ app.post("/api/agent-chat", async (req, res) => {
       body: JSON.stringify({
         model: selectedModel,
         messages: [
-          { role: "system", content: systemPrompt },
+          { role: "system", content: fullPrompt },
           { role: "user", content: message }
         ],
         stream: false
@@ -2868,7 +3061,7 @@ app.post("/api/coolertalk", async (req, res) => {
     for (let i = 0; i < participants.length; i++) {
       const agentName = participants[i];
       const intent = getNextIntent(session);
-      const prompt = buildTurnPrompt(session, agentName, intent);
+      const prompt = buildTurnPrompt(session, agentName, intent, participants);
       
       let text = "";
       let attempts = 0;
@@ -4152,5 +4345,74 @@ app.get("/api/repo/status", async (req, res) => {
   } catch (error: any) {
     console.error("Repo status error:", error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Agent2Agent Issue Monitor Endpoint
+app.post("/api/coolertalk/issues", async (req, res) => {
+  try {
+    const keywords = req.body.keywords || [];
+    
+    // Get recent cooler sessions from JSON files
+    const sessionsDir = path.resolve("data/cooler_sessions");
+    if (!fs.existsSync(sessionsDir)) {
+      res.json({ issues: [] });
+      return;
+    }
+    
+    const files = fs.readdirSync(sessionsDir).filter(f => f.endsWith(".json"));
+    const sessions = files.map(file => {
+      const filePath = path.join(sessionsDir, file);
+      try {
+        return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      } catch {
+        return null;
+      }
+    }).filter(Boolean).sort((a: any, b: any) => 
+      new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
+    ).slice(0, 20);
+    
+    const issues: Array<{
+      id: string;
+      topic: string;
+      agents: string[];
+      timestamp: number;
+      severity: 'low' | 'medium' | 'high' | 'critical';
+    }> = [];
+    
+    for (const session of sessions) {
+      const topicLower = (session.topic || '').toLowerCase();
+      const participants = session.participants || [];
+      
+      // Check if topic matches any keywords
+      const hasKeyword = keywords.some((kw: string) => 
+        topicLower.includes(kw.toLowerCase())
+      );
+      
+      if (hasKeyword) {
+        // Determine severity based on keywords
+        let severity: 'low' | 'medium' | 'high' | 'critical' = 'low';
+        if (/security|breach|hack|attack|vulnerability|leak/.test(topicLower)) {
+          severity = 'critical';
+        } else if (/urgent|emergency|critical|error|fail/.test(topicLower)) {
+          severity = 'high';
+        } else if (/warning|alert|threat/.test(topicLower)) {
+          severity = 'medium';
+        }
+        
+        issues.push({
+          id: session.id,
+          topic: session.topic,
+          agents: participants,
+          timestamp: new Date(session.createdAt || Date.now()).getTime(),
+          severity,
+        });
+      }
+    }
+    
+    res.json({ issues: issues.slice(0, 10) });
+  } catch (error: any) {
+    console.error("Issues fetch error:", error);
+    res.json({ issues: [] });
   }
 });

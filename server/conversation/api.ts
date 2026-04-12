@@ -65,7 +65,7 @@ export async function runNextTurn(
   let repaired = false;
 
   if (generateFn) {
-    const prompt = buildTurnPrompt(session, speaker, intent);
+    const prompt = buildTurnPrompt(session, speaker, intent, session.participants);
 
     for (let attempt = 0; attempt < COOLER_CONFIG.maxRetries; attempt++) {
       const raw = await generateFn(prompt);

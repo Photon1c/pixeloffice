@@ -190,6 +190,10 @@ export function drawAgent(
   if (thoughtBubble) {
     drawThoughtBubble(ctx, x, y - 75, thoughtBubble.text); // Increased offset from 60 to 75
   }
+  if ((agent as any).speechBubble) {
+    const offset = (agent as any).speechBubble.offset || 0;
+    drawSpeechBubble(ctx, x, y - 75 - offset, (agent as any).speechBubble.text);
+  }
 }
 
 function drawThoughtBubble(ctx: CanvasRenderingContext2D, x: number, y: number, text: string): void {
@@ -227,6 +231,51 @@ function drawThoughtBubble(ctx: CanvasRenderingContext2D, x: number, y: number, 
   ctx.stroke();
   
   ctx.fillStyle = "#e8e8f0";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const textY = bubbleY + bubbleHeight / 2;
+  lines.forEach((line, i) => {
+    ctx.fillText(line, x, textY + (i - (lines.length - 1) / 2) * lineHeight);
+  });
+  
+  ctx.restore();
+}
+
+function drawSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: number, text: string): void {
+  ctx.font = "bold 11px 'JetBrains Mono', monospace";
+  ctx.textAlign = "left";
+  const textWidth = ctx.measureText(text).width;
+  const padding = 8;
+  const maxWidth = Math.min(textWidth + padding * 2, 240);
+  const lineHeight = 16;
+  const lines = wrapText(ctx, text, maxWidth - padding * 2);
+  const bubbleHeight = Math.max(lines.length * lineHeight + padding * 2, 32);
+  const bubbleWidth = Math.min(maxWidth, textWidth + padding * 2);
+  
+  const bubbleX = x - bubbleWidth / 2;
+  const bubbleY = y - bubbleHeight / 2;
+  
+  ctx.save();
+  
+  ctx.fillStyle = "rgba(40, 30, 20, 0.95)";
+  ctx.strokeStyle = "#e8a835";
+  ctx.lineWidth = 2;
+  
+  ctx.beginPath();
+  ctx.roundRect(bubbleX, bubbleY, bubbleWidth, bubbleHeight, 6);
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(x - 6, bubbleY + bubbleHeight);
+  ctx.lineTo(x - 10, bubbleY + bubbleHeight + 10);
+  ctx.lineTo(x + 6, bubbleY + bubbleHeight);
+  ctx.closePath();
+  ctx.fillStyle = "rgba(40, 30, 20, 0.95)";
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.fillStyle = "#f0e8d0";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   const textY = bubbleY + bubbleHeight / 2;

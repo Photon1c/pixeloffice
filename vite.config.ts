@@ -19,11 +19,15 @@ export default defineConfig({
       '/handoff': {
         target: 'http://localhost:4173',
         changeOrigin: true,
-        configure: (proxy, options) => {
-          proxy.on('proxyReq', (proxyReq, req, res) => {
+        configure: (proxy) => {
+          proxy.on('proxyReq', (proxyReq) => {
             proxyReq.setHeader('Access-Control-Allow-Origin', '*');
           });
         },
+      },
+      '/model-health': {
+        target: 'http://localhost:4173',
+        changeOrigin: true,
       },
     },
     fs: {

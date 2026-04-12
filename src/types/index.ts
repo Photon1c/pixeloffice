@@ -142,6 +142,12 @@ export interface Agent {
     text: string;
     expiresAt: number;
   };
+  speechBubble?: {
+    text: string;
+    expiresAt: number;
+    offset?: number;
+    yOffset?: number;
+  };
   x: number;
   y: number;
   targetX: number;

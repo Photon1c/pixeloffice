@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Agent, DashboardConfig, AgentStatus, AgentVisibility, Task, ZoneActivity } from "../types";
 import { LAB_MODE } from "../config/env";
 import { setupConsoleMonitor } from "../utils/consoleMonitor";
-import { StabilityMonitor } from "./StabilityMonitor";
+import { StabilityMonitor, AgentIssueMonitor } from "./StabilityMonitor";
 import GenealogyLab from "./GenealogyLab";
 import AdminAssistant from "./AdminAssistant";
 import StockForecasts from "./StockForecasts";
@@ -148,6 +148,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [stigmergyTraces, setStigmergyTraces] = useState<any[]>([]);
   const [socialPotential, setSocialPotential] = useState<{sessionCount: number; participantCount: number; intensity: number} | null>(null);
   const [currentTopic, setCurrentTopic] = useState<string>("");
+  const [speechBubbles, setSpeechBubbles] = useState<{speakerId: string; text: string; offset?: number; yOffset?: number}[]>([]);
   
   // Thought Burst / Loop Detection State
   const [thoughtBurstConfig] = useState({
@@ -221,6 +222,15 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [isScrumRunning, setIsScrumRunning] = useState<boolean>(false);
   const [isCoolerTalkRunning, setIsCoolerTalkRunning] = useState<boolean>(false);
   const [sleepMode, setSleepMode] = useState<boolean>(false);
+
+  // Sync sleep mode to server for more frequent cooler/scrum sessions
+  useEffect(() => {
+    fetch('/api/office/night-mode', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active: sleepMode })
+    }).catch(err => console.warn('Night mode sync error:', err));
+  }, [sleepMode]);
 
   // Load agent cards on mount
   useEffect(() => {
@@ -483,24 +493,28 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
        return () => clearInterval(interval);
      }
  
-       if (dashboardConfig.mockMode) {
-         const interval = setInterval(
-           () => {
-             if (activeConversationZone) return;
-             if (sleepMode) return; // Skip status toggles in sleep mode
+      if (dashboardConfig.mockMode) {
+          const interval = setInterval(
+            () => {
+              if (activeConversationZone) return;
+              // Sleep mode = MORE activity! Office runs wild while user sleeps
+              if (!sleepMode && Math.random() > 0.7) return; // Only throttle when awake
 
-             setAgents((prevAgents) =>
-               prevAgents.map((agent) => {
-                 const newStatus: AgentStatus =
-                   Math.random() > 0.3 ? "working" : "idle";
-                 return updateAgentStatus(agent, newStatus);
-               })
-             );
-           },
-           dashboardConfig.mockToggleSpeed
-         );
-         return () => clearInterval(interval);
-       }
+              setAgents((prevAgents) =>
+                prevAgents.map((agent) => {
+                  // More status changes in sleep mode
+                  const newStatus: AgentStatus =
+                    sleepMode 
+                      ? (Math.random() > 0.2 ? "working" : "idle") // 80% working when sleeping
+                      : (Math.random() > 0.3 ? "working" : "idle"); // 70% working when awake
+                  return updateAgentStatus(agent, newStatus);
+                })
+              );
+            },
+            sleepMode ? 1000 : dashboardConfig.mockToggleSpeed // Faster updates in sleep mode
+          );
+          return () => clearInterval(interval);
+        }
  
      const handleKeyDown = (e: KeyboardEvent) => {
        const leslieClaw = agents.find(agent => agent.id === "leslieclaw");
@@ -549,17 +563,23 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     }, [agents, activeConversationZone, dashboardConfig, fetchStatus]);
 
   useEffect(() => {
+    // Sleep mode = MORE agent conversations and thoughts!
     const moodInterval = setInterval(() => {
-      if (sleepMode && Math.random() > 0.3) return;
+      // When sleeping, 70% chance to continue (more active)
+      // When awake, 30% chance to skip (less active due to user presence)
+      if (!sleepMode && Math.random() > 0.7) return;
+      
       setAgents((prevAgents) =>
         prevAgents.map((agent) => {
           const randomMood = MOOD_OPTIONS[Math.floor(Math.random() * MOOD_OPTIONS.length)];
           let updated = updateAgentMood(agent, randomMood);
-          if (Math.random() > 0.5) updated = generateThoughtBubble(updated);
+          // More thought bubbles in sleep mode
+          const thoughtChance = sleepMode ? 0.7 : 0.5;
+          if (Math.random() > (1 - thoughtChance)) updated = generateThoughtBubble(updated);
           return clearExpiredThoughts(updated);
         })
       );
-    }, 4000);
+    }, sleepMode ? 2000 : 4000); // Faster updates when sleeping
     return () => clearInterval(moodInterval);
   }, []);
 
@@ -717,7 +737,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       const shouldRespectPrivacy = dashboardConfig.viewMode === "public";
       agents.forEach((agent) => {
         if (shouldRespectPrivacy && agent.visibility === "offline") return;
-        drawAgent(ctx, agent, dashboardConfig.showNames);
+        const speech = speechBubbles.find(sb => sb.speakerId === agent.id);
+        drawAgent(ctx, { ...agent, speechBubble: speech ? { text: speech.text, expiresAt: Date.now() + 5000, offset: (speech.offset || 0) * 55 } : undefined }, dashboardConfig.showNames);
       });
 
       drawZoneIndicators(ctx, zoneActivity, stigmergyTraces);
@@ -912,7 +933,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                 </button>
               </div>
               <div style={{ fontSize: '8px', color: '#505060' }}>
-                {sleepMode ? '🐌 Slowed agents, less chat' : '⚡ Normal activity'}
+                {sleepMode ? '🌙 Night mode: 4x more conversations' : '⚡ Normal activity'}
               </div>
             </div>
           )}
@@ -1063,7 +1084,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           }}>Cooler Talk</button>
         </div>
 
-        <div style={{ marginBottom: '16px' }}>
+        <div style={{ marginBottom: '12px' }}>
           <button id="scrum-btn" style={{...styles.paramsToggle, background: '#2ecc71', opacity: (isScrumRunning || isCoolerTalkRunning) ? 0.5 : 1}} disabled={isScrumRunning || isCoolerTalkRunning} onClick={async () => {
             setIsScrumRunning(true);
             setActiveConversationZone("conference");
@@ -1135,6 +1156,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           }}>Test SCRUM</button>
         </div>
 
+        <div style={{ marginBottom: '12px' }}>
+          <a href="/model-health" target="_blank" style={{...styles.paramsToggle, background: '#4a5568', display: 'inline-block', textDecoration: 'none', color: '#fff', padding: '8px 16px', borderRadius: '4px', fontSize: '12px'}}>
+            Model Health
+          </a>
+        </div>
+
         {showParams && <Dashboard config={dashboardConfig} onUpdate={updateConfig} onOpenGenealogyLab={() => setShowGenealogyLab(true)} onOpenAdminAssistant={() => setShowAdminAssistant(true)} onOpenStockForecasts={() => setShowStockForecasts(true)} onOpenConvoViewer={() => { setConvoViewerType("cooler"); setShowConvoViewer(true); }} />}
         {showTimeTasks && <TimeTasksPanel onClose={() => setShowTimeTasks(false)} />}
         {showScrum && <ScrumPanel />}
@@ -1145,6 +1172,67 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         <div style={styles.canvasWrapper} ref={containerRef}>
           <canvas ref={canvasRef} style={styles.canvas} onClick={handleCanvasClick} />
           <StabilityMonitor visible={LAB_MODE} />
+          <AgentIssueMonitor 
+            visible={LAB_MODE} 
+            onTestConversation={() => {
+              const active = agents.filter(a => a.status !== 'offline');
+              if (active.length < 2) return;
+              const shuffled = [...active].sort(() => Math.random() - 0.5);
+              const speakerA = shuffled[0];
+              const speakerB = shuffled[1];
+              const origX = speakerA.x;
+              const origY = speakerA.y;
+              const targetX = speakerB.x;
+              const targetY = speakerB.y;
+              setAgents(prev => prev.map(a => 
+                a.id === speakerA.id 
+                  ? { ...a, targetX: targetX - 40, targetY: targetY, mode: 'walking' as const }
+                  : a
+              ));
+              setTimeout(() => {
+                const conversation = [
+                  { speaker: speakerA.name, text: "Hey! Have you seen the new feature the dev team shipped?" },
+                  { speaker: speakerB.name, text: "Oh yeah? I heard rumors. Is it the dashboard redesign?" },
+                  { speaker: speakerA.name, text: "Even better - it's the agent2agent monitor. Watch this!" },
+                  { speaker: speakerB.name, text: "No way! That's exactly what we needed for Standup." },
+                  { speaker: speakerA.name, text: "Right? And it's got speech bubbles now too." },
+                  { speaker: speakerB.name, text: "This is going to make retro so much easier. Great find!" },
+                ];
+const showConvo = () => {
+                  let bubbleIdx = 0;
+                  let vertOffset = { [speakerA.id]: 0, [speakerB.id]: 0 };
+                  
+                  const showNext = () => {
+                    if (bubbleIdx < conversation.length) {
+                      const c = conversation[bubbleIdx];
+                      const agentId = c.speaker === speakerA.name ? speakerA.id : speakerB.id;
+                      const yOffset = vertOffset[agentId];
+                      vertOffset[agentId] -= 55;
+                      setSpeechBubbles([{ 
+                        speakerId: agentId, 
+                        text: `${c.speaker}: ${c.text}`,
+                        yOffset: yOffset
+                      }]);
+                      bubbleIdx++;
+                      setTimeout(showNext, 1800);
+                    } else {
+                      (window as any).showTestBubbles(conversation);
+                    }
+                  };
+                  showNext();
+                };
+                showConvo();
+                setTimeout(() => {
+                  setSpeechBubbles([]);
+                  setAgents(prev => prev.map(a => 
+                    a.id === speakerA.id 
+                      ? { ...a, targetX: origX, targetY: origY, mode: 'walking' as const }
+                      : a
+                  ));
+                }, 10000);
+              }, 1500);
+            }}
+          />
           {loadingStatus && (
             <div style={{
               position: 'absolute',
@@ -1252,7 +1340,9 @@ function AgentActionCard({ agent, card, workflowState, setWorkflowState, onClose
   const unassignedTasks = tasks?.filter((t: any) => !t.assigneeId) || [];
   const [chatMessages, setChatMessages] = useState<{role: string, content: string}[]>([]);
   const [chatInput, setChatInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState("gemma-3-1b-it");
+  // Default to the agent's configured primary model from opencode-local-agents.json
+  const defaultModel = card?.models?.primary?.name || "gemma-3-1b-it";
+  const [selectedModel, setSelectedModel] = useState(defaultModel);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedWorkflow, setSelectedWorkflow] = useState("");
   const [githubRepo, setGithubRepo] = useState("photon1c/pixeloffice");
@@ -1260,47 +1350,58 @@ function AgentActionCard({ agent, card, workflowState, setWorkflowState, onClose
   const [localGithubError, setLocalGithubError] = useState<string | null>(null);
   const [localGithubResult, setLocalGithubResult] = useState<any>(null);
   const [ollamaModels, setOllamaModels] = useState<Array<{id: string; name: string}>>([]);
+  const [allModels, setAllModels] = useState<any[]>([]);
   
   useEffect(() => {
     fetchOllamaModels().then(setOllamaModels);
+    // Fetch ALL models from health endpoint
+    fetch('/api/models/health').then(r => r.json()).then(d => setAllModels(d.models || [])).catch(() => {});
   }, []);
   
-  const isReceptionist = agent.role === "receptionist";
+const isReceptionist = agent.role === "receptionist";
   
-  // Available models from agent card data
-  const availableModels = [];
+  // State for showing all models vs onboarding only
+  const [showAllModels, setShowAllModels] = useState(false);
   
-  // Use actual Ollama models from the server
-  const availableOllamaModels = ollamaModels.map(m => ({
-    id: m.id,
-    name: `${m.name}`
-  }));
-  
-  // Add the agent's primary Ollama model (configured model)
-  if (card?.models?.primary?.provider === 'ollama') {
-    availableModels.push({
-      id: card.models.primary.name,
-      name: `${card.models.primary.name.split(':')[0]} (${card.models.primary.name.split(':')[1] || 'latest'})`
-    });
+  // Load onboarding models from config (cached)
+  const onboardingModelsRef = useRef<string[]>([]);
+  if (onboardingModelsRef.current.length === 0) {
+    // Parse onboarding models from the markdown file
+    const onboardingText = `deepseek-ai/deepseek-v3.1-terminus
+moonshotai/kimi-k2-instruct-0905
+deepseek-ai/deepseek-v3.2
+mistralai/mistral-large-3-675b-instruct-2512
+google/gemma-7b
+microsoft/phi-3-mini-128k-instruct
+upstage/solar-10.7b-instruct`;
+    onboardingModelsRef.current = onboardingText.split('\n').filter(m => m.trim());
   }
+  const onboardingModels = onboardingModelsRef.current;
   
-  // Add the OTHER available Ollama model as an alternative option (if different from primary)
-  if (card?.models?.primary?.provider === 'ollama') {
-    const otherOllamaModel = availableOllamaModels.find(model => 
-      model.id !== card.models.primary.name
-    );
-    if (otherOllamaModel) {
-      availableModels.push(otherOllamaModel);
-    }
-  }
+  // Get all online Ollama models (always show all)
+  const ollamaOnly = allModels.filter((m: any) => m.provider === 'ollama' && m.status === 'online');
   
-  // Add NVIDIA model options from agent's fallback if it's NVIDIA
-  if (card?.models?.fallback?.provider === 'nvidia') {
-    availableModels.push({
-      id: card.models.fallback.name,
-      name: `NVIDIA ${card.models.fallback.name.split('/')[1].replace('-', ' ').toUpperCase()}`
-    });
-  }
+  // NVIDIA models - filter based on toggle
+  const allNvidia = allModels.filter((m: any) => m.provider === 'nvidia' && m.status === 'online');
+  const nvidiaOnly = showAllModels 
+    ? allNvidia 
+    : allNvidia.filter((m: any) => onboardingModels.includes(m.id));
+  
+  // Available models - show all Ollama + filtered NVIDIA
+  const availableModels: Array<{id: string; name: string}> = [
+    ...ollamaOnly.map((m: any) => ({ id: m.id, name: m.name })),
+    ...nvidiaOnly.map((nv: any) => ({ id: nv.id, name: `NVIDIA ${nv.name}` }))
+  ];
+  
+  // Toggle checkbox UI
+  const toggleStyle: React.CSSProperties = {
+    display: 'flex', 
+    alignItems: 'center', 
+    gap: '6px',
+    marginTop: '8px',
+    fontSize: '11px',
+    color: '#8b9cb5'
+  };
   
   // Also check if there's a global NVIDIA availability for additional options
   const [nvidiaStatus, setNvidiaStatus] = useState<{available: boolean; modelId?: string} | null>(null);
@@ -1577,6 +1678,10 @@ function AgentActionCard({ agent, card, workflowState, setWorkflowState, onClose
             <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} style={actionCardStyles.modelDropdown}>
               {availableModels.map(model => (<option key={model.id} value={model.id}>{model.name}</option>))}
             </select>
+            <label style={toggleStyle}>
+              <input type="checkbox" checked={showAllModels} onChange={(e) => setShowAllModels(e.target.checked)} />
+              View all {nvidiaOnly.length} models
+            </label>
           </div>
           <div style={actionCardStyles.chatMessages}>
             {chatMessages.map((msg, i) => (
@@ -1839,41 +1944,49 @@ function ChatOverlay({ onClose }: { onClose: () => void }) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("gemma-3-1b-it");
-  const [nvidiaStatus, setNvidiaStatus] = useState<{available: boolean; modelId?: string} | null>(null);
   const [ollamaModels, setOllamaModels] = useState<Array<{id: string; name: string}>>([]);
+  const [allChatModels, setAllChatModels] = useState<any[]>([]);
+  const [showAllChatModels, setShowAllChatModels] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Onboarding models (cached)
+  const onboardingChatRef = useRef<string[]>([]);
+  if (onboardingChatRef.current.length === 0) {
+    const text = `deepseek-ai/deepseek-v3.1-terminus
+moonshotai/kimi-k2-instruct-0905
+deepseek-ai/deepseek-v3.2
+mistralai/mistral-large-3-675b-instruct-2512
+google/gemma-7b
+microsoft/phi-3-mini-128k-instruct
+upstage/solar-10.7b-instruct`;
+    onboardingChatRef.current = text.split('\n').filter(m => m.trim());
+  }
+  const onboardingChatModels = onboardingChatRef.current;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   useEffect(() => {
-    fetch('/api/test/nvidia')
-      .then(res => res.json())
-      .then(data => {
-        console.log('[Chat] NVIDIA status:', data);
-        setNvidiaStatus(data);
-      })
-      .catch(err => console.log('[Chat] NVIDIA check failed:', err));
     fetchOllamaModels().then(setOllamaModels);
+    fetch('/api/models/health').then(r => r.json()).then(d => setAllChatModels(d.models || [])).catch(() => {});
   }, []);
 
-  console.log('[Chat] nvidiaStatus:', nvidiaStatus);
+  // Get all online models from health endpoint
+  const chatOllama = allChatModels.filter((m: any) => m.provider === 'ollama' && m.status === 'online');
+  const allNvidiaChat = allChatModels.filter((m: any) => m.provider === 'nvidia' && m.status === 'online');
+  const chatNvidia = showAllChatModels 
+    ? allNvidiaChat 
+    : allNvidiaChat.filter((m: any) => onboardingChatModels.includes(m.id));
   
-  // All available NVIDIA models from benchmarks (best performers first)
-  const nvidiaOptions = [
-    { id: "moonshotai/kimi-k2-instruct-0905", name: "NVIDIA Kimi K2 (Best)" },
-    { id: "microsoft/phi-3-mini-128k-instruct", name: "NVIDIA Phi-3 Mini" },
-    { id: "google/gemma-7b", name: "NVIDIA Gemma 7B" },
-    { id: "upstage/solar-10.7b-instruct", name: "NVIDIA Solar 10.7B" },
-    { id: "deepseek-ai/deepseek-v3.1-terminus", name: "NVIDIA DeepSeek V3.1" },
-    { id: "deepseek-ai/deepseek-v3.2", name: "NVIDIA DeepSeek V3.2" },
-    { id: "mistralai/mistral-large-3-675b-instruct-2512", name: "NVIDIA Mistral Large 3" },
-  ];
   const availableModels = [
-    ...ollamaModels.map(m => ({ id: m.id, name: m.name.split(':')[0] })),
-    ...(nvidiaStatus?.available ? nvidiaOptions : []),
+    ...chatOllama.map((m: any) => ({ id: m.id, name: m.name.split(':')[0] })),
+    ...chatNvidia.map((nv: any) => ({ id: nv.id, name: `NVIDIA ${nv.name}` }))
   ];
+
+  const chatToggleStyle: React.CSSProperties = {
+    display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#8b9cb5'
+  };
 
   const sendMessage = async () => {
     if (!input.trim() || isLoading) return;
@@ -1932,6 +2045,10 @@ function ChatOverlay({ onClose }: { onClose: () => void }) {
             >
               {availableModels.map(m => (<option key={m.id} value={m.id}>{m.name}</option>))}
             </select>
+            <label style={chatToggleStyle}>
+              <input type="checkbox" checked={showAllChatModels} onChange={(e) => setShowAllChatModels(e.target.checked)} />
+              All {chatNvidia.length}
+            </label>
             <button style={chatStyles.closeBtn} onClick={onClose}>×</button>
           </div>
         </div>

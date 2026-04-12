@@ -32,7 +32,7 @@
     "tags": ["office", "custodian", "maintenance"],
     "models": {
       "primary": {
-        "name": "gemma-3-1b-it",
+        "name": "gemma3:270m",
         "provider": "ollama",
         "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
         "status": "local-ready"
@@ -58,7 +58,7 @@
     "tags": ["office", "specialist", "technical"],
     "models": {
       "primary": {
-        "name": "PhysicsObsession/blaze-3b",
+        "name": "gemma3:270m",
         "provider": "ollama",
         "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
         "status": "local-ready"
@@ -84,7 +84,7 @@
     "tags": ["office", "archivist", "records"],
     "models": {
       "primary": {
-        "name": "gemma-3-1b-it",
+        "name": "gemma3:270m",
         "provider": "ollama",
         "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
         "status": "local-ready"
@@ -110,7 +110,7 @@
     "tags": ["office", "clerk", "admin"],
     "models": {
       "primary": {
-        "name": "gemma-3-1b-it",
+        "name": "gemma3:270m",
         "provider": "ollama",
         "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
         "status": "local-ready"
@@ -136,7 +136,7 @@
     "tags": ["office", "executive", "management"],
     "models": {
       "primary": {
-        "name": "gemma-3-1b-it",
+        "name": "gemma3:270m",
         "provider": "ollama",
         "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
         "status": "local-ready"
@@ -162,7 +162,7 @@
     "tags": ["office", "clerk", "operations"],
     "models": {
       "primary": {
-        "name": "gemma-3-1b-it",
+        "name": "gemma3:270m",
         "provider": "ollama",
         "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
         "status": "local-ready"
@@ -188,7 +188,7 @@
     "tags": ["office", "specialist", "resolution"],
     "models": {
       "primary": {
-        "name": "PhysicsObsession/blaze-3b",
+        "name": "gemma3:270m",
         "provider": "ollama",
         "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
         "status": "local-ready"
@@ -240,7 +240,7 @@
     "tags": ["personal", "journal", "reflection"],
     "models": {
       "primary": {
-        "name": "gemma-3-1b-it",
+        "name": "gemma3:270m",
         "provider": "ollama",
         "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
         "status": "local-ready"
@@ -266,7 +266,7 @@
     "tags": ["personal", "tasks", "triage"],
     "models": {
       "primary": {
-        "name": "gemma-3-1b-it",
+        "name": "gemma3:270m",
         "provider": "ollama",
         "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
         "status": "local-ready"

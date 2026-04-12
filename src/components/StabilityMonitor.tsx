@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { LAB_MODE } from "../config/env";
 
 interface HealthMetrics {
   fps: number;
@@ -231,17 +232,243 @@ export function StabilityMonitor({ visible = true }: StabilityMonitorProps) {
         </div>
       </div>
       
-      <div style={{ 
-        marginTop: '8px', 
-        paddingTop: '6px', 
-        borderTop: '1px solid #495057',
-        display: 'flex',
-        justifyContent: 'space-between',
-        fontSize: '10px',
-        color: '#6c757d',
-      }}>
-        <span>Frames: {frameTimes.current.length}</span>
+      
+    </div>
+  );
+}
+
+// Issue keywords that trigger alerts
+const ISSUE_KEYWORDS = [
+  'security', 'breach', 'urgent', 'emergency', 'critical', 'down', 
+  'error', 'fail', 'hack', 'vulnerability', 'password', 'unauthorized',
+  'leak', 'attack', 'threat', 'alert', 'warning', 'violation'
+];
+
+interface Issue {
+  id: string;
+  topic: string;
+  agents: string[];
+  timestamp: number;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export function AgentIssueMonitor({ 
+  visible = true,
+  onTestConversation
+}: { 
+  visible?: boolean;
+  onTestConversation?: () => void;
+}) {
+  const [issues, setIssues] = useState<Issue[]>([]);
+  const [isExpanded, setIsExpanded] = useState(true);
+  const [testBubbles, setTestBubbles] = useState<{speaker: string; text: string}[]>([]);
+  const [isTesting, setIsTesting] = useState(false);
+  const dismissedRef = useRef<string[]>([]);
+  
+  const clearAndDismiss = (id: string) => {
+    dismissedRef.current.push(id);
+    setIssues(prev => prev.filter(i => i.id !== id));
+  };
+  
+  const clearTestBubbles = () => {
+    setTestBubbles([]);
+    (window as any).clearSpeechBubbles?.();
+  };
+  
+  const runTest = async () => {
+    if (testBubbles.length > 0) {
+      clearTestBubbles();
+      return;
+    }
+    setIsTesting(true);
+    setTestBubbles([]);
+    onTestConversation?.();
+  };
+  
+  // Called by parent when agent walk completes
+  (window as any).showTestBubbles = (bubbles: {speaker: string; text: string}[]) => {
+    setTestBubbles(bubbles);
+    setIsTesting(false);
+  };
+  
+  // Poll for cooler talk issues every 10 seconds
+  useEffect(() => {
+    if (!visible) return;
+    
+    const checkForIssues = async () => {
+      try {
+        const res = await fetch('/api/coolertalk/issues', { 
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ keywords: ISSUE_KEYWORDS })
+        });
+        const data = await res.json();
+        if (data.issues) {
+          // Filter for new issues (excluding dismissed ones)
+          const newIssues = (data.issues as Issue[]).filter(i => 
+            !issues.some(existing => existing.id === i.id) &&
+            !dismissedRef.current.includes(i.id)
+          );
+          if (newIssues.length > 0) {
+            setIssues(prev => [...newIssues, ...prev].slice(0, 10));
+          }
+        }
+      } catch (e) {
+        // Silent fail - monitor is optional
+      }
+    };
+    
+    checkForIssues();
+    const interval = setInterval(checkForIssues, 10000);
+    return () => clearInterval(interval);
+  }, [visible, issues]);
+  
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'critical': return '#dc3545';
+      case 'high': return '#fd7e14';
+      case 'medium': return '#ffc107';
+      default: return '#6c757d';
+    }
+  };
+  
+  if (!visible) return null;
+  
+  return (
+    <div style={{
+      position: 'absolute',
+      top: '45%',
+      right: 10,
+      background: 'rgba(0, 0, 0, 0.85)',
+      border: issues.length > 0 ? '1px solid #dc3545' : '1px solid #343a40',
+      borderRadius: '8px',
+      padding: '8px 12px',
+      fontFamily: 'monospace',
+      fontSize: '10px',
+      color: '#e9ecef',
+      zIndex: 1001,
+      width: '160px',
+      maxHeight: '50vh',
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      backdropFilter: 'blur(4px)',
+      boxShadow: issues.length > 0 ? '0 0 10px #dc354540' : 'none',
+    }}>
+      <div 
+        onClick={() => setIsExpanded(!isExpanded)}
+        style={{
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          cursor: 'pointer',
+          marginBottom: '6px'
+        }}
+      >
+        <span style={{ color: '#17a2b8', fontWeight: 'bold' }}>
+          Agent2Agent
+        </span>
+        <button 
+          onClick={runTest}
+          style={{
+            marginLeft: '8px',
+            padding: '2px 6px',
+            fontSize: '8px',
+            background: testBubbles.length > 0 ? '#dc3545' : isTesting ? '#6c757d' : '#28a745',
+            border: 'none',
+            borderRadius: '3px',
+            color: 'white',
+            cursor: 'pointer',
+          }}
+        >
+          {testBubbles.length > 0 ? 'Clear' : isTesting ? '...' : 'Test'}
+        </button>
+        <span style={{ color: '#6c757d', marginLeft: '4px' }}>{isExpanded ? '−' : '+'}</span>
       </div>
+      
+      {isExpanded && (
+        <>
+          {testBubbles.length > 0 && (
+            <div style={{ marginBottom: '8px' }}>
+              {testBubbles.map((bubble, i) => (
+                <div key={i} style={{
+                  marginBottom: '4px',
+                  padding: '4px 6px',
+                  background: '#17a2b820',
+                  borderLeft: '3px solid #17a2b8',
+                  borderRadius: '3px',
+                }}>
+                  <div style={{ color: '#17a2b8', fontWeight: 'bold', fontSize: '9px' }}>
+                    {bubble.speaker}
+                  </div>
+                  <div style={{ color: '#e9ecef', fontSize: '9px', marginTop: '2px' }}>
+                    {bubble.text}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+          
+          {issues.length === 0 && testBubbles.length === 0 ? (
+            <div style={{ color: '#6c757d', fontStyle: 'italic' }}>
+              No active issues detected
+            </div>
+          ) : (
+            issues.map(issue => (
+              <div key={issue.id} style={{
+                marginBottom: '6px',
+                padding: '4px 6px',
+                background: `${getSeverityColor(issue.severity)}20`,
+                borderLeft: `3px solid ${getSeverityColor(issue.severity)}`,
+                borderRadius: '3px',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ color: getSeverityColor(issue.severity), fontWeight: 'bold' }}>
+                    {issue.severity.toUpperCase()}
+                  </div>
+                  <button 
+                    onClick={() => clearAndDismiss(issue.id)}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#6c757d',
+                      cursor: 'pointer',
+                      fontSize: '9px',
+                      padding: '0 4px',
+                    }}
+                  >✕</button>
+                </div>
+                <div style={{ color: '#e9ecef', marginTop: '2px', wordBreak: 'break-word' }}>
+                  {issue.topic}
+                </div>
+                <div style={{ color: '#6c757d', fontSize: '9px', marginTop: '2px' }}>
+                  {issue.agents.join(' ↔ ')}
+                </div>
+              </div>
+            ))
+          )}
+          
+          {issues.length > 0 && (
+            <button 
+              onClick={() => {
+                issues.forEach(i => dismissedRef.current.push(i.id));
+                setIssues([]);
+              }}
+              style={{
+                marginTop: '6px',
+                padding: '4px 8px',
+                background: 'transparent',
+                border: '1px solid #6c757d',
+                borderRadius: '4px',
+                color: '#6c757d',
+                fontSize: '9px',
+                cursor: 'pointer',
+              }}
+            >
+              Clear Issues
+            </button>
+          )}
+        </>
+      )}
     </div>
   );
 }
@@ -307,4 +534,4 @@ export function ErrorBoundary({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-export default { StabilityMonitor, ErrorBoundary };
+export default { StabilityMonitor, AgentIssueMonitor, ErrorBoundary };

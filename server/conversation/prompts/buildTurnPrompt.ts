@@ -21,10 +21,27 @@ const INTENT_INSTRUCTIONS: Record<ConversationIntent, string> = {
   escalate: "Your line must add URGENCY or IMPORTANCE. Explain WHY this matters now - what's the consequence of ignoring or embracing this? Make people care!",
 };
 
+const OFFICE_LOCATIONS = [
+  "lobby", "kitchen", "open office", "archives", "conference room",
+  "specialist suite", "boss office", "Sherlock's office", "lounge", "mission control"
+];
+
+const COWORKER_TRIGGERS: Record<string, string[]> = {
+  "FrontDesk": ["Ask about visitor schedules", "Check with them about office events"],
+  "IronClaw": ["Mention a maintenance issue", "Ask if anything needs fixing"],
+  "ZeroClaw": ["Ask about their latest code", "Share a tech puzzle"],
+  "HermitClaw": ["Ask about archived records", "Inquire about historical data"],
+  "OpenClaw": ["Check on task status", "Ask about deadlines"],
+  "LeslieClaw": ["Ask about the schedule", "Mention team goals"],
+  "Sherlobster": ["Share a strange observation", "Ask about any mysteries"],
+  "Hercule Prawnro": ["Ask about recent metrics", "Mention data trends"],
+};
+
 export function buildTurnPrompt(
   session: CoolerSession,
   agentName: string,
   requiredIntent: ConversationIntent,
+  otherParticipants?: string[],
 ): string {
   const personality = getPersonality(agentName);
   const lastUtterance = session.utterances[session.utterances.length - 1];
@@ -36,18 +53,18 @@ export function buildTurnPrompt(
   }
 
   // Build conversation history with full context
-  let history = `WATER COOLER CONVERSATION\n`;
-  history += `Topic: "${displayTopic}"\n`;
+  let history = "WATER COOLER CONVERSATION\n";
+  history += "Topic: \"" + displayTopic + "\"\n";
   if (session.location) {
-    history += `Location: ${session.location}\n`;
+    history += "Location: " + session.location + "\n";
   }
-  history += `\n--- Conversation So Far ---\n`;
+  history += "\n--- Conversation So Far ---\n";
   
   if (session.conversationHistory.length === 0) {
     history += "(No previous messages - you're starting this conversation)\n";
   } else {
     for (let i = 0; i < session.conversationHistory.length; i++) {
-      history += `${session.conversationHistory[i]}\n`;
+      history += session.conversationHistory[i] + "\n";
     }
   }
   history += "-------------------------\n";
@@ -55,41 +72,75 @@ export function buildTurnPrompt(
   let previousContext: string;
   if (lastUtterance) {
     const cleanLastText = lastUtterance.text.replace(/In recent news:?\s*/gi, "").replace(/According to recent news:?\s*/gi, "").trim();
-    previousContext = `The last thing ${lastUtterance.speaker} said was: "${cleanLastText}"\n`;
-    previousContext += `\nYour turn to respond! Consider:\n`;
-    previousContext += `- What did ${lastUtterance.speaker} say that you agree or disagree with?\n`;
-    previousContext += `- Do you have a personal experience or opinion to share?\n`;
-    previousContext += `- Can you ask a follow-up question or add new information?\n`;
+    previousContext = "The last thing " + lastUtterance.speaker + " said was: \"" + cleanLastText + "\"\n";
+    previousContext += "\nYour turn to respond! Consider:\n";
+    previousContext += "- What did " + lastUtterance.speaker + " say that you agree or disagree with?\n";
+    previousContext += "- Do you have a personal experience or opinion to share?\n";
+    previousContext += "- Can you ask a follow-up question or add new information?\n";
   } else {
-    previousContext = `This is the START of the conversation about "${displayTopic}".\n`;
-    previousContext += `\nKick things off! You could:\n`;
-    previousContext += `- Share something interesting you heard about this topic\n`;
-    previousContext += `- Ask what others think about it\n`;
-    previousContext += `- Relate it to your own experience at work\n`;
+    previousContext = "This is the START of the conversation about \"" + displayTopic + "\".\n";
+    previousContext += "\nKick things off! You could:\n";
+    previousContext += "- Share something interesting you heard about this topic\n";
+    previousContext += "- Ask what others think about it\n";
+    previousContext += "- Relate it to your own experience at work\n";
   }
 
   let personalityContext = "";
   if (personality) {
-    personalityContext = `
-Your character: ${agentName} (${personality.role})
-Style: ${personality.speech_style}
-Speak naturally as this person!`;
+    personalityContext = "\nYour character: " + agentName + " (" + personality.role + ")\n";
+    personalityContext += "Style: " + personality.speech_style + "\n";
+    personalityContext += "Speak naturally as this person!";
   }
 
-  return `${history}${previousContext}${personalityContext}
+  // Build office context with coworker names, quirks, and location awareness
+  let officeContext = "";
+  if (personality) {
+    officeContext = "\n--- Your Office Context ---\n";
+    officeContext += "Your quirks: " + personality.quirks.join(", ") + "\n";
+    officeContext += "Your interests: " + personality.interests.join(", ") + "\n\n";
+    
+    // Add coworkers if provided
+    if (otherParticipants && otherParticipants.length > 0) {
+      const othersNotMe = otherParticipants.filter(p => p !== agentName);
+      if (othersNotMe.length > 0) {
+        officeContext += "Coworkers here: " + othersNotMe.join(", ") + "\n";
+        // Add trigger suggestions for interacting with specific coworkers
+        const triggers: string[] = [];
+        for (const other of othersNotMe) {
+          const otherTriggers = COWORKER_TRIGGERS[other];
+          if (otherTriggers) {
+            const idx = Math.floor(Math.random() * otherTriggers.length);
+            triggers.push(other + ": " + otherTriggers[idx]);
+          }
+        }
+        if (triggers.length > 0) {
+          officeContext += "You could: " + triggers.join(" | ") + "\n";
+        }
+      }
+    }
+    // Reference location
+    const loc = session.location || "kitchen/water cooler";
+    officeContext += "\nThis conversation is happening in the " + loc + ".\n";
+    officeContext += "Other office areas: " + OFFICE_LOCATIONS.join(", ") + "\n";
+  }
 
-CONVERSATION STYLE:
-- Think carefully before responding - give an authentic, thoughtful answer
-- This is a casual chat with coworkers, not a formal interview
-- Your personality should shine through - be genuine!
+  const newline = "\n";
+  let prompt = history + previousContext + personalityContext + officeContext + newline;
+  prompt += newline;
+  prompt += "CONVERSATION STYLE:" + newline;
+  prompt += "- Think carefully before responding - give an authentic, thoughtful answer" + newline;
+  prompt += "- This is a casual chat with coworkers, not a formal interview" + newline;
+  prompt += "- Your personality should shine through - be genuine!" + newline;
+  prompt += newline;
+  prompt += "REQUIRED INTENT: \"" + requiredIntent + "\"" + newline;
+  prompt += INTENT_INSTRUCTIONS[requiredIntent] + newline;
+  prompt += newline;
+  prompt += "RESPONSE RULES:" + newline;
+  prompt += "- Write " + COOLER_CONFIG.promptMaxWords + "+ words (2-4 sentences minimum for engaging conversation)" + newline;
+  prompt += "- Write as natural speech, not an essay or narration" + newline;
+  prompt += "- NO quotation marks around your response" + newline;
+  prompt += '- DO NOT say "In recent news" or "According to recent news" - just discuss naturally like you would with colleagues' + newline;
+  prompt += "- If you ignore these rules, your response will be rejected!";
 
-REQUIRED INTENT: "${requiredIntent}"
-${INTENT_INSTRUCTIONS[requiredIntent]}
-
-RESPONSE RULES:
-- Write ${COOLER_CONFIG.promptMaxWords}+ words (2-4 sentences minimum for engaging conversation)
-- Write as natural speech, not an essay or narration
-- NO quotation marks around your response
-- DO NOT say "In recent news" or "According to recent news" - just discuss naturally like you would with colleagues
-- If you ignore these rules, your response will be rejected!`;
+  return prompt;
 }
