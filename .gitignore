@@ -15,6 +15,7 @@ dist/
 .env.local
 .env.development
 .env.production
+config.alloy
 
 # logs
 npm-debug.log*
@@ -34,3 +35,4 @@ Thumbs.db
 #Documentation
 
 /docs/complete
+
