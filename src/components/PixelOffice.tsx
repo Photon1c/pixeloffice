@@ -102,6 +102,16 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     log.info("Initializing Pixel Office");
   }, []);
   
+  useEffect(() => {
+    (window as any).clearSpeechBubbles = () => {
+      setSpeechBubbles([]);
+    };
+    
+    return () => {
+      delete (window as any).clearSpeechBubbles;
+    };
+  }, []);
+  
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [sidebarWidth, setSidebarWidth] = useState(280);
@@ -1366,15 +1376,16 @@ const isReceptionist = agent.role === "receptionist";
   // Load onboarding models from config (cached)
   const onboardingModelsRef = useRef<string[]>([]);
   if (onboardingModelsRef.current.length === 0) {
-    // Parse onboarding models from the markdown file
-    const onboardingText = `deepseek-ai/deepseek-v3.1-terminus
+    // Parse onboarding models from the JSON config
+    const onboardingConfig = `deepseek-ai/deepseek-v3.1-terminus
 moonshotai/kimi-k2-instruct-0905
 deepseek-ai/deepseek-v3.2
 mistralai/mistral-large-3-675b-instruct-2512
 google/gemma-7b
 microsoft/phi-3-mini-128k-instruct
-upstage/solar-10.7b-instruct`;
-    onboardingModelsRef.current = onboardingText.split('\n').filter(m => m.trim());
+upstage/solar-10.7b-instruct
+stepfun-ai/step-3.5-flash`;
+    onboardingModelsRef.current = onboardingConfig.split('\n').filter(m => m.trim());
   }
   const onboardingModels = onboardingModelsRef.current;
   
@@ -1416,27 +1427,6 @@ upstage/solar-10.7b-instruct`;
       })
       .catch(err => console.log('[AgentCard] NVIDIA check failed:', err));
   }, []);
-
-  // All available NVIDIA models from benchmarks (best performers first)
-  const nvidiaModels = [
-    { id: "moonshotai/kimi-k2-instruct-0905", name: "NVIDIA Kimi K2 (Best)" },
-    { id: "microsoft/phi-3-mini-128k-instruct", name: "NVIDIA Phi-3 Mini" },
-    { id: "google/gemma-7b", name: "NVIDIA Gemma 7B" },
-    { id: "upstage/solar-10.7b-instruct", name: "NVIDIA Solar 10.7B" },
-    { id: "deepseek-ai/deepseek-v3.1-terminus", name: "NVIDIA DeepSeek V3.1" },
-    { id: "deepseek-ai/deepseek-v3.2", name: "NVIDIA DeepSeek V3.2" },
-    { id: "mistralai/mistral-large-3-675b-instruct-2512", name: "NVIDIA Mistral Large 3" },
-  ];
-
-  // Add additional NVIDIA options if available globally
-  if (nvidiaStatus?.available) {
-    nvidiaModels.forEach(nvModel => {
-      const exists = availableModels.some(m => m.id === nvModel.id);
-      if (!exists) {
-        availableModels.push(nvModel);
-      }
-    });
-  }
 
   // Visual pipeline steps for GitHub workflows
   const workflowSteps = [
@@ -2098,7 +2088,7 @@ const chatStyles: Record<string, React.CSSProperties> = {
 
 const actionCardStyles: Record<string, React.CSSProperties> = {
   overlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, background: "rgba(0,0,0,0.7)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "20px" },
-  card: { width: "380px", maxWidth: "calc(100vw - 40px)", maxHeight: "85vh", background: "rgba(15, 15, 25, 0.98)", borderRadius: "12px", border: "1px solid #2a3a4a", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.6)" },
+  card: { width: "1140px", maxWidth: "calc(100vw - 40px)", maxHeight: "85vh", background: "rgba(15, 15, 25, 0.98)", borderRadius: "12px", border: "1px solid #2a3a4a", overflow: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.6)", resize: "both" },
   header: { display: "flex", alignItems: "center", gap: "12px", padding: "16px", borderBottom: "1px solid #2a3a4a" },
   avatar: { width: "40px", height: "40px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: "bold", color: "#050509" },
   name: { margin: 0, fontSize: "16px", color: "#e8e8f0" },
@@ -2120,7 +2110,7 @@ const actionCardStyles: Record<string, React.CSSProperties> = {
   chatContainer: { padding: "12px 16px" },
   modelSelect: { marginBottom: "8px" },
   modelDropdown: { width: "100%", padding: "6px 8px", background: "#1a2538", border: "1px solid #2a3548", borderRadius: "4px", color: "#e0e8f0", fontSize: "12px" },
-  chatMessages: { height: "120px", overflowY: "auto", background: "#0a1520", borderRadius: "6px", padding: "8px", display: "flex", flexDirection: "column", gap: "6px", marginBottom: "8px" },
+  chatMessages: { height: "400px", overflowY: "auto", background: "#0a1520", borderRadius: "6px", padding: "8px", display: "flex", flexDirection: "column", gap: "6px", marginBottom: "8px" },
   chatMessage: { padding: "8px 10px", borderRadius: "6px", fontSize: "12px", lineHeight: 1.4, maxWidth: "85%" },
   chatInput: { flex: 1, padding: "8px 10px", background: "#1a2538", border: "1px solid #2a3548", borderRadius: "4px", color: "#e0e8f0", fontSize: "12px" },
   chatSendBtn: { padding: "8px 16px", background: "#4a90d9", border: "none", borderRadius: "4px", color: "#fff", cursor: "pointer", fontSize: "12px", fontWeight: 600 }
@@ -2144,7 +2134,7 @@ const styles: Record<string, React.CSSProperties> = {
   agentCard: { position: "absolute", bottom: "100px", right: "20px", width: "300px", background: "rgba(15, 15, 25, 0.95)", border: "1px solid #3a3a5a", borderRadius: "12px", padding: "20px", zIndex: 100, boxShadow: "0 10px 30px rgba(0,0,0,0.5)", maxWidth: "calc(100vw - 40px)" },
   agentCardMobile: { width: "calc(100vw - 40px)", right: "20px", left: "20px", bottom: "80px" },
   closeBtn: { background: "none", border: "none", color: "#fff", fontSize: "20px", cursor: "pointer" },
-  chatBox: { height: "120px", overflowY: "auto", background: "rgba(0,0,0,0.2)", borderRadius: "4px", padding: "8px", fontSize: "11px", margin: "12px 0", border: "1px solid #2a2a3a" },
+  chatBox: { height: "400px", overflowY: "auto", background: "rgba(0,0,0,0.2)", borderRadius: "4px", padding: "8px", fontSize: "11px", margin: "12px 0", border: "1px solid #2a2a3a" },
   input: { flex: 1, background: "#0a0a15", border: "1px solid #2a2a3a", color: "#fff", padding: "6px", borderRadius: "4px", fontSize: "12px" },
   sendBtn: { background: "#4a90d9", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" },
   moodBtn: { background: "#2a2a3a", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer" },

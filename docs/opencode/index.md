@@ -45,6 +45,45 @@ This index tracks the implementation status of various OpenCode-related features
     - Endpoint: `GET /metrics` on port 4173
     - Metrics: HTTP requests, LLM requests, service uptime
 
+### Agent Tools & Workflow Integration
+- [x] **Agent Tools** - Tools for KB search, scheduling, and improvement
+  - Status: **Complete** - Tools implemented in roleModels.ts
+  - Components:
+    - `search_knowledge_base` - Query KB
+    - `read_file` - Read local files
+    - `schedule_scrum` - Schedule improvement sessions
+    - `add_calendar_deadline` - Set deadlines
+    - `create_improvement_ticket` - Create backlog items
+
+- [x] **Calendar System** - Time-based task management
+  - Status: **Complete** - Endpoints: `/api/calendar/scrum`, `/api/calendar/deadline`, `/api/calendar/ticket`
+  - Supports natural language deadlines: "in 2 hours", "tomorrow", "next week"
+
+- [x] **KB Integration** - Knowledge base search + ingest
+  - Status: **Complete** - KB server `/ingest` endpoint + Pixel Office endpoints
+
+- [x] **Local Model Configuration** - gemma3:270m for quick transitions
+  - Status: **Complete** - Updated `model_role_mapping.json`
+  - Components:
+    - `gemma3:270m` for handoff/thought_loop roles (quick transitions)
+    - `stepfun-ai/step-3.5-flash` for executive decisions (NVIDIA)
+    - `getQuickTransitionModel()`, `getExecutiveModel()` in roleModels.ts
+
+- [x] **Cooler → SCRUM Auto-Promotion** - Yellow autonomy workflow
+  - Status: **Complete** - Implemented in `server/cooler/coolerToScrum.ts`
+  - Scores sessions (threshold 20), marks `is_scrum_candidate`, creates scrum_run (status: pending)
+  - Requires human approval (Yellow zone)
+
+- [x] **Stigmergy Visualization** - Prometheus metrics for office heat
+  - Status: **Complete** - Metrics at `/metrics`
+  - Types: loopHeat, reviewHeat, speechActivity, taskShadow, observerAttention
+
+- [x] **Autonomy Zones** - GREEN/YELLOW/RED annotations
+  - Status: **Complete** - Added to `roleModels.ts`
+  - GREEN: auto (search_knowledge_base, read_file)
+  - YELLOW: propose/approve (schedule_scrum, create_improvement_ticket)
+  - RED: human only (write_code, migrate_db)
+
 ## 📝 Notes
 
 - Specifications marked with `[ ]` indicate pending implementation work
@@ -52,4 +91,4 @@ This index tracks the implementation status of various OpenCode-related features
 - Check individual documents in `/complete/` and `/design/` directories for details
 - Some features may be intentionally deferred or designed for future phases
 
-*Last Updated: April 5, 2026*
+*Last Updated: April 12, 2026*

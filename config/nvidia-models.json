@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "version": 1,
+  "description": "Shortlist of NVIDIA models for the agent dropdown",
+  "shortlist": [
+    {
+      "id": "moonshotai/kimi-k2-instruct-0905",
+      "name": "NVIDIA Kimi K2",
+      "note": "Best performer from HR benchmarks",
+      "status": "active"
+    },
+    {
+      "id": "microsoft/phi-3-mini-128k-instruct",
+      "name": "NVIDIA Phi-3 Mini",
+      "status": "active"
+    },
+    {
+      "id": "google/gemma-7b",
+      "name": "NVIDIA Gemma 7B",
+      "status": "active"
+    },
+    {
+      "id": "upstage/solar-10.7b-instruct",
+      "name": "NVIDIA Solar 10.7B",
+      "status": "active"
+    },
+    {
+      "id": "deepseek-ai/deepseek-v3.1-terminus",
+      "name": "NVIDIA DeepSeek V3.1",
+      "status": "active"
+    },
+    {
+      "id": "deepseek-ai/deepseek-v3.2",
+      "name": "NVIDIA DeepSeek V3.2",
+      "status": "active"
+    },
+    {
+      "id": "mistralai/mistral-large-3-675b-instruct-2512",
+      "name": "NVIDIA Mistral Large 3",
+      "status": "active"
+    },
+    {
+      "id": "stepfun-ai/step-3.5-flash",
+      "name": "Step-3.5 Flash",
+      "note": "Uses NVIDIA integrate API",
+      "status": "active"
+    },
+    {
+      "id": "z-ai/glm4.7",
+      "name": "GLM-4.7",
+      "note": "Supports streamed reasoning via reasoning_content",
+      "status": "inactive"
+    }
+  ]
+}

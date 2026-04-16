@@ -36,17 +36,30 @@ export function loadOrCreateSession(location: string, createOptions: Partial<{ t
       if (!session.location) {
         session.location = location;
       }
-      // Update topic if provided in options (to get fresh news topics)
-      if (createOptions.topic) {
-        session.topic = createOptions.topic;
-        session.topicKeywords = createOptions.topic.split(/[\s,]+/).filter(k => k.length > 2);
-        // Clear conversation history and utterances for fresh start with new topic
-        session.currentTurn = 0;
-        session.utterances = [];
-        session.conversationHistory = [];
-        session.usedPhrases = new Set();
-        console.log(`[CoolerTalk] Updated topic to: ${createOptions.topic}, cleared history`);
+      // If a new topic is provided and it's different, start a NEW session.
+      // Re-using the same session id causes:
+      // - cooler markdown export overwrites (same date + session_id)
+      // - index.md pointing multiple titles at one file
+      // - DB upserts collapsing history
+      const nextTopic = createOptions.topic;
+      const nextParticipants = createOptions.participants;
+
+      if (nextTopic && nextTopic !== session.topic) {
+        const newSession = createCoolerSession({
+          topic: nextTopic,
+          participants: nextParticipants && nextParticipants.length > 0 ? nextParticipants : (session.participants || []),
+          location,
+        });
+        persistSession(newSession);
+        console.log(`[CoolerTalk] Topic changed, started new session: ${session.id} -> ${newSession.id}`);
+        return newSession;
       }
+
+      // Topic is unchanged, but allow participant set updates.
+      if (nextParticipants && nextParticipants.length > 0) {
+        session.participants = nextParticipants;
+      }
+
       return session;
     } catch (error) {
       console.error(`Failed to load session for ${location}:`, error);

@@ -43,6 +43,20 @@ interface GitHubStatus {
   message: string;
 }
 
+interface ScrumCandidateListItem {
+  id: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  score: number;
+  threshold: number;
+  scrumTitle: string;
+  topic: string;
+  location: string;
+  coolerMarkdownPath?: string;
+  reasons: string[];
+}
+
 type ExportMode = "preview" | "localReport" | "localNotes" | "githubReport" | "githubNotes";
 
 export default function ScrumPanel() {
@@ -53,10 +67,13 @@ export default function ScrumPanel() {
   const [previewContent, setPreviewContent] = useState<string | null>(null);
   const [exportMode, setExportMode] = useState<ExportMode>("localReport");
   const [githubStatus, setGithubStatus] = useState<GitHubStatus | null>(null);
+  const [candidates, setCandidates] = useState<ScrumCandidateListItem[]>([]);
+  const [candidateMsg, setCandidateMsg] = useState<string | null>(null);
 
   useEffect(() => {
     fetchStatus();
     fetchGitHubStatus();
+    fetchCandidates();
   }, []);
 
   async function fetchStatus() {
@@ -77,6 +94,62 @@ export default function ScrumPanel() {
     } catch (err) {
       console.error("Failed to fetch GitHub status:", err);
     }
+  }
+
+  async function fetchCandidates() {
+    try {
+      const res = await fetch(`${API_BASE}/api/scrum/candidates?status=pending`);
+      const data = await res.json();
+      setCandidates(data.candidates || []);
+    } catch (err) {
+      console.error("Failed to fetch SCRUM candidates:", err);
+    }
+  }
+
+  async function approveCandidate(id: string) {
+    setLoading(true);
+    setCandidateMsg(null);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/scrum/candidates/${id}/approve`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok || data.ok === false) {
+        setError(data.error || "Failed to approve candidate");
+      } else {
+        setCandidateMsg(`Approved. Wrote planning SCRUM: ${data.scrumDocPath || "(no doc path)"}`);
+        await fetchCandidates();
+      }
+    } catch (err: any) {
+      setError(err.message);
+    }
+    setLoading(false);
+  }
+
+  async function rejectCandidate(id: string) {
+    setLoading(true);
+    setCandidateMsg(null);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/scrum/candidates/${id}/reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = await res.json();
+      if (!res.ok || data.ok === false) {
+        setError(data.error || "Failed to reject candidate");
+      } else {
+        setCandidateMsg(`Rejected candidate ${id}`);
+        await fetchCandidates();
+      }
+    } catch (err: any) {
+      setError(err.message);
+    }
+    setLoading(false);
   }
 
   async function startScrum() {
@@ -188,8 +261,52 @@ export default function ScrumPanel() {
       </div>
 
       {error && <div style={styles.error}>{error}</div>}
+      {candidateMsg && <div style={styles.success}>{candidateMsg}</div>}
 
       <div style={styles.content}>
+        {candidates.length > 0 && (
+          <div style={styles.candidatesSection}>
+            <div style={styles.candidatesHeader}>
+              <h4 style={styles.sectionTitle}>Cooler → SCRUM Candidates</h4>
+              <button style={styles.smallButton} onClick={fetchCandidates} disabled={loading}>
+                Refresh
+              </button>
+            </div>
+
+            {candidates.map((c) => (
+              <div key={c.id} style={styles.candidateCard}>
+                <div style={styles.candidateTitle}>{c.scrumTitle}</div>
+                <div style={styles.candidateMeta}>
+                  <div><strong>Score:</strong> {c.score} / {c.threshold}</div>
+                  <div><strong>From:</strong> {c.location}</div>
+                  <div><strong>Topic:</strong> {c.topic}</div>
+                  {c.coolerMarkdownPath && (
+                    <div style={{ opacity: 0.8, fontSize: 11 }}><strong>Log:</strong> {c.coolerMarkdownPath}</div>
+                  )}
+                  {c.reasons?.length > 0 && (
+                    <div style={{ marginTop: 6, opacity: 0.9 }}>
+                      <strong>Reasons:</strong>
+                      <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                        {c.reasons.slice(0, 3).map((r, idx) => (
+                          <li key={idx}>{r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                <div style={styles.candidateActions}>
+                  <button style={styles.smallButton} onClick={() => approveCandidate(c.id)} disabled={loading}>
+                    Approve
+                  </button>
+                  <button style={styles.smallDangerButton} onClick={() => rejectCandidate(c.id)} disabled={loading}>
+                    Reject
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
         {status && (
           <div style={styles.statusSection}>
             <div style={styles.stageIndicator}>
@@ -403,6 +520,62 @@ const styles: Record<string, React.CSSProperties> = {
     margin: 8,
     borderRadius: 4,
   },
+  candidatesSection: {
+    marginBottom: 12,
+    padding: 10,
+    border: "1px solid rgba(254, 202, 87, 0.25)",
+    borderRadius: 8,
+    background: "rgba(254, 202, 87, 0.06)",
+  },
+  candidatesHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  candidateCard: {
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: 8,
+    padding: 10,
+    background: "rgba(0,0,0,0.25)",
+    marginBottom: 8,
+  },
+  candidateTitle: {
+    fontSize: 12,
+    fontWeight: "bold",
+    color: "#feca57",
+    marginBottom: 6,
+  },
+  candidateMeta: {
+    fontSize: 11,
+    color: "#cbd5e1",
+    lineHeight: 1.35,
+  },
+  candidateActions: {
+    display: "flex",
+    gap: 8,
+    marginTop: 8,
+  },
+  smallButton: {
+    padding: "6px 10px",
+    background: "#4ecdc4",
+    border: "none",
+    borderRadius: 6,
+    color: "#000",
+    fontWeight: "bold",
+    fontSize: 11,
+    cursor: "pointer",
+  },
+  smallDangerButton: {
+    padding: "6px 10px",
+    background: "#ff6b6b",
+    border: "none",
+    borderRadius: 6,
+    color: "#000",
+    fontWeight: "bold",
+    fontSize: 11,
+    cursor: "pointer",
+  },
   statusSection: {
     display: "flex",
     justifyContent: "space-between",
@@ -518,8 +691,9 @@ const styles: Record<string, React.CSSProperties> = {
     overflow: "auto",
   },
   success: {
-    marginTop: 12,
-    padding: 8,
+    margin: 8,
+    padding: "8px 12px",
+    background: "#143020",
     borderRadius: 6,
     color: "#26de81",
     fontSize: 12,

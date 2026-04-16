@@ -286,10 +286,16 @@ export function AgentIssueMonitor({
   };
   
   // Called by parent when agent walk completes
-  (window as any).showTestBubbles = (bubbles: {speaker: string; text: string}[]) => {
-    setTestBubbles(bubbles);
-    setIsTesting(false);
-  };
+  useEffect(() => {
+    (window as any).showTestBubbles = (bubbles: {speaker: string; text: string}[]) => {
+      setTestBubbles(bubbles);
+      setIsTesting(false);
+    };
+    
+    return () => {
+      delete (window as any).showTestBubbles;
+    };
+  }, []);
   
   // Poll for cooler talk issues every 10 seconds
   useEffect(() => {

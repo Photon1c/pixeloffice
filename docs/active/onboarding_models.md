@@ -6,6 +6,8 @@ z-ai/glm4.7
 - Supports streamed reasoning via `reasoning_content`
 - Uses `extra_body.chat_template_kwargs.enable_thinking = True` and `clear_thinking = False`
 
+stepfun-ai/step-3.5-flash
+
 moonshotai/kimi-k2-instruct-0905
 
 stepfun-ai/step-3.5-flash

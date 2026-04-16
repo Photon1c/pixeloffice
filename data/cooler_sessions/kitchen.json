@@ -1,64 +1,39 @@
 {
-  "id": "ct-1775967979011",
+  "id": "ct-1776285967104",
   "version": "cooler_v2",
-  "topic": "Molotov Cocktail Is Hurled at Home of Sam Altman, OpenAIs CEO",
+  "topic": "What Is Jagged Intelligence and How Can It Reframe the AI Debate",
   "participants": [
     "FrontDesk",
     "OpenClaw",
-    "HermitClaw",
-    "Sherlock",
     "IronClaw",
-    "LeslieClaw"
+    "HermitClaw",
+    "LeslieClaw",
+    "Sherlock"
   ],
   "topicKeywords": [
-    "Molotov",
-    "Cocktail",
-    "Hurled",
-    "Home",
-    "Sam",
-    "Altman",
-    "OpenAIs",
-    "CEO"
+    "jagged",
+    "intelligence",
+    "reframe",
+    "ai",
+    "debate"
   ],
   "utterances": [
     {
       "speaker": "FrontDesk",
-      "text": "Did anyone else notice the Molotov Cocktail Is Hurled at Home of Sam Altman, OpenAIs CEO?",
+      "text": "Did anyone else notice the What Is Jagged Intelligence and How Can It Reframe the AI Debate?",
       "intent": "ask",
       "replyTo": null,
       "validation": {
         "valid": true,
-        "retries": 3,
+        "retries": 5,
         "rejected_reasons": []
       }
     },
     {
       "speaker": "OpenClaw",
-      "text": "We should really address the Molotov Cocktail Is Hurled at Home of Sam Altman, OpenAIs CEO situation!",
-      "intent": "escalate",
+      "text": "Speaking of What Is Jagged Intelligence and How Can It Reframe the AI Debate, should we check on that?",
+      "intent": "redirect",
       "replyTo": 0,
-      "validation": {
-        "valid": true,
-        "retries": 2,
-        "rejected_reasons": []
-      }
-    },
-    {
-      "speaker": "HermitClaw",
-      "text": "Exactly, good point about the Molotov Cocktail Is Hurled at Home of Sam Altman, OpenAIs CEO.",
-      "intent": "agree",
-      "replyTo": 1,
-      "validation": {
-        "valid": true,
-        "retries": 2,
-        "rejected_reasons": []
-      }
-    },
-    {
-      "speaker": "Sherlock",
-      "text": "We should really address the Molotov Cocktail Is Hurled at Home of Sam Altman, OpenAIs CEO situation!",
-      "intent": "escalate",
-      "replyTo": 2,
       "validation": {
         "valid": true,
         "retries": 5,
@@ -67,28 +42,128 @@
     },
     {
       "speaker": "IronClaw",
-      "text": "Absolutely! When someone starts throwing firebombs at tech CEOs, that's not just a news story—it's a wake-up call for every secured building we manage. I just finished upgrading our camera coverage last month, but I'm thinking we need to double-check the perimeter sensors too.",
+      "text": "Exactly, good point about the What Is Jagged Intelligence and How Can It Reframe the AI Debate.",
       "intent": "agree",
-      "replyTo": 3,
-      "validation": {
-        "valid": true,
-        "retries": 1,
-        "rejected_reasons": []
-      }
-    },
-    {
-      "speaker": "LeslieClaw",
-      "text": "I’m with you, IronClaw—let’s treat this as our quarterly-security-boost moment. I’ll spin up a quick spreadsheet tonight that maps every camera, sensor, and lighting gap to the OKRs we set in Q1; if we knock out any red cells before the off-site, we’ll beat the “zero-incident” target and earn that bonus pool, everyone!",
-      "intent": "redirect",
-      "replyTo": 4,
+      "replyTo": 1,
       "validation": {
         "valid": true,
         "retries": 5,
         "rejected_reasons": []
       }
+    },
+    {
+      "speaker": "HermitClaw",
+      "text": "Exactly, good point about the What Is Jagged Intelligence and How Can It Reframe the AI Debate.",
+      "intent": "agree",
+      "replyTo": 2,
+      "validation": {
+        "valid": false,
+        "retries": 5,
+        "rejected_reasons": [
+          "exact_duplicate"
+        ]
+      }
+    },
+    {
+      "speaker": "LeslieClaw",
+      "text": "Speaking of What Is Jagged Intelligence and How Can It Reframe the AI Debate, should we check on that?",
+      "intent": "redirect",
+      "replyTo": 3,
+      "validation": {
+        "valid": false,
+        "retries": 5,
+        "rejected_reasons": [
+          "exact_duplicate"
+        ]
+      }
+    },
+    {
+      "speaker": "Sherlock",
+      "text": "Exactly, good point about the What Is Jagged Intelligence and How Can It Reframe the AI Debate.",
+      "intent": "agree",
+      "replyTo": 4,
+      "validation": {
+        "valid": false,
+        "retries": 5,
+        "rejected_reasons": [
+          "exact_duplicate"
+        ]
+      }
+    },
+    {
+      "speaker": "FrontDesk",
+      "text": "Exactly, good point about the What Is Jagged Intelligence and How Can It Reframe the AI Debate.",
+      "intent": "agree",
+      "replyTo": 5,
+      "validation": {
+        "valid": false,
+        "retries": 5,
+        "rejected_reasons": [
+          "exact_duplicate"
+        ]
+      }
+    },
+    {
+      "speaker": "OpenClaw",
+      "text": "Totally agree—jagged intelligence is the perfect lens for why our sprint-two AI mock-ups bombed on edge cases. Let’s circle back after lunch, book the small conference room, and white-board which rugged, uneven data slices we’ll feed the next training pipeline so stakeholders see smoother downstream deliverables by Friday.",
+      "intent": "redirect",
+      "replyTo": 6,
+      "validation": {
+        "valid": true,
+        "retries": 2,
+        "rejected_reasons": []
+      }
+    },
+    {
+      "speaker": "IronClaw",
+      "text": "Exactly, good point about the What Is Jagged Intelligence and How Can It Reframe the AI Debate.",
+      "intent": "agree",
+      "replyTo": 7,
+      "validation": {
+        "valid": false,
+        "retries": 5,
+        "rejected_reasons": [
+          "exact_duplicate"
+        ]
+      }
+    },
+    {
+      "speaker": "HermitClaw",
+      "text": "Absolutely! HermitClaw completely agrees—jagged intelligence is precisely why our 2019 sentiment-analysis module failed on handwritten customer postcards. The archives still hold the red-tag folder showing how the model choked on quirky ink bleeds and mixed-caps phrases like “LoVe yOuR wIdGet!!!” If we map those uneven slices now and feed them into sprint three, we’ll spare everyone another Friday-evening rollback.",
+      "intent": "agree",
+      "replyTo": 8,
+      "validation": {
+        "valid": true,
+        "retries": 4,
+        "rejected_reasons": []
+      }
+    },
+    {
+      "speaker": "LeslieClaw",
+      "text": "Absolutely! That's so true, HermitClaw—those jagged edge cases are exactly where our models trip hardest, and I love that you're already digging into the red-tag folder for concrete examples, everyone!",
+      "intent": "agree",
+      "replyTo": 9,
+      "validation": {
+        "valid": true,
+        "retries": 3,
+        "rejected_reasons": []
+      }
+    },
+    {
+      "speaker": "Sherlock",
+      "text": "Exactly, good point about the What Is Jagged Intelligence and How Can It Reframe the AI Debate.",
+      "intent": "agree",
+      "replyTo": 10,
+      "validation": {
+        "valid": false,
+        "retries": 5,
+        "rejected_reasons": [
+          "exact_duplicate"
+        ]
+      }
     }
   ],
-  "created_at": "2026-04-12T04:26:19.011Z",
+  "created_at": "2026-04-15T20:46:07.104Z",
   "location": "kitchen",
-  "startedAt": "2026-04-12T04:26:19.011Z"
+  "startedAt": "2026-04-15T20:46:07.104Z"
 }

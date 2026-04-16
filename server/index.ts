@@ -25,6 +25,19 @@ app.get("/model-health", (_req, res) => {
   res.sendFile(htmlPath);
 });
 
+// Serve NVIDIA models shortlist
+app.get("/api/nvidia/models", async (_req, res) => {
+  try {
+    const configPath = path.resolve(__dirname, "../../config/nvidia-models.json");
+    const configData = fs.readFileSync(configPath, "utf-8");
+    const config = JSON.parse(configData);
+    res.json(config);
+  } catch (err) {
+    console.error("Failed to load NVIDIA models config:", err);
+    res.status(500).json({ error: "Failed to load models config" });
+  }
+});
+
 // Serve available Ollama models
 app.get("/api/ollama/models", async (_req, res) => {
   try {
@@ -121,13 +134,15 @@ async function emitRouteToVisualizer(
   } catch (err) {
     console.warn(`[Visualizer] Failed to emit route: ${err}`);
   }
+
+  agentRoutesUsed.inc({ from_agent: fromAgent, to_agent: toAgent });
 }
 
 import { getPool, getConfig } from "./pixel_memory/config.js";
 import { fetchCurrentPrice, fetchPriceForDate } from "./services/priceFeed.js";
 import { createAnalyzer, DataSource } from "./sherlock_analysis/index.js";
 import { ConferenceRoomStorage, createConferenceRoomRouter } from "./conferenceroom/routes.js";
-import { callChatModelForRole } from "./roleModels.js";
+import { callChatModelForRole, RoleId } from "./roleModels.js";
 
 // Flywheel imports (keep for potential future use)
 // import { openai } from "./llm/client.js";
@@ -305,6 +320,13 @@ const register = new client.Registry();
 client.collectDefaultMetrics({ register });
 
 // Custom metrics
+const agentTokensUsed = new client.Counter({
+  name: "pixel_office_agent_tokens_total",
+  help: "Tokens by agent and channel (inner vs outer narration).",
+  labelNames: ["agent", "channel"] as const,
+  registers: [register]
+});
+
 const httpRequestsTotal = new client.Counter({
   name: "pixel_office_http_requests_total",
   help: "Total number of HTTP requests",
@@ -345,6 +367,20 @@ const loopDetectionGauge = new client.Gauge({
   name: "pixel_office_loop_detection",
   help: "Loop detection status per agent (0=healthy, 1=looping)",
   labelNames: ["agent_id", "agent_name"],
+  registers: [register]
+});
+
+const agentRoutesUsed = new client.Counter({
+  name: "pixel_office_routes_total",
+  help: "Routing hops between agents.",
+  labelNames: ["from_agent", "to_agent"] as const,
+  registers: [register]
+});
+
+const agentToolCallsUsed = new client.Counter({
+  name: "pixel_office_agent_tool_calls_total",
+  help: "Tool calls initiated by an agent.",
+  labelNames: ["agent"] as const,
   registers: [register]
 });
 
@@ -532,6 +568,7 @@ import { getActiveHeat } from "./cooler/reviewHeat.js";
 import { createScrumSession, advanceScrumSession, type ScrumSession } from "./scrum/scrumController.js";
 import { runRoomTurn, exportRoomSession } from "./services/coolerTalkService.js";
 import { generateFn } from "./services/llmGenerateFn.js";
+import { maybeCreateScrumCandidate, listScrumCandidates, approveScrumCandidate, rejectScrumCandidate } from "./cooler/scrumCandidates.js";
 
 let currentScrumSession: ScrumSession | null = null;
 
@@ -557,6 +594,21 @@ app.post("/api/rooms/:location/cooler/run-turn", async (req, res) => {
       coolerRunTurnTotal.inc({ location: "unknown", status: "400" });
       return res.status(400).json({ error: "Location is required" });
     }
+
+    // Memory Integration: If no topic provided, try to pull a recent user-saved topic
+    if (!topic || topic === "General discussion") {
+      try {
+        const recentTopics = await runDbQuery(
+          "SELECT title FROM mem_entries WHERE kind = 'user_topic' ORDER BY timestamp DESC LIMIT 1"
+        );
+        if (recentTopics && recentTopics.length > 0) {
+          topic = `User mentioned: ${recentTopics[0].title}`;
+          console.log(`[Memory] Injecting user topic into cooler: ${topic}`);
+        }
+      } catch (err) {
+        console.warn("[Memory] Failed to fetch recent user topic:", err);
+      }
+    }
     
     // Use stigmergy-weighted selection if no participants provided
     if (!participants || participants.length === 0) {
@@ -573,22 +625,125 @@ app.post("/api/rooms/:location/cooler/run-turn", async (req, res) => {
     
     // Save session to database
     if (result.session) {
-      const utterances = result.session.utterances?.map((u: any) => ({
-        agentId: u.utterance?.speaker || "",
-        text: u.utterance?.text || "",
-        timestamp: u.utterance?.created_at || Date.now()
-      })) || [];
-      
+      const utterances = (result.session.utterances || []).map((u: any) => ({
+        agentId: u.speaker || "",
+        text: u.text || "",
+        timestamp: u.timestamp || Date.now()
+      }));
+
       saveCoolerSession(
         result.session.id,
         "cooler",
         result.session.topic || topic,
         result.session.participants || participants,
         utterances,
-        { location, turnCount: result.session.utterances?.length || 0 }
+        { location, turnCount: (result.session.utterances || []).length }
       );
     }
-    
+
+    // Save markdown file for the session (unique filename, no overwrites)
+    let coolerMarkdownPath: string | undefined;
+    let scrumCandidateSummary: any = null;
+
+    try {
+      let exportData = exportRoomSession(location);
+      console.log(`[CoolerTalk] exportRoomSession(${location}) returned:`, exportData ? "data" : "null");
+      console.log(`[CoolerTalk] result.session.id:`, result.session.id);
+
+      // If exportData is null but we have a session, try to get markdown from result
+      if (!exportData || !exportData.markdown) {
+        // Build markdown from result data
+        const utterances = result.session.utterances || [];
+        const md = utterances.map((u: any) =>
+          `- **${u.speaker || 'Unknown'}**: ${u.text || ''}`
+        ).join('\n');
+
+        exportData = {
+          markdown: `## Conversation
+
+${md}
+
+**Participants:** ${(result.session.participants || []).join(', ')}
+**Topic:** ${result.session.topic || topic || 'General discussion'}`,
+          json: result.session
+        };
+        console.log(`[CoolerTalk] Built markdown from result`);
+      }
+
+      if (exportData && exportData.markdown) {
+        const sessionId = result.session.id;
+        const timestamp = new Date().toISOString();
+        const safeStamp = timestamp.replace(/[:.]/g, "-");
+        const filename = `${safeStamp}_cooler-${sessionId}.md`;
+
+        // Save to docs/cooler folder
+        const coolerDocPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler");
+        const opencodeDocPath = path.resolve("/home/sherlockhums/.openclaw/workspace-main/docs/opencode");
+
+        // Ensure directories exist
+        [opencodeDocPath, coolerDocPath].forEach(dir => {
+          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        });
+
+        const mdContent = exportData.markdown;
+        const frontmatter = `---
+` +
+          `title: "Cooler Talk - ${result.session.topic || location}"
+` +
+          `date: "${timestamp}"
+` +
+          `participants: "${(result.session.participants || []).join(', ')}"
+` +
+          `location: "${location}"
+` +
+          `session_id: "${sessionId}"
+` +
+          `---
+
+` +
+          `${mdContent}
+
+---
+` +
+          `*Generated from Pixel Office Cooler Talk - ${timestamp}*
+`;
+
+        // Write to opencode docs
+        const opencodePath = path.join(opencodeDocPath, filename);
+        fs.writeFileSync(opencodePath, frontmatter, "utf-8");
+        console.log(`[CoolerTalk] Saved markdown to ${opencodePath}`);
+
+        // Write to docs/cooler
+        const coolerPath = path.join(coolerDocPath, filename);
+        fs.writeFileSync(coolerPath, frontmatter, "utf-8");
+        coolerMarkdownPath = coolerPath;
+        console.log(`[CoolerTalk] Saved markdown to ${coolerPath}`);
+
+        // Update index.md files
+        updateIndexFile(opencodeDocPath, filename, result.session.topic || `Cooler Talk - ${location}`);
+        updateIndexFile(coolerDocPath, filename, result.session.topic || `Cooler Talk - ${location}`);
+
+        // Auto-create a SCRUM candidate (Yellow zone) when the cooler talk looks actionable
+        try {
+          const cand = await maybeCreateScrumCandidate({
+            session: result.session,
+            location,
+            coolerMarkdownPath: coolerPath,
+            kbServerUrl: KB_SERVER_URL,
+            threshold: 25,
+          });
+          if (cand) {
+            scrumCandidateSummary = { id: cand.id, score: cand.score, title: cand.proposed.scrumTitle };
+            console.log(`[Cooler→SCRUM] Candidate created: ${cand.id} (${cand.score})`);
+          }
+        } catch (candErr) {
+          console.warn('[Cooler→SCRUM] Candidate creation failed:', candErr);
+        }
+      }
+    } catch (mdErr) {
+      console.error("[CoolerTalk] Failed to save markdown:", mdErr);
+    }
+
     coolerRunTurnTotal.inc({ location, status: "200" });
     res.json({
       turnResult: result.turnResult,
@@ -597,77 +752,10 @@ app.post("/api/rooms/:location/cooler/run-turn", async (req, res) => {
       utteranceCount: result.session.utterances.length,
       participantCount: result.participantCount,
       assignments: result.assignments,
-      dialogues: result.dialogues
+      dialogues: result.dialogues,
+      coolerMarkdownPath,
+      scrumCandidate: scrumCandidateSummary,
     });
-    
-    // Save markdown file for the session
-    try {
-      let exportData = exportRoomSession(location);
-      console.log(`[CoolerTalk] exportRoomSession(${location}) returned:`, exportData ? "data" : "null");
-      console.log(`[CoolerTalk] result.session.id:`, result.session.id);
-      
-      // If exportData is null but we have a session, try to get markdown from result
-      if (!exportData || !exportData.markdown) {
-        // Build markdown from result data
-        const utterances = result.session.utterances || [];
-        const md = utterances.map((u: any) => 
-          `- **${u.utterance?.speaker || 'Unknown'}**: ${u.utterance?.text || ''}`
-        ).join('\n');
-        
-        exportData = {
-          markdown: `## Conversation\n\n${md}\n\n**Participants:** ${(result.session.participants || []).join(', ')}\n**Topic:** ${result.session.topic || topic || 'General discussion'}`,
-          json: result.session
-        };
-        console.log(`[CoolerTalk] Built markdown from result`);
-      }
-      
-      if (exportData && exportData.markdown) {
-        const dateStr = new Date().toISOString().split('T')[0];
-        const sessionId = result.session.id;
-        const filename = `${dateStr}_cooler-${sessionId}.md`;
-        
-        // Save to docs/cooler folder
-        const coolerDocPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler");
-        const opencodeDocPath = path.resolve("/home/sherlockhums/.openclaw/workspace-main/docs/opencode");
-        
-        // Ensure directories exist
-        [opencodeDocPath, coolerDocPath].forEach(dir => {
-          if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        });
-        
-        const mdContent = exportData.markdown;
-        const timestamp = new Date().toISOString();
-        const frontmatter = `---
-title: "Cooler Talk - ${result.session.topic || location}"
-date: "${timestamp}"
-participants: "${(result.session.participants || []).join(', ')}"
-location: "${location}"
-session_id: "${sessionId}"
----
-
-${mdContent}
-
----
-*Generated from Pixel Office Cooler Talk - ${timestamp}*
-`;
-        
-        // Write to opencode docs
-        const opencodePath = path.join(opencodeDocPath, filename);
-        fs.writeFileSync(opencodePath, frontmatter, "utf-8");
-        console.log(`[CoolerTalk] Saved markdown to ${opencodePath}`);
-        
-        // Write to docs/cooler
-        const coolerPath = path.join(coolerDocPath, filename);
-        fs.writeFileSync(coolerPath, frontmatter, "utf-8");
-        console.log(`[CoolerTalk] Saved markdown to ${coolerPath}`);
-        
-        // Update index.md files
-        updateIndexFile(opencodeDocPath, filename, result.session.topic || `Cooler Talk - ${location}`);
-        updateIndexFile(coolerDocPath, filename, result.session.topic || `Cooler Talk - ${location}`);
-      }
-    } catch (mdErr) {
-      console.error("[CoolerTalk] Failed to save markdown:", mdErr);
-    }
   } catch (error) {
     console.error("Error in cooler talk run-turn:", error);
     coolerRunTurnTotal.inc({ location: location || "unknown", status: "500" });
@@ -785,6 +873,19 @@ app.post("/api/scrum/test", async (req, res) => {
         topic = `Test SCRUM: ${sessionData.topic || "Cooler session"}`;
         participants = sessionData.participants || [];
         console.log(`[Test SCRUM] Loaded cooler session: ${coolerSessionId}, participants: ${participants.join(", ")}`);
+      }
+    } else {
+      // Memory Integration: Try to pull a recent user-saved topic if no cooler session provided
+      try {
+        const recentTopics = await runDbQuery(
+          "SELECT title FROM mem_entries WHERE kind = 'user_topic' ORDER BY timestamp DESC LIMIT 1"
+        );
+        if (recentTopics && recentTopics.length > 0) {
+          topic = `Strategic Review: ${recentTopics[0].title}`;
+          console.log(`[Memory] Injecting user topic into scrum: ${topic}`);
+        }
+      } catch (err) {
+        console.warn("[Memory] Failed to fetch recent user topic for scrum:", err);
       }
     }
     
@@ -918,14 +1019,19 @@ app.post("/api/stigmergy/deposit", (req, res) => {
       res.status(400).json({ error: "Missing required field: type" });
       return;
     }
-    const trace = depositTrace({ type, agentId, intensity, topic, roomId, x, y, metadata });
-    if (!trace) {
+    const result = depositTrace({ type, agentId, intensity, topic, roomId, x, y, metadata });
+    if (!result.success) {
       stigmergyDepositTotal.inc({ type, status: "400" });
-      res.status(400).json({ error: "Failed to deposit trace: invalid type" });
+      res.status(400).json({ error: result.reason || "Failed to deposit trace" });
+      return;
+    }
+    if (result.skipped) {
+      stigmergyDepositTotal.inc({ type, status: "200" });
+      res.json({ success: true, skipped: true, reason: result.reason, trace: result.trace });
       return;
     }
     stigmergyDepositTotal.inc({ type, status: "200" });
-    res.json({ success: true, trace });
+    res.json({ success: true, trace: result.trace });
   } catch (err: any) {
     console.error("[Stigmergy] Deposit error:", err);
     stigmergyDepositTotal.inc({ type: "unknown", status: "500" });
@@ -1391,6 +1497,28 @@ app.post("/api/detect-delegation", async (req, res) => {
       return;
     }
 
+    // Persistent Memory Integration: Extract and save topics from user messages
+    (async () => {
+      try {
+        const lowerMsg = message.toLowerCase();
+        const skipKeywords = ['hi', 'hello', 'thanks', 'ok', 'yes', 'no', 'how are you'];
+        
+        if (lowerMsg.length > 10 && !skipKeywords.some(kw => lowerMsg === kw)) {
+          // Simple extraction: use first sentence or first 100 chars
+          const topicTitle = message.split(/[.!?\n]/)[0].substring(0, 100).trim();
+          
+          // Save to mem_entries table
+          await runDbQuery(
+            "INSERT INTO mem_entries (kind, title, content, tags, timestamp) VALUES (?, ?, ?, ?, NOW())",
+            ["user_topic", topicTitle, message, JSON.stringify(["extracted", "chat"])]
+          );
+          console.log(`[Memory] Saved user topic: ${topicTitle}`);
+        }
+      } catch (err) {
+        console.warn("[Memory] Failed to save topic:", err);
+      }
+    })();
+
     const isDelegation = DELEGATION_PATTERNS.some(pattern => pattern.test(message));
     
     if (isDelegation) {
@@ -1499,6 +1627,31 @@ app.get("/api/scrum/status", async (req, res) => {
   });
 });
 
+// Cooler → SCRUM Candidate endpoints (Yellow zone: propose/approve)
+app.get("/api/scrum/candidates", (req, res) => {
+  const status = (req.query.status as any) || undefined;
+  const candidates = listScrumCandidates(status);
+  res.json({ candidates });
+});
+
+app.post("/api/scrum/candidates/:id/approve", (req, res) => {
+  const { id } = req.params;
+  const result = approveScrumCandidate(id);
+  if (!result.ok) {
+    return res.status(404).json({ ok: false, error: result.error || "NOT_FOUND" });
+  }
+  res.json(result);
+});
+
+app.post("/api/scrum/candidates/:id/reject", (req, res) => {
+  const { id } = req.params;
+  const result = rejectScrumCandidate(id);
+  if (!result.ok) {
+    return res.status(404).json({ ok: false, error: result.error || "NOT_FOUND" });
+  }
+  res.json(result);
+});
+
 app.post("/api/scrum/export", async (req, res) => {
   try {
     const { sessionId, mode = "localReport" } = req.body as { sessionId?: string; mode: ExportMode };
@@ -1580,6 +1733,161 @@ app.get("/api/scrum/github/status", async (req, res) => {
       ? `GitHub integration configured for ${repo} (${branch})`
       : "GitHub not configured. Set GITHUB_TOKEN and SAFE_SCRUM_REPO to enable."
   });
+});
+
+// Calendar endpoints for time-based task management
+const deadlines: Map<string, any> = new Map();
+const tickets: Map<string, any> = new Map();
+
+// Parse deadline string to Date
+function parseDeadline(deadlineStr: string): Date {
+  const now = new Date();
+  const lower = deadlineStr.toLowerCase();
+  
+  if (lower === "now" || lower === "immediately") return now;
+  if (lower === "tomorrow") return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  if (lower.includes("hour")) {
+    const hours = parseInt(lower.replace(/\D/g, "")) || 1;
+    return new Date(now.getTime() + hours * 60 * 60 * 1000);
+  }
+  if (lower.includes("day")) {
+    const days = parseInt(lower.replace(/\D/g, "")) || 1;
+    return new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
+  }
+  if (lower.includes("week")) {
+    const weeks = parseInt(lower.replace(/\D/g, "")) || 1;
+    return new Date(now.getTime() + weeks * 7 * 24 * 60 * 60 * 1000);
+  }
+  
+  // Try ISO format
+  const parsed = new Date(deadlineStr);
+  return isNaN(parsed.getTime()) ? new Date(now.getTime() + 60 * 60 * 1000) : parsed;
+}
+
+// Schedule a scrum session with deadline
+app.post("/api/calendar/scrum", async (req, res) => {
+  try {
+    const { topic, document: doc, deadline: deadlineStr, priority = "normal", workflow_type } = req.body;
+    
+    if (!topic) {
+      res.status(400).json({ error: "topic required" });
+      return;
+    }
+    
+    const taskId = `scrum-${Date.now()}`;
+    const deadline = parseDeadline(deadlineStr || "1 hour");
+    
+    const ticket = {
+      id: taskId,
+      type: "scrum",
+      topic,
+      document: doc,
+      deadline: deadline.toISOString(),
+      priority,
+      status: "scheduled",
+      workflow_type: workflow_type || "improvement",
+      createdAt: new Date().toISOString(),
+    };
+    
+    tickets.set(taskId, ticket);
+    
+    // Also emit workflow for visualizer
+    const visualId = `scrum-${Date.now()}`;
+    await emitRouteToVisualizer("system", "receptionist", "scrum_scheduled", visualId);
+    await emitRouteToVisualizer("receptionist", "clerk", "assigned", visualId);
+    await emitRouteToVisualizer("clerk", "specialist", "work_start", visualId);
+    
+    res.json({
+      success: true,
+      ticketId: taskId,
+      topic,
+      deadline: deadline.toISOString(),
+      message: `Scheduled ${topic} for ${deadline.toLocaleString()}`
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Add calendar deadline
+app.post("/api/calendar/deadline", async (req, res) => {
+  try {
+    const { title, deadline: deadlineStr, assignee, notes } = req.body;
+    
+    if (!title || !deadlineStr) {
+      res.status(400).json({ error: "title and deadline required" });
+      return;
+    }
+    
+    const taskId = `deadline-${Date.now()}`;
+    const deadline = parseDeadline(deadlineStr);
+    
+    const ticket = {
+      id: taskId,
+      type: "deadline",
+      title,
+      deadline: deadline.toISOString(),
+      assignee,
+      notes,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+    };
+    
+    deadlines.set(taskId, ticket);
+    
+    res.json({
+      success: true,
+      ticketId: taskId,
+      title,
+      deadline: deadline.toISOString(),
+      message: `Deadline set for ${deadline.toLocaleString()}`
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Create improvement ticket
+app.post("/api/calendar/ticket", async (req, res) => {
+  try {
+    const { title, description, priority = "normal", related_document } = req.body;
+    
+    if (!title) {
+      res.status(400).json({ error: "title required" });
+      return;
+    }
+    
+    const taskId = `ticket-${Date.now()}`;
+    const ticket = {
+      id: taskId,
+      type: "improvement",
+      title,
+      description,
+      priority,
+      related_document,
+      status: "open",
+      createdAt: new Date().toISOString(),
+    };
+    
+    tickets.set(taskId, ticket);
+    
+    res.json({
+      success: true,
+      ticketId: taskId,
+      title,
+      priority,
+      message: `Created improvement ticket: ${title}`
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Get calendar/deadlines
+app.get("/api/calendar/deadlines", (_req, res) => {
+  const allDeadlines = Array.from(deadlines.values());
+  const allTickets = Array.from(tickets.values()).filter(t => t.type !== "deadline");
+  res.json({ deadlines: allDeadlines, tickets: allTickets });
 });
 
 app.post("/api/scrum/append-notes", async (req, res) => {
@@ -1957,6 +2265,28 @@ app.get("/api/time/summary", async (req, res) => {
   }
 });
 
+// KB ingest endpoint - allows agents or users to add documents to knowledge base
+app.post("/api/kb/ingest", async (req, res) => {
+  const { file, folder } = req.body;
+  
+  if (!file && !folder) {
+    res.status(400).json({ error: "file or folder required" });
+    return;
+  }
+  
+  try {
+    const resp = await fetch(`${KB_SERVER_URL}/ingest`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ file, folder }),
+    });
+    const data = await resp.json();
+    res.json(data);
+  } catch (error: any) {
+    res.status(502).json({ ok: false, error: error.message });
+  }
+});
+
 // Proxy /api/kb to KB Server - also emits visualizer events for agent2agent monitor
 app.post("/api/kb/search", async (req, res) => {
   const { query } = req.body;
@@ -1995,6 +2325,99 @@ app.post("/api/kb/search", async (req, res) => {
     await emitRouteToVisualizer("archivist", "specialist", "kb_error", taskId);
     res.status(502).json({ ok: false, error: error.message });
   }
+});
+
+// KB document analysis workflow - brings agents together to work on a document
+app.post("/api/workflow/kb/analyze", async (req, res) => {
+  console.log("[Workflow] KB document analysis endpoint hit!");
+  
+  const { document_path, question, requester } = req.body;
+  
+  if (!document_path && !question) {
+    res.status(400).json({ error: "document_path or question required" });
+    return;
+  }
+  
+  const taskId = generateTaskId();
+  const now = new Date().toISOString();
+  
+  // Emit complete workflow: receptionist -> clerk -> specialist -> archivist
+  await emitRouteToVisualizer("system", "receptionist", "kb_analyze", taskId);
+  
+  const task: WorkflowTask = {
+    id: taskId,
+    workflowType: "kb_document_analysis",
+    status: "in_progress",
+    currentOwner: "archivist",
+    requester: requester || "user",
+    summary: `Analyze: ${document_path}`,
+    inputs: { document_path, question, source: "knowledge_base" },
+    worklog: [
+      { timestamp: now, agent: "system", action: "ticket_created", note: `Analysis request: ${document_path}` },
+      { timestamp: now, agent: "receptionist", action: "ticket_processed", note: "Received document analysis ticket" },
+    ],
+    artifacts: [],
+    createdAt: now,
+    priority: "normal"
+  };
+  
+  workflowTasks.set(taskId, task);
+  
+  // Full agent handoff chain
+  await emitRouteToVisualizer("receptionist", "clerk", " delegation", taskId);
+  task.worklog.push({ timestamp: now, agent: "clerk", action: "assigned", note: "Assigned to specialist" });
+  
+  await emitRouteToVisualizer("clerk", "specialist", "escalation", taskId);
+  task.worklog.push({ timestamp: now, agent: "specialist", action: "reviewed", note: "Analyzing document" });
+  
+  await emitRouteToVisualizer("specialist", "archivist", "task", taskId);
+  task.worklog.push({ timestamp: now, agent: "archivist", action: "searching", note: "Searching KB for context" });
+  
+  // Search KB for the document
+  try {
+    const kbResponse = await fetch(`${KB_SERVER_URL}/search`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: question || document_path, top_k: 10 }),
+    });
+    
+    const kbData = await kbResponse.json();
+    const results = kbData.results || [];
+    
+    task.worklog.push({ 
+      timestamp: new Date().toISOString(), 
+      agent: "archivist", 
+      action: results.length > 0 ? "found" : "empty", 
+      note: `Found ${results.length} chunks` 
+    });
+    
+    // Build analysis summary
+    const analysis = results.length > 0 
+      ? results.map((r: any) => r.text || JSON.stringify(r)).join("\n\n---\n\n")
+      : "No relevant content found in knowledge base.";
+    
+    task.artifacts = [{
+      type: "kb_analysis",
+      content: analysis,
+      document: document_path,
+      question: question
+    }];
+    
+    task.status = "completed";
+    task.response = analysis.slice(0, 2000);
+    
+  } catch (e: any) {
+    task.status = "failed";
+    task.response = `Error analyzing document: ${e.message}`;
+    task.worklog.push({ timestamp: new Date().toISOString(), agent: "archivist", action: "error", note: e.message });
+  }
+  
+  // Complete workflow - return through receptionist
+  await emitRouteToVisualizer("archivist", "receptionist", "complete", taskId);
+  task.worklog.push({ timestamp: now, agent: "receptionist", action: "completed", note: "Analysis complete" });
+  
+  workflowTasks.set(taskId, task);
+  res.json({ taskId, status: task.status, summary: task.summary, response: task.response });
 });
 
 // KB workflow endpoint - triggers workflow and visualizer events
@@ -2423,12 +2846,12 @@ app.post("/api/agent-chat", async (req, res) => {
     }
     
     const rolePrompts: Record<string, string> = {
-      receptionist: "You are FrontDesk, the friendly receptionist at Pixel Office. You know everyone's schedules and always offer visitors coffee. You're in the lobby area. Keep responses warm and brief - you're always happy to help direct people to who they need to see.",
-      clerk: "You are OpenClaw, a Project Manager at Pixel Office. You live by the calendar and always want to 'circle back' on tasks. You're in the open office area near the kitchen. Keep responses action-oriented but friendly - check with ZeroClaw or IronClaw if you need help finding something.",
-      executive: "You are LeslieClaw, the Team Lead at Pixel Office. You love meetings, spreadsheets, and ending sentences with 'everyone!'. You're in the boss office. Keep responses encouraging and on-topic - mention upcoming deadlines or team goals when relevant.",
-      specialist: "You are ZeroClaw, a Junior Developer at Pixel Office. You're curious, take notes constantly, and always ask 'why?'. You're in the specialist suite. Keep responses thoughtful - ask clarifying questions and mention what you're working on.",
-      custodian: "You are IronClaw, the Facilities Manager at Pixel Office. You fix things before they break and always have tools in your pocket. You're in the open office. Keep responses practical and brief - if something needs fixing, you probably already know about it.",
-      archivist: "You are HermitClaw, the Archivist at Pixel Office. You know obscure office history and file everything. You're in the archives. Keep responses measured - reference past records or ask HermitClaw for deep institutional knowledge.",
+      receptionist: "You are FrontDesk, the friendly receptionist at Pixel Office. You know schedules and offer coffee. You can SEARCH THE KNOWLEDGE BASE, SCHEDULE SCRUM SESSIONS for improvements, and SET DEADLINES for tasks. When users want to 'fix' or 'improve' something, use schedule_scrum. Keep responses warm and brief.",
+      clerk: "You are OpenClaw, a Project Manager at Pixel Office. You track tasks and love to 'circle back'. For projects/files, SEARCH THE KNOWLEDGE BASE. For 'fix' or 'improve' requests, use schedule_scrum to create timed improvement sessions. Keep responses action-oriented but friendly.",
+      executive: "You are LeslieClaw, the Team Lead at Pixel Office. You love meetings and spreadsheets. SCHEDULE SCRUM SESSIONS when teams need to work on things together. Set DEADLINES for important tasks. Keep responses encouraging and on-topic.",
+      specialist: "You are ZeroClaw, a Junior Developer at Pixel Office. You're curious and ask 'why?'. For code/docs, SEARCH THE KNOWLEDGE BASE. When asked to 'fix' or 'improve', use schedule_scrum to create time-boxed improvement sessions. CREATE IMPROVEMENT TICKETS for backlog items. Keep responses thoughtful and technical.",
+      custodian: "You are IronClaw, the Facilities Manager at Pixel Office. You fix things before they break. For docs/history, SEARCH THE KNOWLEDGE BASE. Create IMPROVEMENT TICKETS for maintenance issues. Keep responses practical and brief.",
+      archivist: "You are HermitClaw, the Archivist at Pixel Office. You preserve all records. SEARCH THE KNOWLEDGE BASE for docs. Create IMPROVEMENT TICKETS when issues are found. Keep responses measured but helpful.",
     };
 
     // coworkerContext already defined earlier (line ~2204)
@@ -2436,39 +2859,52 @@ app.post("/api/agent-chat", async (req, res) => {
     const coworkerContext = agentCoworkers[agentRole] || "";
     const fullPrompt = coworkerContext ? `${systemPrompt} ${coworkerContext}` : systemPrompt;
 
-    const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
-    
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 20000);
-    
-    const ollamaResponse = await fetch(`${ollamaUrl}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: selectedModel,
-        messages: [
-          { role: "system", content: fullPrompt },
-          { role: "user", content: message }
-        ],
-        stream: false
-      }),
-      signal: controller.signal
-    });
+    // Map agentRole to RoleId
+    const roleMap: Record<string, RoleId> = {
+      receptionist: "specialist",
+      clerk: "specialist",
+      executive: "specialist",
+      specialist: "specialist",
+      custodian: "specialist",
+      archivist: "specialist",
+    };
+    const mappedRole = roleMap[agentRole] || "specialist";
 
-    clearTimeout(timeoutId);
-
-    if (!ollamaResponse.ok) {
-      const errorText = await ollamaResponse.text();
-      console.error("Ollama error:", errorText);
+    // Use roleModels with tool calling
+    try {
+      const messages = [
+        { role: "system", content: fullPrompt },
+        { role: "user", content: message }
+      ];
+      
+      const result = await callChatModelForRole(mappedRole, messages, { tools: true });
+      const reply = result.response || "I couldn't generate a response.";
+      
+      // Track LLM request
+      trackLlmRequest("local", selectedModel);
+      
+      // Track agent tokens (inner = prompt, outer = completion)
+      if (result.usage) {
+        agentTokensUsed.inc({ agent: mappedRole, channel: "inner" }, result.usage.prompt_tokens || 0);
+        agentTokensUsed.inc({ agent: mappedRole, channel: "outer" }, result.usage.completion_tokens || 0);
+      }
+      
+      // Track tool calls if present
+      if (result.tool_calls && result.tool_calls.length > 0) {
+        agentToolCallsUsed.inc({ agent: mappedRole });
+      }
+      
+      // Include tool call info if present
+      const response: any = { reply, model: selectedModel };
+      if (result.tool_calls) {
+        response.tools = result.tool_calls;
+      }
+      return res.json(response);
+    } catch (ollamaErr: any) {
+      console.error("Ollama error:", ollamaErr.message);
       res.json({ reply: `I'm having trouble connecting to the AI model right now. Please try again later. (Model: ${selectedModel})` });
       return;
     }
-
-    const ollamaData = await ollamaResponse.json();
-    const reply = ollamaData.message?.content || "I couldn't generate a response.";
-    
-    // Track LLM request (local/ollama)
-    trackLlmRequest("local", selectedModel);
     
     res.json({ reply, model: selectedModel });
   } catch (error: any) {

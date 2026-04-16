@@ -151,8 +151,15 @@ export function saveTraces(traces: StigmergyTrace[]) {
   fs.writeFileSync(TRACES_FILE, data);
 }
 
-export function depositTrace(trace: Partial<StigmergyTrace>) {
-  if (!trace.type) return null;
+export interface DepositResult {
+  success: boolean;
+  trace?: StigmergyTrace;
+  skipped?: boolean;
+  reason?: string;
+}
+
+export function depositTrace(trace: Partial<StigmergyTrace>): DepositResult {
+  if (!trace.type) return { success: false, reason: "Missing type" };
   
   const now = new Date();
   const decayConfig = DEFAULTS[trace.type] || { decayMs: DEFAULT_DECAY_MS };
@@ -170,7 +177,7 @@ export function depositTrace(trace: Partial<StigmergyTrace>) {
     );
     if (recentDuplicate) {
       console.log(`[Stigmergy] Skipping duplicate deposit: ${trace.type} for ${trace.agentId} in ${trace.roomId}`);
-      return null;
+      return { success: true, skipped: true, reason: "Duplicate within cooldown period", trace: recentDuplicate };
     }
   }
   
@@ -191,7 +198,7 @@ export function depositTrace(trace: Partial<StigmergyTrace>) {
   const active = getActiveTraces();
   active.push(newTrace);
   saveTraces(active);
-  return newTrace;
+  return { success: true, trace: newTrace };
 }
 
 export function getTracesForRoom(roomId: string): StigmergyTrace[] {
