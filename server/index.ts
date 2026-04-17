@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
+import { rebuildDocIndexes } from "./docs/docIndex.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -719,9 +720,18 @@ ${md}
         coolerMarkdownPath = coolerPath;
         console.log(`[CoolerTalk] Saved markdown to ${coolerPath}`);
 
-        // Update index.md files
+        // Update opencode index (simple append)
         updateIndexFile(opencodeDocPath, filename, result.session.topic || `Cooler Talk - ${location}`);
-        updateIndexFile(coolerDocPath, filename, result.session.topic || `Cooler Talk - ${location}`);
+
+        // Rebuild Pixel Office doc indexes (table-based, avoids endless bullet growth)
+        try {
+          const { coolerCount, scrumCount } = await rebuildDocIndexes(
+            "/home/sherlockhums/apps/pixelworld/pixel_office"
+          );
+          console.log(`[Index] Rebuilt Pixel Office indexes (cooler=${coolerCount}, scrum=${scrumCount})`);
+        } catch (idxErr) {
+          console.warn("[Index] Failed to rebuild Pixel Office indexes:", idxErr);
+        }
 
         // Auto-create a SCRUM candidate (Yellow zone) when the cooler talk looks actionable
         try {
@@ -953,6 +963,16 @@ source_session: "${coolerSessionId || 'random'}"
       console.log(`[Test SCRUM] Saved markdown to ${opencodePath}`);
     } catch (err: any) {
       console.error(`[Test SCRUM] Failed to save to ${opencodePath}:`, err.message);
+    }
+
+    // Rebuild Pixel Office doc indexes (so docs/scrum/index.md stays current)
+    try {
+      const { coolerCount, scrumCount } = await rebuildDocIndexes(
+        "/home/sherlockhums/apps/pixelworld/pixel_office"
+      );
+      console.log(`[Index] Rebuilt Pixel Office indexes (cooler=${coolerCount}, scrum=${scrumCount})`);
+    } catch (idxErr) {
+      console.warn("[Index] Failed to rebuild Pixel Office indexes:", idxErr);
     }
     
     // Add test metadata
