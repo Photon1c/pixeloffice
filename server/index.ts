@@ -568,8 +568,16 @@ function selectWeightedParticipants(participants: string[], count: number): stri
 import { getActiveHeat } from "./cooler/reviewHeat.js";
 import { createScrumSession, advanceScrumSession, type ScrumSession } from "./scrum/scrumController.js";
 import { runRoomTurn, exportRoomSession } from "./services/coolerTalkService.js";
-import { generateFn } from "./services/llmGenerateFn.js";
-import { maybeCreateScrumCandidate, listScrumCandidates, approveScrumCandidate, rejectScrumCandidate } from "./cooler/scrumCandidates.js";
+import { generateFn, getLastUsedModel } from "./services/llmGenerateFn.js";
+import { maybeCreateScrumCandidate, listScrumCandidates, approveScrumCandidate, rejectScrumCandidate, type ScrumCandidate } from "./cooler/scrumCandidates.js";
+import { createSafeScrumRepoClient } from "./github/safeScrumRepoClient.js";
+import {
+  loadScrumSession,
+  previewScrumReport,
+  exportScrumReport,
+  isSessionComplete,
+  type ExportMode,
+} from "./scrum/scrumExporter.js";
 
 let currentScrumSession: ScrumSession | null = null;
 
@@ -1200,6 +1208,11 @@ app.get("/api/models/health", async (req, res) => {
   });
 });
 
+// Last used model tracking endpoint
+app.get("/api/models/last-used", (req, res) => {
+  res.json({ model: getLastUsedModel() });
+});
+
 app.get("/api/stigmergy/review-heat", (req, res) => {
   try {
     const activeHeat = getActiveHeat();
@@ -1343,7 +1356,7 @@ app.post("/api/agent/detect-loop", (req, res) => {
     if (loopScore >= 0.7 || estimatedTokens >= maxTokens) {
       state = "looping";
       recommendedAction = "interrupt";
-    } else if (loopScore >= 0.4 || noveltyScore < 0.5) {
+    } else if (loopScore >= 0.5 || noveltyScore < 0.3) {
       state = "stalled";
       recommendedAction = "summarize";
     }
@@ -1654,13 +1667,89 @@ app.get("/api/scrum/candidates", (req, res) => {
   res.json({ candidates });
 });
 
-app.post("/api/scrum/candidates/:id/approve", (req, res) => {
+app.post("/api/scrum/candidates/:id/approve", async (req, res) => {
   const { id } = req.params;
-  const result = approveScrumCandidate(id);
-  if (!result.ok) {
-    return res.status(404).json({ ok: false, error: result.error || "NOT_FOUND" });
+  const shouldRun = req.query.run === "true";
+  const exportMode = (req.query.export as ExportMode) || "localReport";
+
+  const approveResult = approveScrumCandidate(id);
+  if (!approveResult.ok) {
+    return res.status(404).json({ ok: false, error: approveResult.error || "NOT_FOUND" });
   }
-  res.json(result);
+
+  if (!shouldRun) {
+    return res.json(approveResult);
+  }
+
+  try {
+    const candidate = approveResult.candidate!;
+    const topic = candidate.proposed.scrumTitle;
+    const participants = ["clerk", "specialist", "executive", "archivist"];
+
+    const candidateContext = [
+      `Source: Cooler session ${candidate.source.coolerSessionId}`,
+      `Location: ${candidate.source.location}`,
+      `Topic: ${candidate.source.topic}`,
+      `Score: ${candidate.score} (threshold: ${candidate.threshold})`,
+      ...candidate.reasons.map((r) => `- ${r}`),
+      ...candidate.kb.topSnippets.slice(0, 2).map((s) => `KB: ${s}`),
+    ];
+
+    let session = createScrumSession(topic, participants, candidateContext);
+
+    while (session.finalStatus !== "complete" && session.finalStatus !== "failed") {
+      const { session: updatedSession } = await advanceScrumSession(session);
+      session = updatedSession;
+      if (session.finalStatus === "failed") break;
+    }
+
+    if (!isSessionComplete(session)) {
+      return res.json({
+        ok: true,
+        candidate,
+        sessionId: session.id,
+        status: "session_failed",
+        error: "SCRUM session did not complete",
+      });
+    }
+
+    const githubClient = createSafeScrumRepoClient({
+      GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+      SAFE_SCRUM_REPO: process.env.SAFE_SCRUM_REPO,
+      SAFE_SCRUM_BRANCH: process.env.SAFE_SCRUM_BRANCH,
+      SAFE_SCRUM_REPORTS_DIR: process.env.SAFE_SCRUM_REPORTS_DIR,
+      SAFE_SCRUM_NOTES_PATH: process.env.SAFE_SCRUM_NOTES_PATH,
+    });
+
+    const exportResult = await exportScrumReport(
+      session.id,
+      exportMode,
+      githubClient || undefined
+    );
+
+    const reviewResult = session.results.find((r) => r.stage === "review");
+    const decideResult = session.results.find((r) => r.stage === "decide");
+
+    res.json({
+      ok: true,
+      candidate,
+      candidateId: candidate.id,
+      sessionId: session.id,
+      reportPath: exportResult.path,
+      status: "completed",
+      decision: decideResult?.output?.decision || "unknown",
+      recommended_actions: reviewResult?.output?.recommended_actions || [],
+      sourceContext: candidateContext,
+      exportMode,
+    });
+  } catch (error: any) {
+    console.error("Error running SCRUM from candidate:", error);
+    res.status(500).json({
+      ok: false,
+      error: error.message || "Failed to run SCRUM session",
+      candidate: approveResult.candidate,
+    });
+  }
 });
 
 app.post("/api/scrum/candidates/:id/reject", (req, res) => {
@@ -2257,6 +2346,16 @@ app.get("/api/cooler/topics/current", async (req, res) => {
     const topics = await fetchNewsTopics();
     const currentTopic = topics.length > 0 ? topics[0] : null;
     res.json({ topic: currentTopic, topics });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/cooler/topics/refresh", async (req, res) => {
+  try {
+    const topics = await fetchNewsTopics();
+    const currentTopic = topics.length > 0 ? topics[0] : null;
+    res.json({ success: true, topic: currentTopic, topics });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

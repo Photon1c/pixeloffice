@@ -1,11 +1,21 @@
 import type { GenerateFn } from "../conversation/api.js";
-import { tryLocalModel, isLocalModelAvailable } from "../llm/localClient.js";
+import { tryLocalModel, isLocalModelAvailable, LOCAL_MODEL } from "../llm/localClient.js";
 import { routeChat } from "../llm/llmRouter.js";
 
 const MAX_TOKENS = 40;
 const TEMPERATURE = 0.7;
 
 let localModelAvailable: boolean | null = null;
+
+// Track the last used model for display
+let lastUsedModel: string = LOCAL_MODEL;
+
+/**
+ * Get the currently tracked model name
+ */
+export function getLastUsedModel(): string {
+  return lastUsedModel;
+}
 
 /**
  * Check if local model is available (cached)
@@ -31,6 +41,7 @@ export const generateFn: GenerateFn = async (prompt: string): Promise<string> =>
   // 1. Local
   const localAvailable = await checkLocalAvailability();
   if (localAvailable) {
+    lastUsedModel = LOCAL_MODEL;
     const localResult = await tryLocalModel(prompt);
     if (localResult !== null && localResult.length > 0) {
       return localResult;
@@ -39,10 +50,12 @@ export const generateFn: GenerateFn = async (prompt: string): Promise<string> =>
   
   // 2. Cloud Router
   try {
+    lastUsedModel = "cloud";
     const result = await routeChat([{ role: "user", content: prompt }], {
       max_tokens: MAX_TOKENS,
       temperature: TEMPERATURE
     });
+    lastUsedModel = result.model || "cloud";
     return result.content;
   } catch (error) {
     console.error("[generateFn] Cloud Router error:", error);

@@ -3,6 +3,7 @@ import { Agent, DashboardConfig, AgentStatus, AgentVisibility, Task, ZoneActivit
 import { LAB_MODE } from "../config/env";
 import { setupConsoleMonitor } from "../utils/consoleMonitor";
 import { StabilityMonitor, AgentIssueMonitor } from "./StabilityMonitor";
+import { TSAHealthPanel } from "./TSAHealthPanel";
 import GenealogyLab from "./GenealogyLab";
 import AdminAssistant from "./AdminAssistant";
 import StockForecasts from "./StockForecasts";
@@ -154,11 +155,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [convoSessions, setConvoSessions] = useState<any[]>([]);
   const [selectedSession, setSelectedSession] = useState<any>(null);
   const [zoneActivity, setZoneActivity] = useState<Map<string, ZoneActivity>>(new Map());
+  const debouncedDeskUpdates = useRef<Map<string, NodeJS.Timeout>>(new Map());
   const [activeConversationZone, setActiveConversationZone] = useState<string | null>(null);
   const [stigmergyTraces, setStigmergyTraces] = useState<any[]>([]);
   const [socialPotential, setSocialPotential] = useState<{sessionCount: number; participantCount: number; intensity: number} | null>(null);
   const [currentTopic, setCurrentTopic] = useState<string>("");
-  const [speechBubbles, setSpeechBubbles] = useState<{speakerId: string; text: string; offset?: number; yOffset?: number}[]>([]);
+  const [speechBubbles, setSpeechBubbles] = useState<{speakerId: string; text: string; offset?: number; yOffset?: number; model?: string}[]>([]);
   
   // Thought Burst / Loop Detection State
   const [thoughtBurstConfig] = useState({
@@ -358,6 +360,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       } catch {}
     };
     
+    const refreshTopic = async () => {
+      try {
+        const resp = await fetch("/api/cooler/topics/refresh", { method: 'POST' });
+        const data = await resp.json();
+        if (data.topic) {
+          const topicValue = typeof data.topic === 'object' ? data.topic.title : data.topic;
+          setCurrentTopic(topicValue);
+        }
+      } catch {}
+    };
+    
     fetchTraces();
     fetchSocialPotential();
     fetchTopic();
@@ -365,7 +378,11 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       fetchTraces();
       fetchSocialPotential();
     }, 5000);
-    return () => clearInterval(interval);
+    const topicInterval = setInterval(refreshTopic, 300000); // Refresh news topic every 5 minutes
+    return () => {
+      clearInterval(interval);
+      clearInterval(topicInterval);
+    };
   }, []);
 
   // Fetch Desk Stigmergy State (per thought_speech_stigmergy.md Part B)
@@ -602,12 +619,13 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           // Simulate occasional "thinking" text
           if (agent.status === "working" && agent.thoughtBubble) {
             const text = agent.thoughtBubble.text;
+            const burstTokenCount = Math.ceil(text.length / 4); // Estimate tokens (~4 chars per token)
             fetch("/api/agent/detect-loop", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ 
                 text, 
-                burstTokenCount: Math.floor(Math.random() * 100),
+                burstTokenCount,
                 maxBurstTokens: thoughtBurstConfig.maxBurstTokens
               })
             })
@@ -624,14 +642,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                 }
               }));
               
-              // Update desk loop heat based on detection
-              if (data.state === "looping") {
-                const deskId = `desk-${agent.deskIndex}`;
-                fetch(`/api/stigmergy/desk/${deskId}/update`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ loopHeat: 0.8 })
-                }).catch(() => {});
+              // Update desk loop heat based on detection (rate limited)
+              if (data.state === "looping" && agent.id) {
+                debouncedDeskUpdates.current.set(`desk-${agent.deskIndex}`, 
+                  setTimeout(() => {
+                    fetch(`/api/stigmergy/desk/desk-${agent.deskIndex}/update`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ loopHeat: 0.8 })
+                    }).catch(() => {});
+                  }, 1000)
+                );
               }
             })
             .catch(() => {});
@@ -682,13 +703,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       return;
     }
 
-    log.info("Starting render", { w: canvas.width, h: canvas.height, agents: agents.length });
-    
-    // Force explicit size check
-    const checkSize = () => {
-      renderLog.debug("Canvas dimensions:", { w: canvas.width, h: canvas.height, clientW: canvas.clientWidth, clientH: canvas.clientHeight });
-    };
-    checkSize();
+    // Render loop
 
     // Test: Fill canvas with a solid color first
     ctx.fillStyle = "#050509";
@@ -848,7 +863,10 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             <button onClick={async () => {
               const resp = await fetch("/api/cooler/topics/refresh", { method: 'POST' });
               const data = await resp.json();
-              if (data.topic) setCurrentTopic(data.topic);
+              if (data.topic) {
+                const topicValue = typeof data.topic === 'object' ? data.topic.title : data.topic;
+                setCurrentTopic(topicValue);
+              }
             }} style={styles.iconBtn} title="Refresh news topic">↻</button>
           </div>
           <div style={{ fontSize: '10px', color: '#feca57', marginBottom: '8px', fontStyle: 'italic' }}>Topic: {currentTopic || "Loading..."}</div>
@@ -1182,6 +1200,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         <div style={styles.canvasWrapper} ref={containerRef}>
           <canvas ref={canvasRef} style={styles.canvas} onClick={handleCanvasClick} />
           <StabilityMonitor visible={LAB_MODE} />
+          <TSAHealthPanel visible={true} />
           <AgentIssueMonitor 
             visible={LAB_MODE} 
             onTestConversation={() => {
@@ -1201,12 +1220,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               ));
               setTimeout(() => {
                 const conversation = [
-                  { speaker: speakerA.name, text: "Hey! Have you seen the new feature the dev team shipped?" },
-                  { speaker: speakerB.name, text: "Oh yeah? I heard rumors. Is it the dashboard redesign?" },
-                  { speaker: speakerA.name, text: "Even better - it's the agent2agent monitor. Watch this!" },
-                  { speaker: speakerB.name, text: "No way! That's exactly what we needed for Standup." },
-                  { speaker: speakerA.name, text: "Right? And it's got speech bubbles now too." },
-                  { speaker: speakerB.name, text: "This is going to make retro so much easier. Great find!" },
+                  { speaker: speakerA.name, text: "Hey! Have you seen the new feature the dev team shipped?", model: "llama3.3" },
+                  { speaker: speakerB.name, text: "Oh yeah? I heard rumors. Is it the dashboard redesign?", model: "qwen2.5" },
+                  { speaker: speakerA.name, text: "Even better - it's the agent2agent monitor. Watch this!", model: "llama3.3" },
+                  { speaker: speakerB.name, text: "No way! That's exactly what we needed for Standup.", model: "qwen2.5" },
+                  { speaker: speakerA.name, text: "Right? And it's got speech bubbles now too.", model: "llama3.3" },
+                  { speaker: speakerB.name, text: "This is going to make retro so much easier. Great find!", model: "qwen2.5" },
                 ];
 const showConvo = () => {
                   let bubbleIdx = 0;

@@ -1,7 +1,7 @@
 import "dotenv/config";
 
 const OLLAMA_ENDPOINT = process.env.OLLAMA_ENDPOINT || "http://localhost:11434";
-const LOCAL_MODEL = process.env.LOCAL_MODEL_NAME || "llama3.2";
+export const LOCAL_MODEL = process.env.LOCAL_MODEL_NAME || "llama3.2";
 const LOCAL_TIMEOUT_MS = parseInt(process.env.LOCAL_TIMEOUT_MS || "8000", 10);
 
 export interface LocalModelResponse {
