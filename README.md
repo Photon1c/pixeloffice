@@ -12,17 +12,34 @@ The [live app](https://stigmergic-pixel-office.netlify.app/) is now available.
 
 ---
 
-## ✨ Current Highlights (March 31, 2026)
+## ✨ Current Highlights (April 27, 2026)
 
-- **Grid-Based Layout**
-  - 5×3 grid filling a 1200×800 canvas
-  - Standardized room interiors (70% back wall / 30% floor strip)
-  - Kitchen and Sherlock's Office fully furnished via schema-driven layout
+- **Model Health Dashboard**
+  - Real-time health monitoring at `/model-health` endpoint
+  - Tracks model availability, latency, and response status
+  - Accessible via the office interface (top-right menu)
+
+- **News & Review Heat**
+  - **News Topics**: Fetches fresh tech/science news via RSS (BBC Tech, NY Times Tech) with fallback to DuckDuckGo web search
+  - **Review Heat**: Stigmergic field tracking "heated" conversations about PRs, reviews, and bottlenecks
+  - Cooler→SCRUM scoring for relevance (tags + action phrases)
+  - Qualifying conversations promote into `scrum_runs` + `tasks` via Supabase
 
 - **Stigmergic Fields**
   - **Review Heat**: orange pulsing aura in the kitchen when cooler talk centers on PR backlog / review bottlenecks
   - **Task Shadows**: blue fading footprints at desks where agents have unfinished work
-  - These fields are wired into backend logic (cooler→SCRUM bridge) and visible in the scene
+  - **Social Potential**: intensity meter tracking active cooler sessions and participants
+  - Fields are wired into backend logic (cooler→SCRUM bridge) and visible in the scene
+
+- **Thought-Speech-Action (TSA) Health Panel** (Lab-only)
+  - Real-time monitoring of Thought bursts, Speech events, and Action executions
+  - Issues tracking for anomaly detection (loops, stuck states, deadlocks)
+  - Test bubble simulation for stress testing the agent ecosystem
+
+- **Agentic OS Kernel (Reasoning Loop)**
+  - Autonomous task execution engine (`kernel_reasoning_loop.cjs`)
+  - Orchestrator for structured task workflows (`orchestrator.cjs`)
+  - Supports refresh_news, health_check, desk_state, write_note and more
 
 - **Cooler → SCRUM Bridge**
   - Cooler sessions are scored for relevance (tags + action phrases)
@@ -40,7 +57,13 @@ The [live app](https://stigmergic-pixel-office.netlify.app/) is now available.
 - **Public vs Lab Modes**
   - `PUBLIC_MODE` / `LAB_MODE` flags control which UI surfaces are exposed
   - **Always visible**: Live Mode, Show Agent Names, core office view
-  - **Lab-only**: Terminal, Sherlock CS, NightWatchauton, ClawGuard, Genealogy Lab, Admin Assistant, Stock Forecasts, and other experimental tools
+  - **Lab-only**: Terminal, Sherlock CS, NightWatchauton, ClawGuard, Genealogy Lab, Admin Assistant, Stock Forecasts, TSA Health Panel, and other experimental tools
+
+- **Multi-Upgrade Features**
+  - Loop detection with abort/resume capability
+  - Auto-refreshed news topics (every 5 minutes)
+  - Agentic OS Kernel reasoning loop for autonomous task execution
+  - Improved cooler-to-SCRUM bridge with meaningful report generation
 
 ---
 
@@ -50,7 +73,10 @@ The [live app](https://stigmergic-pixel-office.netlify.app/) is now available.
 pixel_office/
 ├─ src/
 │  ├─ components/
-│  │  └─ PixelOffice.tsx        # Main React component + HUD
+│  │  ├─ PixelOffice.tsx        # Main React component + HUD
+│  │  ├─ TSAHealthPanel.tsx    # Lab-only TSA health monitoring (Thought-Speech-Action)
+│  │  ├─ StabilityMonitor.tsx    # Agent stability & anomaly tracking
+│  │  └─ ...
 │  ├─ config/
 │  │  └─ env.ts                 # PUBLIC_MODE / LAB_MODE helpers
 │  ├─ utils/
@@ -61,16 +87,20 @@ pixel_office/
 │  ├─ index.ts                  # Express server entry
 │  ├─ cooler/
 │  │  ├─ coolerToScrum.ts      # Cooler → SCRUM bridge logic
-│  │  └─ stigmergy.ts          # Review Heat / Task Shadows endpoints
-│  ├─ roleModels.ts             # Role → model mapping
+│  │  ├─ reviewHeat.ts         # Review Heat tracking (PR/review conversations)
+│  │  └─ stigmergy.ts         # Stigmergic fields (heat, shadows, social potential)
+│  ├─ services/
+│  │  └─ newsTopics.ts        # News topic fetching (RSS, web search, fallback)
+│  ├─ kernel_reasoning_loop.cjs   # Agentic OS kernel reasoning engine
+│  ├─ orchestrator.cjs        # Task orchestration engine
+│  ├─ roleModels.ts           # Role → model mapping
 │  └─ ...
 ├─ docs/
 │  └─ active/                   # Design briefs & current specs
-│     ├─ 03-31-quick-summary.md
-│     ├─ evening_summary.md
-│     ├─ opencode_nvidia_integration_spec.md
-│     ├─ stigmergy.md
-│     └─ cooler_scrum_quick_summary.md
+│     ├─ index.md
+│     ├─ opencode_multi_upgrade_handoff.md
+│     ├─ opencode_pixel_office_tsa_health_ui_handoff.md
+│     └─ ...
 ├─ netlify.toml                 # Build + functions config for Netlify
 ├─ package.json
 └─ README.md                    # You are here
