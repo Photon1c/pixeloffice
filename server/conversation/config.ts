@@ -6,11 +6,11 @@
  * some slack before we throw the line out entirely.
  */
 export const COOLER_CONFIG = {
-  maxWords: 60,
+  maxWords: 80,
   promptMaxWords: 50,
-  minWords: 5,
-  similarityThreshold: 0.7,
-  maxRetries: 5,
+  minWords: 3,
+  similarityThreshold: 0.5,
+  maxRetries: 3,
   minKeywordLength: 2,
 } as const;
 

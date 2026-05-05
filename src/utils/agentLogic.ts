@@ -17,6 +17,11 @@ const MOOD_THOUGHTS: Record<AgentMood, string[]> = {
     "Love this vibe in the office. Great energy everywhere!",
     "What a wonderful morning! The coffee is perfect and work is flowing.",
     "So glad to be working with such talented colleagues today!",
+    "Today is going to be amazing! I can feel it.",
+    "The sun is shining and the code is compiling!",
+    "Love working with this team - great synergies!",
+    "Productive morning! Getting so much done.",
+    "Cheers to a great afternoon of coding!",
   ],
   neutral: [
     "So it goes... another day in the pixel world office.",
@@ -24,6 +29,11 @@ const MOOD_THOUGHTS: Record<AgentMood, string[]> = {
     "Hmm... I should probably check on those pending tasks soon.",
     "The office is quiet today, everyone seems focused on their work.",
     "Need to organize my desk and review what needs to be done next.",
+    "Steady progress on all fronts today.",
+    "The daily standup went smoothly.",
+    "Tasks are piling up - need to prioritize.",
+    "Let me review my todo list for the day.",
+    "Regular day at the office - nothing to report.",
   ],
   thinking: [
     "Interesting... I need to figure out the best approach to this problem.",
@@ -31,6 +41,11 @@ const MOOD_THOUGHTS: Record<AgentMood, string[]> = {
     "What if we tried a different strategy? The current approach seems slow.",
     "This is a complex task. Let me break it down into smaller steps.",
     "I should review the documentation before making any changes.",
+    "The algorithm needs optimization - I see a bottleneck.",
+    "Need to research best practices for this approach.",
+    "Let me analyze the root cause before proposing a fix.",
+    "The architecture needs careful consideration.",
+    "Thinking about the long-term maintainability here.",
   ],
   excited: [
     "Can't wait to start this new project! It's going to be amazing!",
@@ -38,6 +53,11 @@ const MOOD_THOUGHTS: Record<AgentMood, string[]> = {
     "New ideas are flowing! Let me capture them before I forget.",
     "The client loved our proposal! Time to celebrate this success!",
     "This opportunity is exactly what I've been waiting for!",
+    "Breaking news! This is going to be huge!",
+    "The prototype worked on the first try!",
+    "Innovation at its finest - love this direction!",
+    "Finally, the perfect solution revealed itself!",
+    "Game-changing update coming soon!",
   ],
   tired: [
     "Need coffee... my brain is running on empty right now.",
@@ -45,6 +65,11 @@ const MOOD_THOUGHTS: Record<AgentMood, string[]> = {
     "Almost done with this task. Just need to push through to the end.",
     "It's been a long day. Only a few more hours until I can rest.",
     "My focus is fading. This task requires more energy than I have left.",
+    "Time for a quick break - brain feels foggy.",
+    "Almost at the finish line... just a bit more.",
+    "Running on autopilot today.",
+    "Need to recharge before continuing.",
+    "Just a few more tickets before I head out.",
   ],
   frustrated: [
     "Not working... why is this code failing again?!",
@@ -52,6 +77,66 @@ const MOOD_THOUGHTS: Record<AgentMood, string[]> = {
     "This is harder than expected. I need to ask for help.",
     "The deadline is approaching and I'm still stuck on this issue.",
     "Nothing seems to work the way it's supposed to today!",
+    "The edge case strikes again!",
+    "This bug is more elusive than I thought.",
+    "Need to step back and approach this differently.",
+    "Third time retrying - will it work now?",
+    "Documentation doesn't match the implementation...",
+  ],
+};
+
+const AGENT_SPECIFIC_THOUGHTS: Record<string, string[]> = {
+  frontdesk: [
+    "Welcome to Pixel Office! How may I direct your call?",
+    "The lobby is quiet today. Good for desk work.",
+    "Who just walked in? Let me check the visitor log.",
+    "Meeting room scheduling is my specialty.",
+    "Front desk needs attention - be ready for visitors.",
+  ],
+  openclaw: [
+    "Organizing the ticket queue - so many tasks, so little time.",
+    "Let me process these requests in priority order.",
+    "The workflow is flowing smoothly today.",
+    "Task management mode: activated.",
+    "Clearing the backlog one ticket at a time.",
+  ],
+  ironclaw: [
+    "Clean code is happy code. Let me polish this.",
+    "The build pipeline looks good today.",
+    "Quality assurance - my middle name.",
+    "Testing all the things! No bugs on my watch.",
+    "Keeping the office systems running smoothly.",
+  ],
+  hermitclaw: [
+    "Reviewing overnight logs for any pressing issues...",
+    "Scanning for loose ends and unresolved paths...",
+    "Documenting confusing pathways for later review...",
+    "The archives hold many secrets worth preserving...",
+    "Knowledge preservation is my sacred duty...",
+    "Let me check what changed while I rested...",
+    "Writing up observations for my owner's morning review...",
+    "Patterns emerge when you watch long enough...",
+  ],
+  leslieclaw: [
+    "Strategic planning in progress.",
+    "The numbers look promising this quarter.",
+    "Making executive decisions - the buck stops here.",
+    "Leadership requires vision and clarity.",
+    "What's the big picture today?",
+  ],
+  sherlock: [
+    "The clues are all there - I just need to find them.",
+    "Complex problems need elegant solutions.",
+    "Analyzing the situation from all angles.",
+    "Let me think through this systematically.",
+    "The mystery awaits unraveling.",
+  ],
+  zeroclaw: [
+    "Zero defects is the goal. Let me verify this.",
+    "Precision is key - let me double-check.",
+    "Debugging deeper than expected.",
+    "The root cause will reveal itself.",
+    "Edge cases are my specialty.",
   ],
 };
 
@@ -360,7 +445,11 @@ export function getMoodEmoji(mood: AgentMood): string {
   return MOOD_EMOJIS[mood];
 }
 
-export function getRandomThought(mood: AgentMood): string {
+export function getRandomThought(mood: AgentMood, agentId?: string): string {
+  if (agentId && AGENT_SPECIFIC_THOUGHTS[agentId]) {
+    const agentThoughts = AGENT_SPECIFIC_THOUGHTS[agentId];
+    return agentThoughts[Math.floor(Math.random() * agentThoughts.length)];
+  }
   const thoughts = MOOD_THOUGHTS[mood];
   return thoughts[Math.floor(Math.random() * thoughts.length)];
 }
@@ -370,7 +459,7 @@ export function updateAgentMood(agent: Agent, newMood: AgentMood): Agent {
 }
 
 export function generateThoughtBubble(agent: Agent): Agent {
-  const thoughtText = getRandomThought(agent.mood);
+  const thoughtText = getRandomThought(agent.mood, agent.id);
   return {
     ...agent,
     thoughtBubble: {

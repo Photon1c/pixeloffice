@@ -687,7 +687,10 @@ ${md}
 
         // Save to docs/cooler folder
         const coolerDocPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler");
-        const opencodeDocPath = path.resolve("/home/sherlockhums/.openclaw/workspace-main/docs/opencode");
+const opencodeDocPath = path.resolve("/home/sherlockhums/.openclaw/workspace-main/docs/opencode");
+    const hermitclawDocPath = path.resolve("/home/sherlockhums/.openclaw/hermitclaw_workspace/notes");
+    const hermitclawResearchPath = path.resolve("/home/sherlockhums/.openclaw/hermitclaw_workspace/research");
+    const hermitclawProjectsPath = path.resolve("/home/sherlockhums/.openclaw/hermitclaw_workspace/projects");
 
         // Ensure directories exist
         [opencodeDocPath, coolerDocPath].forEach(dir => {
@@ -877,9 +880,9 @@ app.get("/api/cooler/sessions/db/:sessionId", async (req, res) => {
 // Test SCRUM: Create mock SCRUM from a cooler session
 app.post("/api/scrum/test", async (req, res) => {
   try {
-    const { coolerSessionId } = req.body;
+    const { coolerSessionId, topic: reqTopic } = req.body;
     
-    let topic = "Test SCRUM from cooler session";
+    let topic = reqTopic || "Test SCRUM from cooler session";
     let participants: string[] = [];
     let sessionData: any = null;
     
@@ -888,22 +891,38 @@ app.post("/api/scrum/test", async (req, res) => {
       const sessionPath = path.resolve(`data/cooler_sessions/${coolerSessionId}.json`);
       if (fs.existsSync(sessionPath)) {
         sessionData = JSON.parse(fs.readFileSync(sessionPath, "utf-8"));
-        topic = `Test SCRUM: ${sessionData.topic || "Cooler session"}`;
+        topic = sessionData.topic || topic;
         participants = sessionData.participants || [];
-        console.log(`[Test SCRUM] Loaded cooler session: ${coolerSessionId}, participants: ${participants.join(", ")}`);
+        console.log(`[Test SCRUM] Loaded cooler session: ${coolerSessionId}, topic: ${topic}, participants: ${participants.join(", ")}`);
       }
-    } else {
-      // Memory Integration: Try to pull a recent user-saved topic if no cooler session provided
+    } else if (!reqTopic) {
+      // Try to get current topic from news API
       try {
-        const recentTopics = await runDbQuery(
-          "SELECT title FROM mem_entries WHERE kind = 'user_topic' ORDER BY timestamp DESC LIMIT 1"
-        );
-        if (recentTopics && recentTopics.length > 0) {
-          topic = `Strategic Review: ${recentTopics[0].title}`;
-          console.log(`[Memory] Injecting user topic into scrum: ${topic}`);
+        const newsRes = await fetch("http://localhost:4173/api/cooler/topics/current");
+        if (newsRes.ok) {
+          const newsData = await newsRes.json();
+          if (newsData.topic?.title) {
+            topic = newsData.topic.title;
+            console.log(`[Test SCRUM] Using current news topic: ${topic}`);
+          }
         }
       } catch (err) {
-        console.warn("[Memory] Failed to fetch recent user topic for scrum:", err);
+        console.warn("[Test SCRUM] Failed to fetch current topic:", err);
+      }
+      
+      // Fallback to memory integration
+      if (topic === "Test SCRUM from cooler session") {
+        try {
+          const recentTopics = await runDbQuery(
+            "SELECT title FROM mem_entries WHERE kind = 'user_topic' ORDER BY timestamp DESC LIMIT 1"
+          );
+          if (recentTopics && recentTopics.length > 0) {
+            topic = recentTopics[0].title;
+            console.log(`[Memory] Injecting user topic into scrum: ${topic}`);
+          }
+        } catch (err) {
+          console.warn("[Memory] Failed to fetch recent user topic for scrum:", err);
+        }
       }
     }
     
@@ -986,7 +1005,7 @@ source_session: "${coolerSessionId || 'random'}"
     // Add test metadata
     const testOutput = {
       sourceSession: coolerSessionId || "random",
-      sourceTopic: sessionData?.topic || "N/A",
+      sourceTopic: topic || "N/A",
       sourceParticipants: sessionData?.participants || [],
       stigmergyWeighted: participants,
       message: "Test SCRUM created from cooler session with shadow-biased participant selection"
@@ -2163,7 +2182,7 @@ const AUTO_COOLER_INTERVAL_MS = parseInt(process.env.AUTO_COOLER_INTERVAL_MS || 
 const AUTO_SCRUM_INTERVAL_MS = parseInt(process.env.AUTO_SCRUM_INTERVAL_MS || "") || 10 * 60 * 1000; // 10 minutes default
 const AUTO_SCRUM_ENABLED = process.env.AUTO_SCRUM_ENABLED === "true";
 const NIGHT_MODE_MULTIPLIER = parseFloat(process.env.NIGHT_MODE_MULTIPLIER || "") || 0.25; // 4x faster at night
-let nightModeActive = false;
+let nightModeActive = true;
 
 function getActiveInterval(baseMs: number): number {
   return nightModeActive ? Math.floor(baseMs * NIGHT_MODE_MULTIPLIER) : baseMs;

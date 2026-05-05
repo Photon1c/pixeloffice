@@ -57,6 +57,8 @@ This index tracks historical implementations, feature-level completion status, a
   *Refs:* [src/components/ObjectEditor.tsx](./src/components/ObjectEditor.tsx), [agent_workspace_editor_proposal.md](./agent_workspace_editor_proposal.md) - GUI for agent self-editing and proposal creation
 - [x] **Prometheus/Grafana Metrics Integration (April 8, 2026)** 🟢  
   *Refs:* [session_summary_apple.md](./session_summary_apple.md) - Added stigmergy deposit counter, cooler run-turn counter, loop detection gauge
+- [x] **TSA Health HUD (UI overlay)** 🟢  
+  *Refs:* [../active/opencode_pixel_office_tsa_health_ui_handoff.md](../active/opencode_pixel_office_tsa_health_ui_handoff.md) - In-UI health panel polling workflow/model/handoff endpoints
 - [x] **Ghost Executive Role** 🟢  
   *Refs:* [ghost_executive.md](./ghost_executive.md) - User role concept for stigmergy-based system
 - [x] **Onboarding Models Reference** 🟢  

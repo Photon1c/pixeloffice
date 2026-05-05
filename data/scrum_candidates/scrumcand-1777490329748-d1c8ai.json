@@ -1,0 +1,58 @@
+{
+  "id": "scrumcand-1777490329748-d1c8ai",
+  "status": "pending",
+  "createdAt": "2026-04-29T19:18:49.748Z",
+  "updatedAt": "2026-04-29T19:18:49.748Z",
+  "source": {
+    "location": "kitchen",
+    "coolerSessionId": "ct-1777490319303",
+    "topic": "AI development",
+    "participants": [
+      "Bob",
+      "Alice"
+    ],
+    "utteranceCount": 2,
+    "coolerMarkdownPath": "/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler/2026-04-29T19-18-46-231Z_cooler-ct-1777490319303.md"
+  },
+  "score": 41,
+  "threshold": 25,
+  "reasons": [
+    "contains 1 escalate intent(s)",
+    "urgency detected (1 hits)",
+    "KB boost (+20)"
+  ],
+  "kb": {
+    "query": "AI development",
+    "resultsCount": 5,
+    "topSnippets": [
+      "# AI Flight Simulator Version 2 ✈️✈️☁️🛰️ **A sophisticated, web-based flight simulator with a powerful AI autopilot and a CLI for automated testing.** This project combines a rich, interactive 3D flight experience with a robust backend and",
+      "and AI mission parameters. ## How to Run 1. **Install Dependencies:** ```bash npm install ``` 2. **Start the Backend Server (for AI features):** ```bash cd backend node server.js ``` 3. **Start the Frontend Development Server:** ```bash npm",
+      "eeping it in view ### Satellite Mode - **Mouse/OrbitControls**: Pan, zoom, and rotate the camera around the Earth. The satellite itself is not directly controlled. ### Universal Controls - **I**: Show/Hide Instructions panel - **L**: Export"
+    ]
+  },
+  "proposed": {
+    "scrumTitle": "SCRUM (Planning): AI development",
+    "scrumType": "planning",
+    "agenda": [
+      "Intake: what happened / what we noticed (AI development)",
+      "Define goal and success criteria",
+      "Constraints and assumptions",
+      "Implementation plan (milestones + owners)",
+      "Next actions (tickets / scripts / tests)"
+    ],
+    "tasks": [
+      {
+        "title": "Convert cooler topic into a concrete goal",
+        "description": "Turn: \"AI development\" into a measurable deliverable."
+      },
+      {
+        "title": "Outline implementation plan",
+        "description": "List milestones, risks, and required artifacts (scripts, docs, dashboards)."
+      },
+      {
+        "title": "Create first 3 tickets",
+        "description": "Seed tasks with owners and acceptance criteria so this doesn't evaporate."
+      }
+    ]
+  }
+}

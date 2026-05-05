@@ -5,6 +5,7 @@ export interface CheckOutput {
   findings: string[];
   readme_content?: string;
   repo?: string;
+  source_context?: string[];
 }
 
 export interface ReportOutput {
@@ -53,6 +54,7 @@ export interface ScrumSession {
   currentStage: ScrumStage;
   results: ScrumStageResult[];
   finalStatus: "pending" | "complete" | "failed";
+  sourceContext?: string[];
 }
 
 export interface ScrumSessionResponse {

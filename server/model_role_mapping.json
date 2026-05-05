@@ -56,8 +56,18 @@
     "use_case": "quick_transitions"
   },
   "thought_loop": {
-    "model_name": "gemma3:270m",
+    "model_name": "qwen:0.5b",
     "provider": "ollama",
     "use_case": "quick_transitions"
+  },
+  "primary": {
+    "model_name": "gemma3:270m",
+    "provider": "ollama",
+    "use_case": "primary_agent"
+  },
+  "fallback": {
+    "model_name": "qwen:0.5b",
+    "provider": "ollama",
+    "use_case": "fallback_agent"
   }
 }

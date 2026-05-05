@@ -23,7 +23,7 @@ export interface NvidiaChatOptions {
 export async function nvidiaChat(
   messages: NvidiaChatMessage[],
   options: NvidiaChatOptions = {}
-): Promise<{ content: string; raw: any }> {
+): Promise<{ content: string; model: string; raw: any }> {
   const apiKey = process.env.NVIDIA_API_KEY;
   // Best performer from HR benchmarks: Kimi K2 (5/5 passed, avg 1571ms)
   // Other good options: Phi-3 Mini, Gemma 7B, Solar 10.7B (all 5/5, ~1600-1700ms)
@@ -74,6 +74,7 @@ export async function nvidiaChat(
 
     return {
       content,
+      model: data.model || model,
       raw: data
     };
   } catch (error: any) {

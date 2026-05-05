@@ -273,13 +273,17 @@ export function loadScrumSession(sessionId: string): Promise<ScrumSession | null
 
     try {
       const content = fs.readFileSync(sessionPath, "utf8");
-      const frontMatterMatch = content.match(/^```json\n([\s\S]*?)\n```$/m);
-      if (!frontMatterMatch) {
+
+      // The SCRUM log markdown contains many ```json blocks (one per stage output).
+      // We append the full session JSON as the *last* block. Load that one.
+      const matches = Array.from(content.matchAll(/^```json\n([\s\S]*?)\n```$/gm));
+      if (matches.length === 0) {
         resolve(null);
         return;
       }
 
-      const session = JSON.parse(frontMatterMatch[1]) as ScrumSession;
+      const last = matches[matches.length - 1];
+      const session = JSON.parse(last[1]) as ScrumSession;
       resolve(session);
     } catch {
       resolve(null);

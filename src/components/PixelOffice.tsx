@@ -135,7 +135,23 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
   
-  const [agents, setAgents] = useState<Agent[]>(INITIAL_AGENTS);
+  const [agents, setAgents] = useState<Agent[]>(() => {
+    const saved = localStorage.getItem("pixel_office_agents");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {
+        console.warn("Failed to load agents from localStorage", e);
+      }
+    }
+    return INITIAL_AGENTS;
+  });
+
+  // Persist agents to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem("pixel_office_agents", JSON.stringify(agents));
+  }, [agents]);
   const [agentCards, setAgentCards] = useState<AgentCard[]>([]);
   const [dashboardConfig, setDashboardConfig] = useState<DashboardConfig>({
     ...DEFAULT_CONFIG,
@@ -233,7 +249,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   
   const [isScrumRunning, setIsScrumRunning] = useState<boolean>(false);
   const [isCoolerTalkRunning, setIsCoolerTalkRunning] = useState<boolean>(false);
-  const [sleepMode, setSleepMode] = useState<boolean>(false);
+  const [sleepMode, setSleepMode] = useState<boolean>(true);
 
   // Sync sleep mode to server for more frequent cooler/scrum sessions
   useEffect(() => {
@@ -1075,8 +1091,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           </button>
         </div>
 
-        <div style={{ marginBottom: '16px' }}>
-          <button id="coolertalk-btn" style={{...styles.paramsToggle, background: '#7c5cbf', opacity: (isScrumRunning || isCoolerTalkRunning) ? 0.5 : 1}} disabled={isScrumRunning || isCoolerTalkRunning} onClick={() => {
+         <div style={{ marginBottom: '16px' }}>
+          <button id="coolertalk-btn" style={{...styles.paramsToggle, background: '#7c5cbf', opacity: (!currentTopic || currentTopic === "" || isScrumRunning || isCoolerTalkRunning) ? 0.5 : 1}} disabled={!currentTopic || currentTopic === "" || isScrumRunning || isCoolerTalkRunning} onClick={() => {
             setIsCoolerTalkRunning(true);
             setActiveConversationZone("kitchen");
             // Move agents to kitchen positions
@@ -1094,6 +1110,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               body: JSON.stringify({ topic: currentTopic, participants: agents.map(a => a.name).slice(0, 6) })
             }).then(r => r.json()).then(data => {
               console.log("[CoolerTalk] Response:", data);
+              console.log("[CoolerTalk] Topic sent:", currentTopic);
             }).catch(err => {
               console.error("[CoolerTalk] Error:", err);
             }).finally(() => {
@@ -1110,6 +1127,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               }, 8000);
             });
           }}>Cooler Talk</button>
+          {!currentTopic && <div style={{ fontSize: '10px', color: '#ff6b6b', marginTop: '4px' }}>Loading topic...</div>}
+          {currentTopic && <div style={{ fontSize: '10px', color: '#feca57', marginTop: '4px', fontStyle: 'italic' }}>Topic: {currentTopic}</div>}
         </div>
 
         <div style={{ marginBottom: '12px' }}>
@@ -1135,20 +1154,22 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               
               // Pick random session or use most recent
               let sessionId: string | undefined;
-              let topicDisplay = "Daily standup";
+              let topicDisplay = currentTopic || "Daily standup";
               
               if (sessions.length > 0) {
                 const randomSession = sessions[Math.floor(Math.random() * sessions.length)];
                 sessionId = randomSession.id;
-                topicDisplay = randomSession.topic;
+                topicDisplay = randomSession.topic || currentTopic || "Daily standup";
                 console.log(`[Test SCRUM] Using session: ${sessionId} (${topicDisplay})`);
               }
+              
+              console.log(`[Test SCRUM] Topic: ${topicDisplay}`);
               
               // Call test scrum endpoint
               const scrumRes = await fetch('/api/scrum/test', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ coolerSessionId: sessionId })
+                body: JSON.stringify({ coolerSessionId: sessionId, topic: topicDisplay })
               });
               const scrumData = await scrumRes.json();
               
@@ -1561,6 +1582,22 @@ stepfun-ai/step-3.5-flash`;
             </span>
           )}
         </div>
+
+        {/* HermitClaw workspace link and status */}
+        {agent.id === 'hermitclaw' && (
+          <div style={{...actionCardStyles.statusRow, background: '#1a2538', padding: '8px 12px', borderRadius: '6px', marginBottom: '12px'}}>
+            <span style={{...actionCardStyles.statusDot, background: '#26de81'}} />
+            <span style={actionCardStyles.statusText}>Online (port 8003)</span>
+            <a 
+              href="http://127.0.0.1:8003" 
+              target="_blank" 
+              rel="noreferrer"
+              style={{ marginLeft: 'auto', fontSize: '11px', color: '#4ecdc4', textDecoration: 'none' }}
+            >
+              🌐 Server ↗
+            </a>
+          </div>
+        )}
 
         <div style={actionCardStyles.section}>
           <h4 style={actionCardStyles.sectionTitle}>Mood: {getMoodEmoji(agent.mood)}</h4>
@@ -2045,7 +2082,12 @@ upstage/solar-10.7b-instruct`;
     <div style={chatStyles.overlay}>
       <div style={chatStyles.container}>
         <div style={chatStyles.header}>
-          <h3 style={chatStyles.title}>Chat with Agents</h3>
+          <div>
+            <h3 style={chatStyles.title}>Chat with Agents</h3>
+            {currentTopic && (
+              <div style={{ fontSize: '10px', color: '#feca57', marginTop: '-2px', fontStyle: 'italic' }}>Topic: {currentTopic}</div>
+            )}
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <select 
               value={selectedModel} 
@@ -2258,17 +2300,18 @@ function ConvoViewer({ sessions, selectedSession, onSelectSession, type, onChang
             ))}
           </div>
         ) : (
-          <div>
-            <button onClick={() => onSelectSession(null)} style={{ background: '#2a2a3a', border: 'none', color: '#4ecdc4', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}>
-              ← Back to list
-            </button>
-            
-            <div style={{ background: '#1a1a2a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
-              <div style={{ fontSize: '14px', color: '#4ecdc4', marginBottom: '8px' }}>{selectedSession.topic || "Untitled"}</div>
-              <div style={{ fontSize: '11px', color: '#606070' }}>
-                Type: {selectedSession.session_type} • Created: {formatDate(selectedSession.created_at)} • Updated: {formatDate(selectedSession.updated_at)}
+            <div>
+              <button onClick={() => onSelectSession(null)} style={{ background: '#2a2a3a', border: 'none', color: '#4ecdc4', padding: '8px 12px', borderRadius: '4px', cursor: 'pointer', marginBottom: '20px' }}>
+                ← Back to list
+              </button>
+              
+              <div style={{ background: '#1a1a2a', border: '1px solid #2a2a3a', borderRadius: '8px', padding: '20px', marginBottom: '20px' }}>
+                <div style={{ fontSize: '11px', color: '#808090', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '1px' }}>Conversation Topic</div>
+                <div style={{ fontSize: '16px', color: '#4ecdc4', marginBottom: '8px', fontWeight: 'bold' }}>{selectedSession.topic || "Untitled"}</div>
+                <div style={{ fontSize: '11px', color: '#606070' }}>
+                  Type: {selectedSession.session_type} • Created: {formatDate(selectedSession.created_at)} • Updated: {formatDate(selectedSession.updated_at)}
+                </div>
               </div>
-            </div>
             
             <div style={{ display: 'grid', gap: '8px' }}>
               {parseUtterances(selectedSession).map((utterance: any, idx: number) => (

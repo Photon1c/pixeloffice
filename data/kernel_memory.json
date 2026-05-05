@@ -1,0 +1,141 @@
+{
+  "episodic": [
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:00.890Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:00.891Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:00.891Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:00.893Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:00.896Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:00.897Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:00.898Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:18.073Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:18.074Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:18.074Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:18.075Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:18.075Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:18.075Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:18.076Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:30.468Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:30.468Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:30.469Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:49.770Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:49.770Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:49.771Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:49.773Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:49.773Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:49.774Z"
+    },
+    {
+      "success": false,
+      "output": "undefined",
+      "timestamp": "2026-04-23T04:58:49.775Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-04-23T04:59:25.769Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-04-23T04:59:25.790Z"
+    }
+  ],
+  "semantic": {
+    "facts": [],
+    "rules": []
+  },
+  "working": {}
+}

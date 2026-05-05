@@ -1,0 +1,17 @@
+{
+  "stimulus": "Check office health",
+  "timestamp": "2026-04-23T04:59:24.403Z",
+  "iterations": [
+    {
+      "iteration": 1,
+      "tasks": [
+        "Check health metrics",
+        "List pending SCRUM candidates"
+      ],
+      "results": []
+    }
+  ],
+  "finalDecision": "exit",
+  "success": true,
+  "avgConfidence": 0.7
+}

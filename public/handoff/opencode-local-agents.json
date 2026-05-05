@@ -80,11 +80,11 @@
   {
     "id": "hermitclaw",
     "name": "HermitClaw",
-    "description": "Archivist agent managing knowledge records and documentation",
-    "tags": ["office", "archivist", "records"],
+    "description": "Archivist agent for overnight janitorial duties - reading, monitoring, and reporting on pressing issues, loose ends, and confusing pathways",
+    "tags": ["office", "archivist", "records", "janitor"],
     "models": {
       "primary": {
-        "name": "gemma3:270m",
+        "name": "granite4:350m",
         "provider": "ollama",
         "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
         "status": "local-ready"
@@ -98,8 +98,8 @@
     "visualizer_node": "HERMIT",
     "status": "active",
     "meta": {
-      "version": 2,
-      "updatedAt": "2026-03-26T00:00:00.000Z",
+      "version": 3,
+      "updatedAt": "2026-05-04T00:00:00.000Z",
       "app": "pixel_office"
     }
   },

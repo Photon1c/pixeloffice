@@ -45,6 +45,12 @@ This index tracks the implementation status of various OpenCode-related features
     - Endpoint: `GET /metrics` on port 4173
     - Metrics: HTTP requests, LLM requests, service uptime
 
+### TSA Health Panel (UI)
+- [x] **TSA Health Panel** - In-UI health HUD polling workflow/model/handoff endpoints
+  - Code: `src/components/TSAHealthPanel.tsx` (mounted in `src/components/PixelOffice.tsx`)
+- [ ] **Positioning polish** - stack HUD overlays and remove hard-coded `top` offsets
+  - Handoff: `../active/opencode_pixel_office_tsa_health_ui_handoff.md`
+
 ### Agent Tools & Workflow Integration
 - [x] **Agent Tools** - Tools for KB search, scheduling, and improvement
   - Status: **Complete** - Tools implemented in roleModels.ts
@@ -73,6 +79,8 @@ This index tracks the implementation status of various OpenCode-related features
   - Status: **Complete** - Implemented in `server/cooler/coolerToScrum.ts`
   - Scores sessions (threshold 20), marks `is_scrum_candidate`, creates scrum_run (status: pending)
   - Requires human approval (Yellow zone)
+- [ ] **Cooler → SCRUM Meaningful Reports** - ensure approvals produce completed SCRUMs + exported reports with at least one suggestion (even “no action”)
+  - Handoff: `../active/opencode_cooler_to_scrum_meaningful_reports_handoff.md`
 
 - [x] **Stigmergy Visualization** - Prometheus metrics for office heat
   - Status: **Complete** - Metrics at `/metrics`
@@ -91,4 +99,4 @@ This index tracks the implementation status of various OpenCode-related features
 - Check individual documents in `/complete/` and `/design/` directories for details
 - Some features may be intentionally deferred or designed for future phases
 
-*Last Updated: April 12, 2026*
+*Last Updated: April 22, 2026*

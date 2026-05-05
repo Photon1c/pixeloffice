@@ -3,6 +3,10 @@
 ## Files
 
 - ⚪ **complete/session_summary_2026-04-02_pixel_office.md** - Session summary from Pixel Office
+- 🟢 **active/opencode_pixel_office_tsa_health_ui_handoff.md** - OpenCode handoff: TSA Health Panel (UI) + positioning polish notes
+- ⚪ **cooler/index.md** - Auto-generated index of recent cooler talk sessions
+- ⚪ **scrum/index.md** - Auto-generated index of SCRUM exports (including cooler-promoted runs)
+- ⚪ **reports/2026-04-23_scrum-scrum-1776921790667-fgoeem.md** - SCRUM report for Mythos cooler session (Anthropics New Mythos A.I. Model)
 
 ## Directories
 
@@ -27,4 +31,4 @@
 - 🟣 Purple: Tools / Technology
 - ✅ Green: Verified Complete
 
-*Last updated: 2026-04-05*
+*Last updated: 2026-04-24*

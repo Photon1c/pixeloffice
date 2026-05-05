@@ -169,19 +169,44 @@ async function kbSearch(kbServerUrl: string, query: string): Promise<{ resultsCo
 
 function proposeScrumTitle(topic: string, kbSnippets: string[], reasons: string[]): string {
   const t = topic.replace(/^in recent news:\s*/i, "").trim();
+  const tLower = t.toLowerCase();
   const hay = `${t}\n${kbSnippets.join("\n")}`.toLowerCase();
 
-  if (hay.includes("fsd") || hay.includes("self driving") || hay.includes("autonomous")) {
+  const fsdIndicators = ["fsd", "full self driving", "self-driving", "autonomous driving", "tesla"];
+  const hasFsdInTopic = fsdIndicators.some(ind => tLower.includes(ind));
+  
+  if (hasFsdInTopic) {
     return "SCRUM (Planning): FSD Python Test Engine";
   }
-  if (hay.includes("falcon vision") || hay.includes("parking occupancy") || hay.includes("yolo")) {
+  if (kbSnippets.length > 0) {
+    const kbLower = kbSnippets.join(" ").toLowerCase();
+    const hasFsdInKb = fsdIndicators.some(ind => kbLower.includes(ind));
+    const matchingIndicator = fsdIndicators.find(ind => kbLower.includes(ind) && tLower.includes(ind.split(" ")[0]));
+    if (hasFsdInKb && matchingIndicator) {
+      return "SCRUM (Planning): FSD Python Test Engine";
+    }
+  }
+
+  const falconIndicators = ["falcon vision", "parking occupancy", "yolo", "object detection"];
+  const hasFalconInTopic = falconIndicators.some(ind => tLower.includes(ind));
+  
+  if (hasFalconInTopic) {
     return "SCRUM (Planning): Falcon Vision Occupancy Pipeline";
   }
-  if (hay.includes("pixel office") || hay.includes("pixeloffice")) {
+  if (kbSnippets.length > 0 && t.length < 100) {
+    const kbLower = kbSnippets.join(" ").toLowerCase();
+    if (falconIndicators.some(ind => kbLower.includes(ind))) {
+      return "SCRUM (Planning): Falcon Vision Occupancy Pipeline";
+    }
+  }
+
+  const pixelOfficeIndicators = ["pixel office", "pixeloffice", "opencode"];
+  const hasPixelOfficeInTopic = pixelOfficeIndicators.some(ind => tLower.includes(ind));
+  
+  if (hasPixelOfficeInTopic) {
     return "SCRUM (Planning): Pixel Office Follow-up";
   }
 
-  // Fallback: keep it tied to the source topic.
   return `SCRUM (Planning): ${t.slice(0, 72)}${t.length > 72 ? "…" : ""}`;
 }
 
@@ -198,9 +223,12 @@ function proposeAgenda(topic: string): string[] {
 
 function proposeTasks(topic: string, kbSnippets: string[]): Array<{ title: string; description: string }> {
   const t = topic.replace(/^in recent news:\s*/i, "").trim();
-  const hay = `${t}\n${kbSnippets.join("\n")}`.toLowerCase();
+  const tLower = t.toLowerCase();
 
-  if (hay.includes("fsd") || hay.includes("self driving") || hay.includes("autonomous")) {
+  const fsdIndicators = ["fsd", "full self driving", "self-driving", "autonomous driving", "tesla"];
+  const hasFsdInTopic = fsdIndicators.some(ind => tLower.includes(ind));
+
+  if (hasFsdInTopic) {
     return [
       {
         title: "Draft FSD python test engine architecture",

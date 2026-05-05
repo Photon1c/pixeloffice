@@ -24,7 +24,7 @@ function generateSessionId(): string {
   return `scrum-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 }
 
-export function createScrumSession(topic: string, participants: string[]): ScrumSession {
+export function createScrumSession(topic: string, participants: string[], sourceContext?: string[]): ScrumSession {
   return {
     id: generateSessionId(),
     timestamp: new Date().toISOString(),
@@ -33,6 +33,7 @@ export function createScrumSession(topic: string, participants: string[]): Scrum
     currentStage: "check",
     results: [],
     finalStatus: "pending",
+    sourceContext,
   };
 }
 
@@ -84,13 +85,18 @@ async function fetchGitHubREADME(owner: string, repo: string): Promise<string | 
   return null;
 }
 
-export async function runCheckStage(session: ScrumSession): Promise<ScrumStageResult> {
+export async function runCheckStage(session: ScrumSession, sourceContext?: string[]): Promise<ScrumStageResult> {
   const targetRepo = "Photon1c/pixeloffice";
   let readmeContent: string | undefined;
   let repoStatus: "clean" | "changes_detected" | "error" = "changes_detected";
   const findings: string[] = [
     "Repository: " + targetRepo,
   ];
+
+  if (sourceContext && sourceContext.length > 0) {
+    findings.push("Source Context:");
+    findings.push(...sourceContext);
+  }
 
   try {
     const readme = await fetchGitHubREADME("Photon1c", "pixeloffice");
@@ -111,6 +117,7 @@ export async function runCheckStage(session: ScrumSession): Promise<ScrumStageRe
     findings,
     readme_content: readmeContent,
     repo: targetRepo,
+    source_context: sourceContext,
   };
 
   return {
@@ -145,10 +152,23 @@ export function runReviewStage(session: ScrumSession): ScrumStageResult {
   const hasUnrunTests = checkResult?.valid &&
     (checkResult.output as CheckOutput).findings.includes("tests not yet run");
 
+  const NO_ACTION_DEFAULT = "No action recommended right now. Monitor and revisit if new evidence appears.";
+
+  let recommendedActions: string[];
+  if (hasUnrunTests) {
+    recommendedActions = ["run tests", "review modified files"];
+  } else {
+    recommendedActions = [];
+  }
+
+  if (recommendedActions.length === 0) {
+    recommendedActions = [NO_ACTION_DEFAULT];
+  }
+
   const output: ReviewOutput = {
     approved: !hasUnrunTests,
     risks: hasUnrunTests ? ["tests not run"] : [],
-    recommended_actions: hasUnrunTests ? ["run tests", "review modified files"] : [],
+    recommended_actions: recommendedActions,
   };
 
   return {
@@ -199,38 +219,51 @@ export function runExecuteStage(session: ScrumSession): ScrumStageResult {
 }
 
 export function runLogStage(session: ScrumSession): ScrumStageResult {
-  const logContent = generateSessionMarkdown(session);
   const logPath = path.join(SCRUM_LOG_DIR, `${session.id}.md`);
-  
   console.log(`[SCRUM] runLogStage called, writing to: ${logPath}`);
+
+  // Important: exporter parses the *last* ```json block as the session JSON.
+  // At this stage, `session.results` does not yet include the log stage result
+  // (advanceScrumSession appends it after the handler returns). So we write a
+  // "sessionForWrite" that includes the log stage and marks finalStatus=complete.
+  const output: LogOutput = { logged: false, path: logPath };
+  const stageResult: ScrumStageResult = {
+    stage: "log",
+    agent: "archivist",
+    output,
+    valid: true,
+  };
+
+  const sessionForWrite: ScrumSession = {
+    ...session,
+    currentStage: "log",
+    finalStatus: "complete",
+    results: [...session.results, stageResult],
+  };
+
+  const logContent = generateSessionMarkdown(sessionForWrite);
 
   try {
     fs.writeFileSync(logPath, logContent, "utf8");
+    output.logged = true;
     console.log(`[SCRUM] Log saved successfully: ${logPath}`);
   } catch (err) {
     console.error(`[SCRUM] Failed to write log: ${err}`);
-    const output: LogOutput = { logged: false, path: "" };
     return {
       stage: "log",
       agent: "archivist",
-      output,
+      output: { logged: false, path: logPath },
       valid: false,
       error: "Failed to write log file",
     };
   }
 
   // If this is a self-maintenance topic, append GitHub-ready summary
-  if (session.topic && session.topic.startsWith("repo:")) {
-    appendToGithubNotes(session);
+  if (sessionForWrite.topic && sessionForWrite.topic.startsWith("repo:")) {
+    appendToGithubNotes(sessionForWrite);
   }
 
-  const output: LogOutput = { logged: true, path: logPath };
-  return {
-    stage: "log",
-    agent: "archivist",
-    output,
-    valid: true,
-  };
+  return stageResult;
 }
 
 function appendToGithubNotes(session: ScrumSession): void {
@@ -341,6 +374,15 @@ function generateSessionMarkdown(session: ScrumSession): string {
   }
   lines.push(`- **Final Status:** ${session.finalStatus}`);
 
+  lines.push("");
+  lines.push("---");
+  lines.push("");
+  lines.push("## Session JSON");
+  lines.push("");
+  lines.push("```json");
+  lines.push(JSON.stringify(session, null, 2));
+  lines.push("```");
+
   return lines.join("\n");
 }
 
@@ -348,7 +390,7 @@ export async function advanceScrumSession(
   session: ScrumSession
 ): Promise<{ session: ScrumSession; stageResult: ScrumStageResult }> {
   const stageHandlers: Record<ScrumStage, (s: ScrumSession) => Promise<ScrumStageResult> | ScrumStageResult> = {
-    check: runCheckStage,
+    check: (s) => runCheckStage(s, s.sourceContext),
     report: runReportStage,
     review: runReviewStage,
     decide: runDecideStage,

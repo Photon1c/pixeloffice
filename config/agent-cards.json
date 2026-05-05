@@ -71,7 +71,7 @@
     {
       "id": "hermitclaw",
       "name": "HermitClaw",
-      "description": "Archivist agent managing knowledge records and documentation",
+      "description": "Archivist agent managing knowledge records and documentation. Workspace: hermitclaw_workspace/",
       "tags": ["office", "archivist", "records"],
       "role": "archivist",
       "persona": "Quiet archivist maintaining office records and knowledge base",

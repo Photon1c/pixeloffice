@@ -15,6 +15,11 @@ interface NewsTopic {
 }
 
 const FALLBACK_TOPICS: NewsTopic[] = [
+  // Workspace and project topics (night shift focus)
+  { title: "Reviewing the latest workspace files from hermitclaw's research and projects folders - what discoveries were made?", category: "workspace", source: "office" },
+  { title: "Analyzing GitHub activity across our repositories - what new PRs, issues, and deployments happened today?", category: "github", source: "office" },
+  { title: "The team just shipped a new feature - discussing impact on users and next steps", category: "project", source: "office" },
+  // Standard news topics
   { title: "Latest developments in artificial intelligence and how they're transforming everyday work", category: "tech", source: "trending" },
   { title: "New climate change initiatives from major tech companies aiming for carbon neutrality", category: "science", source: "trending" },
   { title: "NASA's latest Mars rover discoveries and what they mean for future space exploration", category: "science", source: "trending" },

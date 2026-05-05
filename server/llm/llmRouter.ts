@@ -8,7 +8,7 @@ import { openai } from "./client.js";
 export async function routeChat(
   messages: any[],
   options: any = {}
-): Promise<{ content: string; provider: 'nvidia' | 'openai'; raw: any }> {
+): Promise<{ content: string; provider: 'nvidia' | 'openai'; model: string; raw: any }> {
   const useNvidia = !!process.env.NVIDIA_API_KEY;
 
   if (useNvidia) {
@@ -18,6 +18,7 @@ export async function routeChat(
       return {
         content: result.content,
         provider: 'nvidia',
+        model: result.model || 'nvidia',
         raw: result.raw
       };
     } catch (err) {
@@ -36,6 +37,7 @@ export async function routeChat(
   return {
     content: response.choices[0].message.content || "",
     provider: 'openai',
+    model: response.model || 'gpt-4o-mini',
     raw: response
   };
 }
