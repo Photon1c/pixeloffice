@@ -9,6 +9,9 @@ import AdminAssistant from "./AdminAssistant";
 import StockForecasts from "./StockForecasts";
 import TimeTasksPanel from "./TimeTasksPanel";
 import ScrumPanel from "./ScrumPanel";
+import OfficeClock from "./OfficeClock";
+import YouTubePlayer from "./YouTubePlayer";
+import { getPeriodForHour } from "../utils/schedule";
 import {
   INITIAL_AGENTS,
   updateAgentPosition,
@@ -250,6 +253,11 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [isScrumRunning, setIsScrumRunning] = useState<boolean>(false);
   const [isCoolerTalkRunning, setIsCoolerTalkRunning] = useState<boolean>(false);
   const [sleepMode, setSleepMode] = useState<boolean>(true);
+  const [showAgent2Agent, setShowAgent2Agent] = useState<boolean>(true);
+  const [showYouTube, setShowYouTube] = useState<boolean>(false);
+  const [showReviewHeat, setShowReviewHeat] = useState<boolean>(true);
+  const [showQuickActions, setShowQuickActions] = useState<boolean>(false);
+  const [showThoughtBursts, setShowThoughtBursts] = useState<boolean>(LAB_MODE);
 
   // Sync sleep mode to server for more frequent cooler/scrum sessions
   useEffect(() => {
@@ -847,6 +855,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         ...(isMobile && styles.sidebarMobile)
       }}>
         {isMobile && <div style={styles.resizeHandle} />}
+        <OfficeClock embedded onHourChange={(hour) => { const period = getPeriodForHour(hour); }} />
+
         
         <div style={{ marginBottom: '16px' }}>
           <button style={styles.paramsToggle} onClick={() => setShowParams(!showParams)}>
@@ -871,9 +881,29 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             {showChat ? "▼ Chat" : "▶ Chat"}
           </button>
         </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', padding: '8px 10px', background: '#0f1520', border: '1px solid #1b2333', borderRadius: '6px' }}>
+          <span style={{ fontSize: '11px', color: '#a0a0b0', fontWeight: 600 }}>🌙 Sleep Mode</span>
+          <button
+            onClick={() => setSleepMode(prev => !prev)}
+            style={{
+              padding: '3px 12px',
+              fontSize: '10px',
+              borderRadius: '10px',
+              border: 'none',
+              cursor: 'pointer',
+              background: sleepMode ? '#27ae60' : '#2a2a3a',
+              color: sleepMode ? '#fff' : '#666',
+              fontWeight: 600,
+              transition: 'all 0.2s',
+            }}
+          >
+            {sleepMode ? 'ON' : 'OFF'}
+          </button>
+        </div>
         
         {/* STIGMERGY PANEL */}
-        <div style={{ background: "rgba(255, 100, 50, 0.1)", border: "1px solid #ff6432", borderRadius: "4px", padding: "10px", marginBottom: "16px" }}>
+        <div style={{ background: "rgba(255, 100, 50, 0.1)", border: "1px solid #ff6432", borderRadius: "4px", padding: "10px", marginBottom: "16px", maxHeight: "300px", overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "#3a3a5a transparent" }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <h4 style={{ color: "#ff6432", margin: 0, fontSize: "12px" }}>🔥 Review Heat</h4>
             <button onClick={async () => {
@@ -955,32 +985,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             </div>
           )}
           
-          {/* Office Status Panel (per grok_suggestions.md) */}
-          {LAB_MODE && (
-            <div style={{ borderTop: "1px solid rgba(150, 100, 50, 0.2)", paddingTop: "8px", marginTop: "8px" }}>
-              <div style={{ fontSize: '10px', color: '#f39c12', marginBottom: '6px', fontWeight: 600 }}>🏢 Office Status</div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
-                <span style={{ fontSize: '9px', color: '#a0a0b0' }}>Sleep Mode</span>
-                <button 
-                  onClick={() => setSleepMode(prev => !prev)}
-                  style={{
-                    padding: '2px 8px',
-                    fontSize: '8px',
-                    borderRadius: '4px',
-                    border: 'none',
-                    cursor: 'pointer',
-                    background: sleepMode ? '#27ae60' : '#2a2a3a',
-                    color: sleepMode ? '#fff' : '#666'
-                  }}
-                >
-                  {sleepMode ? 'ON' : 'OFF'}
-                </button>
-              </div>
-              <div style={{ fontSize: '8px', color: '#505060' }}>
-                {sleepMode ? '🌙 Night mode: 4x more conversations' : '⚡ Normal activity'}
-              </div>
-            </div>
-          )}
+
           
           {/* Observer / Thought Burst Panel - Lab Mode Only */}
           {LAB_MODE && (
@@ -1220,7 +1225,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       <div style={styles.mainContent}>
         <div style={styles.canvasWrapper} ref={containerRef}>
           <canvas ref={canvasRef} style={styles.canvas} onClick={handleCanvasClick} />
-          <StabilityMonitor visible={LAB_MODE} />
+          <StabilityMonitor metrics={{ cpu: 45, memory: 32, fps: 60 }} visible={LAB_MODE} />
           <TSAHealthPanel visible={true} />
           <AgentIssueMonitor 
             visible={LAB_MODE} 
@@ -1344,6 +1349,53 @@ const showConvo = () => {
               />
             )}
         </div>
+{!isMobile && (
+  <div style={{
+    width: '260px',
+    background: '#0a0a12',
+    borderLeft: '1px solid #1b2333',
+    padding: '16px 10px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '2px',
+    overflowY: 'auto',
+    flexShrink: 0,
+    height: '100%',
+  }}>
+    {/* AGENT-TO-AGENT */}
+    <div style={{ marginBottom: '2px', borderBottom: '1px solid rgba(27,35,51,0.5)', paddingBottom: '2px' }}>
+      <button
+        style={{ width: '100%', padding: '8px 6px', background: 'transparent', border: 'none', color: '#e8e8f0', cursor: 'pointer', fontSize: '11px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '4px', borderRadius: '4px' }}
+        onClick={() => setShowAgent2Agent(!showAgent2Agent)}
+      >
+        <span style={{ color: showAgent2Agent ? '#4ecdc4' : '#606070', fontSize: '10px', marginRight: '6px' }}>{showAgent2Agent ? '▼' : '▶'}</span>
+        <span style={{ fontWeight: 600 }}>Agent2Agent</span>
+      </button>
+      {showAgent2Agent && (
+        <div style={{ padding: '4px 6px 8px 6px', fontSize: '10px' }}>
+          <AgentIssueMonitor visible={true} embedded={true} onTestConversation={() => {}} />
+        </div>
+      )}
+    </div>
+
+    {/* YOUTUBE */}
+    <div style={{ marginBottom: '2px', borderBottom: '1px solid rgba(27,35,51,0.5)', paddingBottom: '2px' }}>
+      <button
+        style={{ width: '100%', padding: '8px 6px', background: 'transparent', border: 'none', color: '#e8e8f0', cursor: 'pointer', fontSize: '11px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '4px', borderRadius: '4px' }}
+        onClick={() => setShowYouTube(!showYouTube)}
+      >
+        <span style={{ color: showYouTube ? '#ff6b6b' : '#606070', fontSize: '10px', marginRight: '6px' }}>{showYouTube ? '▼' : '▶'}</span>
+        <span style={{ fontWeight: 600 }}>🎵 Music</span>
+      </button>
+      {showYouTube && (
+        <div style={{ padding: '4px 6px 8px 6px', fontSize: '10px' }}>
+          <YouTubePlayer />
+        </div>
+      )}
+    </div>
+    
+  </div>
+)}
       </div>
     </div>
   );
@@ -1599,6 +1651,22 @@ stepfun-ai/step-3.5-flash`;
           </div>
         )}
 
+        {/* IronClaw instance link and status */}
+        {agent.id === 'ironclaw' && (
+          <div style={{...actionCardStyles.statusRow, background: '#1a2538', padding: '8px 12px', borderRadius: '6px', marginBottom: '12px'}}>
+            <span style={{...actionCardStyles.statusDot, background: '#26de81'}} />
+            <span style={actionCardStyles.statusText}>Online (port 3008)</span>
+            <a 
+              href="http://127.0.0.1:3008" 
+              target="_blank" 
+              rel="noreferrer"
+              style={{ marginLeft: 'auto', fontSize: '11px', color: '#4ecdc4', textDecoration: 'none' }}
+            >
+              🔗 IronClaw ↗
+            </a>
+          </div>
+        )}
+
         <div style={actionCardStyles.section}>
           <h4 style={actionCardStyles.sectionTitle}>Mood: {getMoodEmoji(agent.mood)}</h4>
           <div style={actionCardStyles.moodGrid}>
@@ -1720,14 +1788,9 @@ stepfun-ai/step-3.5-flash`;
 
         <div style={actionCardStyles.chatContainer}>
           <h4 style={actionCardStyles.sectionTitle}>Chat with {agent.name}</h4>
-          <div style={actionCardStyles.modelSelect}>
-            <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} style={actionCardStyles.modelDropdown}>
-              {availableModels.map(model => (<option key={model.id} value={model.id}>{model.name}</option>))}
-            </select>
-            <label style={toggleStyle}>
-              <input type="checkbox" checked={showAllModels} onChange={(e) => setShowAllModels(e.target.checked)} />
-              View all {nvidiaOnly.length} models
-            </label>
+          <div style={{display: 'flex', gap: '8px', marginBottom: '8px'}}>
+            <input style={actionCardStyles.chatInput} value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendChat()} placeholder={`Ask ${agent.name}...`} />
+            <button style={actionCardStyles.chatSendBtn} onClick={handleSendChat} disabled={isLoading}>Send</button>
           </div>
           <div style={actionCardStyles.chatMessages}>
             {chatMessages.map((msg, i) => (
@@ -1737,9 +1800,14 @@ stepfun-ai/step-3.5-flash`;
             ))}
             {isLoading && <div style={{color: '#4ecdc4', fontSize: '12px'}}>Thinking...</div>}
           </div>
-          <div style={{display: 'flex', gap: '8px'}}>
-            <input style={actionCardStyles.chatInput} value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendChat()} placeholder={`Ask ${agent.name}...`} />
-            <button style={actionCardStyles.chatSendBtn} onClick={handleSendChat} disabled={isLoading}>Send</button>
+          <div style={actionCardStyles.modelSelect}>
+            <select value={selectedModel} onChange={(e) => setSelectedModel(e.target.value)} style={actionCardStyles.modelDropdown}>
+              {availableModels.map(model => (<option key={model.id} value={model.id}>{model.name}</option>))}
+            </select>
+            <label style={toggleStyle}>
+              <input type="checkbox" checked={showAllModels} onChange={(e) => setShowAllModels(e.target.checked)} />
+              View all {nvidiaOnly.length} models
+            </label>
           </div>
         </div>
       </div>
