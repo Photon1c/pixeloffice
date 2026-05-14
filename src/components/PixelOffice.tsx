@@ -22,6 +22,9 @@ import {
   clearExpiredThoughts,
   MOOD_OPTIONS,
   getMoodEmoji,
+  initiateWalkUpChat,
+  enhanceTextWithEmoji,
+  WalkUpChatSession,
 } from "../utils/agentLogic";
 import { loadAgentCards, fetchOllamaModels, AgentCard, getAgentCardForRuntimeAgent } from "../utils/agentCards";
 import { createLogger } from "../utils/consoleMonitor";
@@ -260,6 +263,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [showReviewHeat, setShowReviewHeat] = useState<boolean>(true);
   const [showQuickActions, setShowQuickActions] = useState<boolean>(false);
   const [showThoughtBursts, setShowThoughtBursts] = useState<boolean>(LAB_MODE);
+  const [activeWalkUpChats, setActiveWalkUpChats] = useState<Map<string, WalkUpChatSession>>(new Map());
 
   // Sync sleep mode to server for more frequent cooler/scrum sessions
   useEffect(() => {
@@ -634,7 +638,67 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       );
     }, sleepMode ? 2000 : 4000); // Faster updates when sleeping
     return () => clearInterval(moodInterval);
-  }, []);
+  }, [sleepMode]);
+
+  // Sleep mode: impromptu conversations between agents (enhanced socialization)
+  useEffect(() => {
+    if (!sleepMode) return;
+    const convInterval = setInterval(() => {
+      setAgents((prevAgents) => {
+        const idle = prevAgents.filter(a => a.mode === "sitting" && !a.speechBubble && !activeWalkUpChats.has(a.id));
+        if (idle.length < 2) return prevAgents;
+        const initiator = idle[Math.floor(Math.random() * idle.length)];
+        const partners = idle.filter(a => a.id !== initiator.id);
+        if (partners.length === 0) return prevAgents;
+        const partner = partners[Math.floor(Math.random() * partners.length)];
+        const session = initiateWalkUpChat(initiator, partner, new Map());
+        if (!session) return prevAgents;
+        setActiveWalkUpChats(prev => { const m = new Map(prev); m.set(session.initiatorId, session); return m; });
+        setSpeechBubbles(prev => [...prev, {
+          speakerId: session.initiatorId,
+          text: enhanceTextWithEmoji(session.script[0]?.text || "Hey!", prevAgents.find(a => a.id === session.initiatorId)?.mood || "neutral", session.initiatorId),
+        }]);
+        return prevAgents.map(a => {
+          if (a.id === session.initiatorId || a.id === session.partnerId) {
+            return { ...a, targetX: session.meetPoint.x + (a.id === session.initiatorId ? -20 : 20), targetY: session.meetPoint.y, mode: "standing" as const };
+          }
+          return a;
+        });
+      });
+    }, 8000); // New conversation every 8 seconds in sleep mode
+    return () => clearInterval(convInterval);
+  }, [sleepMode]);
+
+  // Advance active walk-up chat dialogues periodically
+  useEffect(() => {
+    if (!sleepMode || activeWalkUpChats.size === 0) return;
+    const advanceInterval = setInterval(() => {
+      setActiveWalkUpChats(prev => {
+        const next = new Map(prev);
+        let changed = false;
+        next.forEach((session, id) => {
+          if (session.finished) { next.delete(id); changed = true; return; }
+          const nextLine = session.currentLine + 1;
+          if (nextLine >= session.script.length) {
+            next.set(id, { ...session, finished: true, currentLine: nextLine });
+            changed = true;
+            setSpeechBubbles(prevBubbles => prevBubbles.filter(b => b.speakerId !== session.initiatorId && b.speakerId !== session.partnerId));
+          } else {
+            const line = session.script[nextLine];
+            setSpeechBubbles(prevBubbles => {
+              const filtered = prevBubbles.filter(b => b.speakerId !== line.speakerId);
+              const mood = prevBubbles.length > 0 ? "neutral" : "neutral";
+              return [...filtered, { speakerId: line.speakerId, text: enhanceTextWithEmoji(line.text, mood, line.speakerId) }];
+            });
+            next.set(id, { ...session, currentLine: nextLine });
+            changed = true;
+          }
+        });
+        return changed ? next : prev;
+      });
+    }, 4000);
+    return () => clearInterval(advanceInterval);
+  }, [sleepMode, activeWalkUpChats.size]);
 
   // Thought Burst Loop Detection (per thought_speech_stigmergy.md Part C)
   useEffect(() => {
@@ -885,7 +949,10 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', padding: '8px 10px', background: '#0f1520', border: '1px solid #1b2333', borderRadius: '6px' }}>
-          <span style={{ fontSize: '11px', color: '#a0a0b0', fontWeight: 600 }}>🌙 Sleep Mode</span>
+          <div>
+            <div style={{ fontSize: '11px', color: '#a0a0b0', fontWeight: 600 }}>🌙 Sleep Mode</div>
+            <div style={{ fontSize: '8px', color: '#6c757d', marginTop: '2px' }}>{sleepMode ? '💬 impromptu chats • 💭 thoughts • ⚡ faster' : 'normal office hours'}</div>
+          </div>
           <button
             onClick={() => setSleepMode(prev => !prev)}
             style={{
