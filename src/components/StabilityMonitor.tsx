@@ -1,246 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-import { LAB_MODE } from "../config/env";
+import React, { useState, useEffect, useRef } from 'react';
 
-interface HealthMetrics {
-  fps: number;
-  memory: number | null;
-  renderTime: number;
-  agentCount: number;
-  lastFrame: number;
-  errors: number;
-  warnings: number;
-  healthyFrames: number;
-}
-
-interface StabilityMonitorProps {
-  visible?: boolean;
-}
-
-export function StabilityMonitor({ visible = true }: StabilityMonitorProps) {
-  const [metrics, setMetrics] = useState<HealthMetrics>({
-    fps: 60,
-    memory: null,
-    renderTime: 16,
-    agentCount: 0,
-    lastFrame: Date.now(),
-    errors: 0,
-    warnings: 0,
-    healthyFrames: 0,
-  });
-  const [isMinimized, setIsMinimized] = useState(false);
-  
-  const frameTimes = useRef<number[]>([]);
-  const lastFrameTime = useRef(performance.now());
-  const rafId = useRef<number | null>(null);
-  const hasReportedCritical = useRef(false);
-  const sampleCount = useRef(0);
-  
-  useEffect(() => {
-    if (!visible) return;
-    
-    const measureFrame = () => {
-      const now = performance.now();
-      const delta = now - lastFrameTime.current;
-      lastFrameTime.current = now;
-      
-      if (delta > 0 && delta < 500) {
-        frameTimes.current.push(delta);
-        if (frameTimes.current.length > 60) {
-          frameTimes.current.shift();
-        }
-      }
-      
-      sampleCount.current++;
-      
-      let avgFrameTime = 16.67;
-      let fps = 60;
-      
-      if (frameTimes.current.length >= 2) {
-        avgFrameTime = frameTimes.current.reduce((a, b) => a + b, 0) / frameTimes.current.length;
-        fps = Math.round(1000 / avgFrameTime);
-      }
-      
-      const memory = (performance as any).memory 
-        ? Math.round((performance as any).memory.usedJSHeapSize / 1048576) 
-        : null;
-      
-      const healthyFrames = fps >= 40 ? (metrics.healthyFrames + 1) : 0;
-      
-      setMetrics(prev => ({
-        ...prev,
-        fps: Math.min(60, Math.max(1, fps)),
-        memory,
-        renderTime: Math.round(avgFrameTime),
-        agentCount: 0,
-        healthyFrames,
-      }));
-      
-      if (fps >= 40 && !hasReportedCritical.current) {
-        hasReportedCritical.current = true;
-      }
-      
-      rafId.current = requestAnimationFrame(measureFrame);
-    };
-    
-    rafId.current = requestAnimationFrame(measureFrame);
-    
-    return () => {
-      if (rafId.current) cancelAnimationFrame(rafId.current);
-    };
-  }, [visible, metrics.healthyFrames]);
-  
-  const getStatusColor = () => {
-    if (metrics.fps < 20) return '#dc3545';
-    if (metrics.fps < 40) return '#ffc107';
-    return '#20c997';
-  };
-  
-  const getStatusText = () => {
-    if (metrics.fps < 20) return 'CRITICAL';
-    if (metrics.fps < 40) return 'SLOW';
-    return 'HEALTHY';
-  };
-  
-  if (!visible) return null;
-  
-  if (isMinimized) {
-    return (
-      <div 
-        onClick={() => setIsMinimized(false)}
-        style={{
-          position: 'absolute',
-          top: 10,
-          right: 10,
-          background: 'rgba(0, 0, 0, 0.7)',
-          border: '1px solid #495057',
-          borderRadius: '20px',
-          padding: '6px 10px',
-          cursor: 'pointer',
-          zIndex: 1000,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-        }}
-      >
-        <span style={{ 
-          width: '6px', 
-          height: '6px', 
-          borderRadius: '50%', 
-          background: getStatusColor(),
-        }} />
-        <span style={{ color: '#6c757d', fontSize: '10px', fontFamily: 'monospace' }}>
-          {metrics.fps} FPS
-        </span>
-      </div>
-    );
-  }
-  
-  return (
-    <div 
-      onDoubleClick={() => setIsMinimized(true)}
-      style={{
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        background: 'rgba(0, 0, 0, 0.85)',
-        border: `1px solid ${getStatusColor()}`,
-        borderRadius: '8px',
-        padding: '10px 14px',
-        fontFamily: 'monospace',
-        fontSize: '11px',
-        color: '#e9ecef',
-        zIndex: 1000,
-        minWidth: '180px',
-        backdropFilter: 'blur(4px)',
-        boxShadow: `0 0 10px ${getStatusColor()}40`,
-      }}>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '8px',
-        marginBottom: '8px',
-        borderBottom: '1px solid #495057',
-        paddingBottom: '6px',
-      }}>
-        <span style={{ 
-          width: '8px', 
-          height: '8px', 
-          borderRadius: '50%', 
-          background: getStatusColor(),
-          boxShadow: `0 0 6px ${getStatusColor()}`,
-        }} />
-        <span style={{ fontWeight: 'bold', color: getStatusColor() }}>
-          {getStatusText()}
-        </span>
-        <span style={{ marginLeft: 'auto', color: '#6c757d' }}>
-          PIXEL OFFICE
-        </span>
-        <button 
-          onClick={(e) => { e.stopPropagation(); setIsMinimized(true); }}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#6c757d',
-            cursor: 'pointer',
-            padding: '0 4px',
-            fontSize: '12px',
-          }}
-        >
-          −
-        </button>
-      </div>
-      
-      <div style={{ display: 'grid', gap: '4px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: '#6c757d' }}>FPS</span>
-          <span style={{ 
-            color: getStatusColor(),
-            fontWeight: 'bold',
-            fontSize: '13px',
-          }}>
-            {metrics.fps}
-          </span>
-        </div>
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: '#6c757d' }}>Frame Time</span>
-          <span style={{ 
-            color: metrics.renderTime > 16.67 ? '#ffc107' : '#20c997',
-          }}>
-            {metrics.renderTime.toFixed(1)}ms
-          </span>
-        </div>
-        
-        {metrics.memory && (
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: '#6c757d' }}>Memory</span>
-            <span style={{ 
-              color: metrics.memory > 200 ? '#ffc107' : '#20c997',
-            }}>
-              {metrics.memory}MB
-            </span>
-          </div>
-        )}
-        
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ color: '#6c757d' }}>Status</span>
-          <span style={{ 
-            color: '#20c997',
-          }}>
-            RENDERING
-          </span>
-        </div>
-      </div>
-      
-      
-    </div>
-  );
-}
-
-// Issue keywords that trigger alerts
+// Common issue keywords that agents might discuss
 const ISSUE_KEYWORDS = [
-  'security', 'breach', 'urgent', 'emergency', 'critical', 'down', 
-  'error', 'fail', 'hack', 'vulnerability', 'password', 'unauthorized',
+  'error', 'bug', 'fail', 'critical', 'emergency', 'urgent', 'problem', 'fix',
+  'broken', 'latency', 'slow', 'timeout', 'offline', 'security', 'vulnerability',
   'leak', 'attack', 'threat', 'alert', 'warning', 'violation'
 ];
 
@@ -250,6 +13,17 @@ interface Issue {
   agents: string[];
   timestamp: number;
   severity: 'low' | 'medium' | 'high' | 'critical';
+}
+
+export interface StabilityMonitorProps {
+  metrics: {
+    cpu: number;
+    memory: number;
+    fps: number;
+  };
+  visible?: boolean;
+  onReset?: () => void;
+  embedded?: boolean;
 }
 
 export interface AgentIssueMonitorProps { 
@@ -264,6 +38,75 @@ interface TestBubble {
   model?: string;
 }
 
+type TestStatus = "idle" | "testing" | "success" | "error";
+
+export function StabilityMonitor({ 
+  metrics,
+  visible = true,
+  onReset
+}: StabilityMonitorProps) {
+  const [isExpanded, setIsExpanded] = useState(true);
+  
+  if (!visible) return null;
+  
+  return (
+    <div style={{
+      position: 'absolute',
+      bottom: 20,
+      right: 20,
+      background: 'rgba(0, 0, 0, 0.8)',
+      border: '1px solid #17a2b8',
+      borderRadius: '8px',
+      padding: '12px',
+      fontFamily: 'monospace',
+      color: '#e9ecef',
+      zIndex: 1000,
+      width: '240px',
+      backdropFilter: 'blur(4px)',
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+        <span style={{ color: '#17a2b8', fontWeight: 'bold' }}>Stability Monitor</span>
+        <button 
+          onClick={() => setIsExpanded(!isExpanded)}
+          style={{ background: 'none', border: 'none', color: 'white', cursor: 'pointer' }}
+        >
+          {isExpanded ? '−' : '+'}
+        </button>
+      </div>
+      
+      {isExpanded && (
+        <>
+          <div style={{ marginBottom: '4px' }}>
+            CPU: <span style={{ color: metrics.cpu > 80 ? '#dc3545' : '#28a745' }}>{metrics.cpu}%</span>
+          </div>
+          <div style={{ marginBottom: '4px' }}>
+            MEM: <span style={{ color: metrics.memory > 80 ? '#dc3545' : '#28a745' }}>{metrics.memory}%</span>
+          </div>
+          <div style={{ marginBottom: '12px' }}>
+            FPS: <span style={{ color: metrics.fps < 30 ? '#dc3545' : '#28a745' }}>{metrics.fps}</span>
+          </div>
+          
+          <button 
+            onClick={onReset}
+            style={{
+              width: '100%',
+              padding: '6px',
+              background: '#17a2b8',
+              border: 'none',
+              borderRadius: '4px',
+              color: 'white',
+              cursor: 'pointer',
+              fontWeight: 'bold'
+            }}
+          >
+            Reset Arena
+          </button>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function AgentIssueMonitor({ 
   visible = true,
   onTestConversation,
@@ -273,8 +116,16 @@ export function AgentIssueMonitor({
   const [isExpanded, setIsExpanded] = useState(true);
   const [testBubbles, setTestBubbles] = useState<TestBubble[]>([]);
   const [isTesting, setIsTesting] = useState(false);
+  const [testStatus, setTestStatus] = useState<TestStatus>("idle");
+  const testTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTestingRef = useRef(false);
   const [currentTopic, setCurrentTopic] = useState<string>('');
   const [topicSource, setTopicSource] = useState<string>('');
+  const [selectedTopicSource, setSelectedTopicSource] = useState<string>("auto");
+  const [isConfiguringGithub, setIsConfiguringGithub] = useState(false);
+  const [availableRepos, setAvailableRepos] = useState<any[]>([]);
+  const [manualRepo, setManualRepo] = useState("");
+  const [currentRepo, setCurrentRepo] = useState("");
   const dismissedRef = useRef<string[]>([]);
   
   const clearAndDismiss = (id: string) => {
@@ -284,16 +135,33 @@ export function AgentIssueMonitor({
   
   const clearTestBubbles = () => {
     setTestBubbles([]);
+    setTestStatus("idle");
+    isTestingRef.current = false;
+    if (testTimeoutRef.current) clearTimeout(testTimeoutRef.current);
     (window as any).clearSpeechBubbles?.();
   };
   
+  // Fetch current repo config
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const res = await fetch('/api/scrum/github/status');
+        const data = await res.json();
+        if (data.repo) setCurrentRepo(data.repo);
+      } catch (err) {
+        console.warn('[AgentIssueMonitor] Failed to fetch github status:', err);
+      }
+    };
+    fetchConfig();
+  }, []);
+
   // Fetch current topic more frequently (every 60 seconds)
   useEffect(() => {
     if (!visible) return;
     
     const fetchTopic = async () => {
       try {
-        const res = await fetch('/api/cooler/topics/current');
+        const res = await fetch(`/api/cooler/topics/current?source=${selectedTopicSource}`);
         const data = await res.json();
         if (data.topic) {
           const topicValue = typeof data.topic === 'object' ? data.topic.title : data.topic;
@@ -308,7 +176,46 @@ export function AgentIssueMonitor({
     fetchTopic();
     const interval = setInterval(fetchTopic, 60000);
     return () => clearInterval(interval);
-  }, [visible]);
+  }, [visible, selectedTopicSource]);
+
+  const fetchRepos = async () => {
+    try {
+      const res = await fetch('/api/github/repos');
+      const data = await res.json();
+      if (data.repos) setAvailableRepos(data.repos);
+    } catch (err) {
+      console.warn('[AgentIssueMonitor] Failed to fetch repos:', err);
+    }
+  };
+
+  const updateRepoConfig = async (repoName: string) => {
+    try {
+      const res = await fetch('/api/github/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ repo: repoName })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setCurrentRepo(repoName);
+        setIsConfiguringGithub(false);
+        // Refresh topic after changing repo
+        const refreshRes = await fetch('/api/cooler/topics/refresh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ source: 'github' })
+        });
+        const refreshData = await refreshRes.json();
+        if (refreshData.topic) {
+          const topicValue = typeof refreshData.topic === 'object' ? refreshData.topic.title : refreshData.topic;
+          setCurrentTopic(topicValue);
+          setTopicSource(refreshData.topic?.source || 'github');
+        }
+      }
+    } catch (err) {
+      console.warn('[AgentIssueMonitor] Failed to update repo config:', err);
+    }
+  };
   
   const runTest = async () => {
     if (testBubbles.length > 0) {
@@ -316,8 +223,20 @@ export function AgentIssueMonitor({
       return;
     }
     setIsTesting(true);
+    isTestingRef.current = true;
+    setTestStatus("testing");
     setTestBubbles([]);
     onTestConversation?.();
+
+    if (testTimeoutRef.current) clearTimeout(testTimeoutRef.current);
+    testTimeoutRef.current = setTimeout(() => {
+      if (isTestingRef.current) {
+        setIsTesting(false);
+        isTestingRef.current = false;
+        setTestStatus("error");
+        setTimeout(() => setTestStatus("idle"), 3000);
+      }
+    }, 15000);
   };
   
   // Called by parent when agent walk completes
@@ -325,13 +244,33 @@ export function AgentIssueMonitor({
     (window as any).showTestBubbles = (bubbles: TestBubble[]) => {
       setTestBubbles(bubbles);
       setIsTesting(false);
+      isTestingRef.current = false;
+      setTestStatus("success");
+      if (testTimeoutRef.current) clearTimeout(testTimeoutRef.current);
+      setTimeout(() => setTestStatus("idle"), 3000);
+    };
+
+    (window as any).showTestError = (err?: string) => {
+      setIsTesting(false);
+      isTestingRef.current = false;
+      setTestStatus("error");
+      if (testTimeoutRef.current) clearTimeout(testTimeoutRef.current);
+      setTimeout(() => setTestStatus("idle"), 4000);
     };
     
     return () => {
       delete (window as any).showTestBubbles;
+      delete (window as any).showTestError;
     };
   }, []);
   
+  // Cleanup test timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (testTimeoutRef.current) clearTimeout(testTimeoutRef.current);
+    };
+  }, []);
+
   // Poll for cooler talk issues every 10 seconds
   useEffect(() => {
     if (!visible) return;
@@ -421,20 +360,64 @@ export function AgentIssueMonitor({
         }}
       >
         <div style={{ flex: 1, minWidth: '150px' }}>
-          <span style={{ color: '#17a2b8', fontWeight: 'bold', fontSize: '12px' }}>
-            Agent2Agent
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ color: '#17a2b8', fontWeight: 'bold', fontSize: '12px' }}>
+              Agent2Agent
+            </span>
+            {selectedTopicSource === 'github' && (
+              <span 
+                onClick={() => {
+                  setIsConfiguringGithub(!isConfiguringGithub);
+                  if (!isConfiguringGithub) fetchRepos();
+                }}
+                style={{ 
+                  fontSize: '9px', 
+                  color: currentRepo ? '#feca57' : '#6c757d', 
+                  cursor: 'pointer',
+                  background: '#2a2a3a',
+                  padding: '1px 6px',
+                  borderRadius: '3px',
+                  border: '1px solid #495057'
+                }}
+                title={currentRepo ? `Repo: ${currentRepo}` : "Click to set repo"}
+              >
+                📦 {currentRepo || "set repo"}
+              </span>
+            )}
+          </div>
           {currentTopic && (
             <div style={{ fontSize: '9px', color: '#6c757d', marginTop: '2px', lineHeight: '1.2' }}>
-              <span style={{ color: '#feca57' }}>[{topicSource}]</span> {currentTopic.length > 50 ? currentTopic.slice(0, 50) + '...' : currentTopic}
+              <span style={{ color: '#feca57' }}>[{topicSource}]</span> {currentTopic.length > 70 ? currentTopic.slice(0, 70) + '...' : currentTopic}
             </div>
           )}
         </div>
         <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+          <select
+            value={selectedTopicSource}
+            onChange={(e) => { setSelectedTopicSource(e.target.value); }}
+            style={{
+              padding: '2px 4px',
+              fontSize: '9px',
+              background: '#495057',
+              border: 'none',
+              borderRadius: '3px',
+              color: 'white',
+              cursor: 'pointer',
+            }}
+            title="Topic source"
+          >
+            <option value="auto">Auto</option>
+            <option value="news">News</option>
+            <option value="github">GitHub</option>
+          </select>
           <button 
             onClick={async () => {
               try {
-                const res = await fetch('/api/cooler/topics/refresh', { method: 'POST' });
+                const res = await fetch('/api/cooler/topics/refresh', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ source: selectedTopicSource })
+                });
                 const data = await res.json();
                 if (data.topic) {
                   const topicValue = typeof data.topic === 'object' ? data.topic.title : data.topic;
@@ -463,15 +446,16 @@ export function AgentIssueMonitor({
             style={{
               padding: '4px 10px',
               fontSize: '10px',
-              background: testBubbles.length > 0 ? '#dc3545' : isTesting ? '#6c757d' : '#28a745',
+              background: testBubbles.length > 0 ? '#dc3545' : testStatus === 'success' ? '#20c997' : isTesting ? '#6c757d' : '#28a745',
               border: 'none',
               borderRadius: '4px',
               color: 'white',
               cursor: 'pointer',
               fontWeight: 'bold',
+              transition: 'background 0.3s',
             }}
           >
-            {testBubbles.length > 0 ? 'Clear' : isTesting ? '...' : 'Test'}
+            {testBubbles.length > 0 ? 'Clear' : testStatus === 'success' ? '✓' : isTesting ? '...' : 'Test'}
           </button>
           <button 
             onClick={() => {
@@ -481,6 +465,7 @@ export function AgentIssueMonitor({
                 severity: 'medium',
                 topic: `Standup ${current + 1}: Sprint review and planning`,
                 agents: ['HermitClaw', 'IronClaw'],
+                timestamp: Date.now(),
               };
               setIssues([...issues, newIssue]);
             }}
@@ -514,7 +499,61 @@ export function AgentIssueMonitor({
           </button>
         </div>
       </div>
+
+      {isConfiguringGithub && (
+        <div style={{
+          background: '#1a1a2e',
+          border: '1px solid #4a4a5e',
+          borderRadius: '4px',
+          padding: '8px',
+          marginBottom: '10px',
+          animation: 'fadeIn 0.2s'
+        }}>
+          <div style={{ fontSize: '10px', color: '#17a2b8', marginBottom: '6px', fontWeight: 'bold' }}>
+            Set GitHub Repository
+          </div>
+          <div style={{ fontSize: '8px', color: '#6c757d', marginBottom: '6px' }}>
+            Current: <span style={{ color: currentRepo ? '#feca57' : '#6c757d' }}>{currentRepo || "none"}</span>
+          </div>
+          <div style={{ display: 'flex', gap: '4px', marginBottom: '6px' }}>
+            <input 
+              placeholder="owner/repo (e.g., photon1c/pixeloffice)"
+              value={manualRepo}
+              onChange={(e) => setManualRepo(e.target.value)}
+              style={{ flex: 1, fontSize: '10px', padding: '4px', background: '#2a2a3a', color: 'white', border: '1px solid #444' }}
+            />
+            <button 
+              onClick={() => { if(manualRepo) updateRepoConfig(manualRepo); }}
+              style={{ fontSize: '10px', padding: '4px 8px', background: '#17a2b8', border: 'none', borderRadius: '3px', color: 'white', cursor: 'pointer' }}
+            >Set</button>
+          </div>
+          <input 
+            placeholder="Task description (e.g., review PR #42, analyze issues)"
+            style={{ width: '100%', fontSize: '10px', padding: '4px', background: '#2a2a3a', color: 'white', border: '1px solid #444', boxSizing: 'border-box' }}
+          />
+          <div style={{ fontSize: '8px', color: '#6c757d', marginTop: '4px' }}>
+            Agents will use this repo and task for their next discussion
+          </div>
+        </div>
+      )}
       
+      {(testStatus === "success" || testStatus === "error") && !testBubbles.length ? (
+        <div style={{
+          padding: '6px 8px',
+          marginBottom: '8px',
+          borderRadius: '4px',
+          fontSize: '10px',
+          fontWeight: 'bold',
+          textAlign: 'center',
+          animation: 'fadeIn 0.3s',
+          background: testStatus === 'success' ? '#20c99720' : '#dc354520',
+          border: `1px solid ${testStatus === 'success' ? '#20c997' : '#dc3545'}`,
+          color: testStatus === 'success' ? '#20c997' : '#dc3545',
+        }}>
+          {testStatus === 'success' ? '✓ Agent conversation test passed' : '✗ Agent conversation test failed or timed out'}
+        </div>
+      ) : null}
+
       {isExpanded && (
         <>
           {testBubbles.length > 0 && (

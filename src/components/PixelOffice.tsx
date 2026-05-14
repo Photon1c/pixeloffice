@@ -169,6 +169,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [showScrum, setShowScrum] = useState<boolean>(false);
   const [showChat, setShowChat] = useState<boolean>(false);
   const [showEditor, setShowEditor] = useState<boolean>(false);
+  const [scrumRepo, setScrumRepo] = useState<string>("");
+  const [scrumTask, setScrumTask] = useState<string>("");
   const [showConvoViewer, setShowConvoViewer] = useState<boolean>(false);
   const [convoViewerType, setConvoViewerType] = useState<"cooler" | "scrum">("cooler");
   const [convoSessions, setConvoSessions] = useState<any[]>([]);
@@ -1136,8 +1138,20 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           {currentTopic && <div style={{ fontSize: '10px', color: '#feca57', marginTop: '4px', fontStyle: 'italic' }}>Topic: {currentTopic}</div>}
         </div>
 
-        <div style={{ marginBottom: '12px' }}>
-          <button id="scrum-btn" style={{...styles.paramsToggle, background: '#2ecc71', opacity: (isScrumRunning || isCoolerTalkRunning) ? 0.5 : 1}} disabled={isScrumRunning || isCoolerTalkRunning} onClick={async () => {
+        <div style={{ marginBottom: '12px', background: '#0f1520', border: '1px solid #1b2333', borderRadius: '6px', padding: '8px' }}>
+          <input
+            placeholder="Repo (e.g., photon1c/pixeloffice)"
+            value={scrumRepo}
+            onChange={(e) => setScrumRepo(e.target.value)}
+            style={{ width: '100%', fontSize: '10px', padding: '4px', background: '#2a2a3a', color: 'white', border: '1px solid #444', borderRadius: '3px', marginBottom: '4px', boxSizing: 'border-box' }}
+          />
+          <input
+            placeholder="Task (e.g., review sprint issues)"
+            value={scrumTask}
+            onChange={(e) => setScrumTask(e.target.value)}
+            style={{ width: '100%', fontSize: '10px', padding: '4px', background: '#2a2a3a', color: 'white', border: '1px solid #444', borderRadius: '3px', marginBottom: '6px', boxSizing: 'border-box' }}
+          />
+          <button id="scrum-btn" style={{width: '100%', padding: '6px', background: '#2ecc71', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer', fontSize: '11px', fontWeight: 600, opacity: (isScrumRunning || isCoolerTalkRunning) ? 0.5 : 1}} disabled={isScrumRunning || isCoolerTalkRunning} onClick={async () => {
             setIsScrumRunning(true);
             setActiveConversationZone("conference");
             
@@ -1152,36 +1166,18 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             }));
             
             try {
-              // Fetch available cooler sessions
-              const sessionsRes = await fetch('/api/cooler/sessions/list');
-              const sessionsData = await sessionsRes.json();
-              const sessions = sessionsData.sessions || [];
+              const topic = scrumTask || currentTopic || "Daily standup";
+              const repo = scrumRepo || undefined;
               
-              // Pick random session or use most recent
-              let sessionId: string | undefined;
-              let topicDisplay = currentTopic || "Daily standup";
-              
-              if (sessions.length > 0) {
-                const randomSession = sessions[Math.floor(Math.random() * sessions.length)];
-                sessionId = randomSession.id;
-                topicDisplay = randomSession.topic || currentTopic || "Daily standup";
-                console.log(`[Test SCRUM] Using session: ${sessionId} (${topicDisplay})`);
-              }
-              
-              console.log(`[Test SCRUM] Topic: ${topicDisplay}`);
-              
-              // Call test scrum endpoint
               const scrumRes = await fetch('/api/scrum/test', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ coolerSessionId: sessionId, topic: topicDisplay })
+                body: JSON.stringify({ topic, repo, coolerSessionId: undefined })
               });
               const scrumData = await scrumRes.json();
               
-              console.log('[Test SCRUM] Response:', scrumData);
-              console.log('[Test SCRUM] Created:', scrumData.testOutput);
+              console.log('[SCRUM] Response:', scrumData);
               
-              // Move agents to conference room for SCRUM
               if (scrumData.assignments && scrumData.assignments.length > 0) {
                 const assignmentMap = new Map(scrumData.assignments.map((a: any) => [a.agentId, { x: a.targetX, y: a.targetY }]));
                 setAgents(prev => prev.map(agent => {
@@ -1193,13 +1189,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                 }));
               }
             } catch (err) {
-              console.error('[Test SCRUM] Error:', err);
+              console.error('[SCRUM] Error:', err);
             }
             
             setTimeout(() => {
               setIsScrumRunning(false);
               setActiveConversationZone(null);
-              // Return agents to their desks
               setAgents(prev => prev.map(agent => ({
                 ...agent,
                 targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,
@@ -1207,7 +1202,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                 mode: "sitting"
               })));
             }, 8000);
-          }}>Test SCRUM</button>
+          }}>Run SCRUM</button>
         </div>
 
         <div style={{ marginBottom: '12px' }}>
@@ -1289,7 +1284,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         {!isMobile && (
         <div style={{ width: '260px', height: '100%', background: '#0a0a12', borderLeft: '1px solid #1b2333', padding: '10px', display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0, gap: '8px' }}>
           <div style={{ background: '#0f1520', borderRadius: '6px', padding: '8px', border: '1px solid #1b2333' }}>
-            <TSAHealthPanel visible={true} embedded />
+            <TSAHealthPanel visible={true} embedded agentActivities={agents.map(a => {
+              let activity: "thinking" | "speaking" | "acting" | "idle" = "idle";
+              let detail: string | undefined;
+              if (a.speechBubble) { activity = "speaking"; detail = a.speechBubble.text?.slice(0, 40); }
+              else if (a.thoughtBubble) { activity = "thinking"; detail = a.thoughtBubble.text?.slice(0, 40); }
+              else if (a.mode === "walking") { activity = "acting"; detail = "moving"; }
+              return { id: a.id, name: a.name, activity, detail };
+            })} />
           </div>
           <div style={{ borderTop: '1px solid #1b2333', paddingTop: '8px' }}>
             <AgentIssueMonitor visible={true} embedded onTestConversation={() => {}} />

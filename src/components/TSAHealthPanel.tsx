@@ -42,9 +42,18 @@ interface TSAHealthData {
   agents: AgentInfo[];
 }
 
+export interface AgentActivity {
+  id: string;
+  name: string;
+  activity: "thinking" | "speaking" | "acting" | "idle";
+  detail?: string;
+}
+
 interface TSAHealthPanelProps {
   visible?: boolean;
   pollInterval?: number;
+  embedded?: boolean;
+  agentActivities?: AgentActivity[];
 }
 
 const DEFAULT_POLL_INTERVAL = 15000;
@@ -52,6 +61,8 @@ const DEFAULT_POLL_INTERVAL = 15000;
 export function TSAHealthPanel({
   visible = true,
   pollInterval = DEFAULT_POLL_INTERVAL,
+  embedded = false,
+  agentActivities,
 }: TSAHealthPanelProps) {
   const [isMinimized, setIsMinimized] = useState(true);
   const [healthData, setHealthData] = useState<TSAHealthData>({
@@ -186,7 +197,8 @@ export function TSAHealthPanel({
   };
 
   const getModelStatusText = () => {
-    const { models, errors: errs } = healthData;
+    const errs = errors;
+    const { models } = healthData;
     if (errs.models === "unreachable") return "UNREACHABLE";
     if (errs.models === "error") return "ERROR";
     if (models.length === 0) return "NO MODELS";
@@ -194,7 +206,8 @@ export function TSAHealthPanel({
   };
 
   const getAgentStatusText = () => {
-    const { agents, errors: errs } = healthData;
+    const errs = errors;
+    const { agents } = healthData;
     if (errs.agents === "unavailable") return "NO HANDOFF";
     if (errs.agents === "error") return "ERROR";
     if (agents.length === 0) return "No agents";
@@ -208,24 +221,29 @@ export function TSAHealthPanel({
 
   const overallStatus = getOverallStatus();
   const statusColor = getStatusColor(overallStatus);
+  const pos = embedded ? "relative" : "absolute";
+  const topVal = embedded ? 0 : 160;
+  const topValExpanded = embedded ? 0 : 120;
+  const zIdx = embedded ? 1 : 1000;
 
   if (isMinimized) {
     return (
       <div
         onClick={() => setIsMinimized(false)}
         style={{
-          position: "absolute",
-          top: 160,
+          position: pos as any,
+          top: topVal,
           right: 10,
           background: "rgba(0, 0, 0, 0.7)",
           border: `1px solid ${statusColor}`,
           borderRadius: "20px",
           padding: "6px 10px",
           cursor: "pointer",
-          zIndex: 1000,
+          zIndex: zIdx,
           display: "flex",
           alignItems: "center",
           gap: "6px",
+          marginBottom: embedded ? "8px" : 0,
         }}
       >
         <span
@@ -253,8 +271,8 @@ export function TSAHealthPanel({
     <div
       onDoubleClick={() => setIsMinimized(true)}
       style={{
-        position: "absolute",
-        top: 120,
+        position: pos as any,
+        top: topValExpanded,
         right: 10,
         background: "rgba(0, 0, 0, 0.85)",
         border: `1px solid ${statusColor}`,
@@ -263,10 +281,11 @@ export function TSAHealthPanel({
         fontFamily: "monospace",
         fontSize: "11px",
         color: "#e9ecef",
-        zIndex: 1000,
+        zIndex: zIdx,
         minWidth: "220px",
         backdropFilter: "blur(4px)",
         boxShadow: `0 0 10px ${statusColor}40`,
+        marginBottom: embedded ? "8px" : 0,
       }}
     >
       <div
@@ -422,6 +441,34 @@ export function TSAHealthPanel({
               +{(healthData.agents || []).length - 8} more
             </div>
           )}
+        </div>
+      )}
+
+      {agentActivities && agentActivities.length > 0 && (
+        <div style={{ borderTop: "1px solid #495057", paddingTop: "6px", marginTop: "6px" }}>
+          <div style={{ fontSize: "9px", color: "#6c757d", marginBottom: "4px" }}>Agent Activity</div>
+          {agentActivities.map((a) => {
+            const activityColors: Record<string, string> = {
+              thinking: "#feca57",
+              speaking: "#20c997",
+              acting: "#17a2b8",
+              idle: "#6c757d",
+            };
+            const activityLabels: Record<string, string> = {
+              thinking: "💭 thinking",
+              speaking: "💬 speaking",
+              acting: "⚡ acting",
+              idle: "○ idle",
+            };
+            return (
+              <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "2px", fontSize: "9px" }}>
+                <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: activityColors[a.activity], flexShrink: 0 }} />
+                <span style={{ color: "#bbb", minWidth: "60px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</span>
+                <span style={{ color: activityColors[a.activity], fontSize: "8px" }}>{activityLabels[a.activity]}</span>
+                {a.detail && <span style={{ color: "#6c757d", fontSize: "7px", marginLeft: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: "80px" }}>{a.detail}</span>}
+              </div>
+            );
+          })}
         </div>
       )}
 
