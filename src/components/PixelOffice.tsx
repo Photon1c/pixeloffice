@@ -1287,15 +1287,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             )}
         </div>
         {!isMobile && (
-        <div style={{ width: '260px', height: '100%', background: '#0a0a12', borderLeft: '1px solid #1b2333', padding: '12px', display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0, gap: '8px' }}>
-          <div style={{ fontSize: '11px', color: '#4ecdc4', fontWeight: 600, marginBottom: '4px' }}>📊 System</div>
-          <StabilityMonitor metrics={{ cpu: 45, memory: 32, fps: 60 }} visible={true} embedded />
-          <div style={{ borderTop: '1px solid #1b2333', paddingTop: '8px' }}>
-            <div style={{ fontSize: '11px', color: '#ff6b6b', fontWeight: 600, marginBottom: '4px' }}>🔬 TSA</div>
-            <TSAHealthPanel visible={true} />
+        <div style={{ width: '260px', height: '100%', background: '#0a0a12', borderLeft: '1px solid #1b2333', padding: '10px', display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0, gap: '8px' }}>
+          <div style={{ background: '#0f1520', borderRadius: '6px', padding: '8px', border: '1px solid #1b2333' }}>
+            <TSAHealthPanel visible={true} embedded />
           </div>
           <div style={{ borderTop: '1px solid #1b2333', paddingTop: '8px' }}>
-            <div style={{ fontSize: '11px', color: '#a55eea', fontWeight: 600, marginBottom: '4px' }}>🎵 Media</div>
+            <AgentIssueMonitor visible={true} embedded onTestConversation={() => {}} />
+          </div>
+          <div style={{ borderTop: '1px solid #1b2333', paddingTop: '8px' }}>
             <YouTubePlayer />
           </div>
         </div>
