@@ -1225,9 +1225,6 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       <div style={styles.mainContent}>
         <div style={styles.canvasWrapper} ref={containerRef}>
           <canvas ref={canvasRef} style={styles.canvas} onClick={handleCanvasClick} />
-          <StabilityMonitor metrics={{ cpu: 45, memory: 32, fps: 60 }} visible={LAB_MODE} />
-          <TSAHealthPanel visible={true} />
-          <AgentIssueMonitor visible={LAB_MODE} embedded={true} onTestConversation={() => {}} />
           {loadingStatus && (
             <div style={{
               position: 'absolute',
@@ -1289,6 +1286,20 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               />
             )}
         </div>
+        {!isMobile && (
+        <div style={{ width: '260px', height: '100%', background: '#0a0a12', borderLeft: '1px solid #1b2333', padding: '12px', display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0, gap: '8px' }}>
+          <div style={{ fontSize: '11px', color: '#4ecdc4', fontWeight: 600, marginBottom: '4px' }}>📊 System</div>
+          <StabilityMonitor metrics={{ cpu: 45, memory: 32, fps: 60 }} visible={true} embedded />
+          <div style={{ borderTop: '1px solid #1b2333', paddingTop: '8px' }}>
+            <div style={{ fontSize: '11px', color: '#ff6b6b', fontWeight: 600, marginBottom: '4px' }}>🔬 TSA</div>
+            <TSAHealthPanel visible={true} />
+          </div>
+          <div style={{ borderTop: '1px solid #1b2333', paddingTop: '8px' }}>
+            <div style={{ fontSize: '11px', color: '#a55eea', fontWeight: 600, marginBottom: '4px' }}>🎵 Media</div>
+            <YouTubePlayer />
+          </div>
+        </div>
+        )}
       </div>
     </div>
   );
@@ -2144,7 +2155,7 @@ const styles: Record<string, React.CSSProperties> = {
   sidebarCollapsed: { width: "60px", padding: "10px" },
   sidebarMobile: { position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 50, width: "85vw", maxWidth: "320px", transform: "translateX(0)", transition: "transform 0.3s ease" },
   sidebarHidden: { transform: "translateX(-100%)" },
-  mainContent: { flex: 1, height: "100%", position: "relative", overflow: "hidden", display: "flex", flexDirection: "column" },
+  mainContent: { flex: 1, height: "100%", position: "relative", overflow: "hidden", display: "flex", flexDirection: "row" },
   mainContentNoSidebar: { marginLeft: 0 },
   canvasWrapper: { width: "100%", height: "100%", position: "relative", flex: 1, minHeight: 0 },
   canvas: { width: "100%", height: "100%", display: "block" },
