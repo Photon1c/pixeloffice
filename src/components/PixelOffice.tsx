@@ -1227,67 +1227,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           <canvas ref={canvasRef} style={styles.canvas} onClick={handleCanvasClick} />
           <StabilityMonitor metrics={{ cpu: 45, memory: 32, fps: 60 }} visible={LAB_MODE} />
           <TSAHealthPanel visible={true} />
-          <AgentIssueMonitor 
-            visible={LAB_MODE} 
-            onTestConversation={() => {
-              const active = agents.filter(a => a.status !== 'offline');
-              if (active.length < 2) return;
-              const shuffled = [...active].sort(() => Math.random() - 0.5);
-              const speakerA = shuffled[0];
-              const speakerB = shuffled[1];
-              const origX = speakerA.x;
-              const origY = speakerA.y;
-              const targetX = speakerB.x;
-              const targetY = speakerB.y;
-              setAgents(prev => prev.map(a => 
-                a.id === speakerA.id 
-                  ? { ...a, targetX: targetX - 40, targetY: targetY, mode: 'walking' as const }
-                  : a
-              ));
-              setTimeout(() => {
-                const conversation = [
-                  { speaker: speakerA.name, text: "Hey! Have you seen the new feature the dev team shipped?", model: "llama3.3" },
-                  { speaker: speakerB.name, text: "Oh yeah? I heard rumors. Is it the dashboard redesign?", model: "qwen2.5" },
-                  { speaker: speakerA.name, text: "Even better - it's the agent2agent monitor. Watch this!", model: "llama3.3" },
-                  { speaker: speakerB.name, text: "No way! That's exactly what we needed for Standup.", model: "qwen2.5" },
-                  { speaker: speakerA.name, text: "Right? And it's got speech bubbles now too.", model: "llama3.3" },
-                  { speaker: speakerB.name, text: "This is going to make retro so much easier. Great find!", model: "qwen2.5" },
-                ];
-const showConvo = () => {
-                  let bubbleIdx = 0;
-                  let vertOffset = { [speakerA.id]: 0, [speakerB.id]: 0 };
-                  
-                  const showNext = () => {
-                    if (bubbleIdx < conversation.length) {
-                      const c = conversation[bubbleIdx];
-                      const agentId = c.speaker === speakerA.name ? speakerA.id : speakerB.id;
-                      const yOffset = vertOffset[agentId];
-                      vertOffset[agentId] -= 55;
-                      setSpeechBubbles([{ 
-                        speakerId: agentId, 
-                        text: `${c.speaker}: ${c.text}`,
-                        yOffset: yOffset
-                      }]);
-                      bubbleIdx++;
-                      setTimeout(showNext, 1800);
-                    } else {
-                      (window as any).showTestBubbles(conversation);
-                    }
-                  };
-                  showNext();
-                };
-                showConvo();
-                setTimeout(() => {
-                  setSpeechBubbles([]);
-                  setAgents(prev => prev.map(a => 
-                    a.id === speakerA.id 
-                      ? { ...a, targetX: origX, targetY: origY, mode: 'walking' as const }
-                      : a
-                  ));
-                }, 10000);
-              }, 1500);
-            }}
-          />
+          <AgentIssueMonitor visible={LAB_MODE} embedded={true} onTestConversation={() => {}} />
           {loadingStatus && (
             <div style={{
               position: 'absolute',
@@ -1349,53 +1289,6 @@ const showConvo = () => {
               />
             )}
         </div>
-{!isMobile && (
-  <div style={{
-    width: '260px',
-    background: '#0a0a12',
-    borderLeft: '1px solid #1b2333',
-    padding: '16px 10px',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '2px',
-    overflowY: 'auto',
-    flexShrink: 0,
-    height: '100%',
-  }}>
-    {/* AGENT-TO-AGENT */}
-    <div style={{ marginBottom: '2px', borderBottom: '1px solid rgba(27,35,51,0.5)', paddingBottom: '2px' }}>
-      <button
-        style={{ width: '100%', padding: '8px 6px', background: 'transparent', border: 'none', color: '#e8e8f0', cursor: 'pointer', fontSize: '11px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '4px', borderRadius: '4px' }}
-        onClick={() => setShowAgent2Agent(!showAgent2Agent)}
-      >
-        <span style={{ color: showAgent2Agent ? '#4ecdc4' : '#606070', fontSize: '10px', marginRight: '6px' }}>{showAgent2Agent ? '▼' : '▶'}</span>
-        <span style={{ fontWeight: 600 }}>Agent2Agent</span>
-      </button>
-      {showAgent2Agent && (
-        <div style={{ padding: '4px 6px 8px 6px', fontSize: '10px' }}>
-          <AgentIssueMonitor visible={true} embedded={true} onTestConversation={() => {}} />
-        </div>
-      )}
-    </div>
-
-    {/* YOUTUBE */}
-    <div style={{ marginBottom: '2px', borderBottom: '1px solid rgba(27,35,51,0.5)', paddingBottom: '2px' }}>
-      <button
-        style={{ width: '100%', padding: '8px 6px', background: 'transparent', border: 'none', color: '#e8e8f0', cursor: 'pointer', fontSize: '11px', textAlign: 'left', display: 'flex', alignItems: 'center', gap: '4px', borderRadius: '4px' }}
-        onClick={() => setShowYouTube(!showYouTube)}
-      >
-        <span style={{ color: showYouTube ? '#ff6b6b' : '#606070', fontSize: '10px', marginRight: '6px' }}>{showYouTube ? '▼' : '▶'}</span>
-        <span style={{ fontWeight: 600 }}>🎵 Music</span>
-      </button>
-      {showYouTube && (
-        <div style={{ padding: '4px 6px 8px 6px', fontSize: '10px' }}>
-          <YouTubePlayer />
-        </div>
-      )}
-    </div>
-    
-  </div>
-)}
       </div>
     </div>
   );
