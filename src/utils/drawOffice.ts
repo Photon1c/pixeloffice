@@ -292,6 +292,28 @@ export function drawMissionControl(ctx: CanvasRenderingContext2D): void {
 
 export function drawLobby(ctx: CanvasRenderingContext2D): void {
   drawRoomObjects(ctx, "lobby");
+  drawMainEntrance(ctx);
+}
+
+export function drawMainEntrance(ctx: CanvasRenderingContext2D): void {
+  const lobby = ROOMS.lobby;
+  const floorY = lobby.y + lobby.height * 0.7;
+  const doorX = lobby.x - 36;
+  const doorY = floorY - 40;
+  ctx.fillStyle = "#3a2a1a";
+  ctx.fillRect(doorX, doorY, 30, 50);
+  ctx.fillStyle = "#4a3a2a";
+  ctx.fillRect(doorX + 4, doorY + 4, 22, 42);
+  ctx.fillStyle = "#d4a030";
+  ctx.beginPath();
+  ctx.arc(doorX + 22, doorY + 20, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#2a1a0a";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(doorX, doorY, 30, 50);
+  ctx.fillStyle = "rgba(255,255,255,0.15)";
+  ctx.fillRect(doorX + 8, doorY + 8, 14, 20);
+  ctx.lineWidth = 1;
 }
 
 export function drawWarRoom(ctx: CanvasRenderingContext2D): void {

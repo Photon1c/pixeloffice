@@ -340,20 +340,21 @@ export function updateAgentPosition(
   speed: number,
   deltaTime: number
 ): Agent {
+  if (agent.mode !== "walking" && agent.mode !== "idle-wander") {
+    return agent;
+  }
+
   const dx = agent.targetX - agent.x;
   const dy = agent.targetY - agent.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
 
   if (distance < 4) {
-    if (agent.mode === "walking") {
-      return {
-        ...agent,
-        mode: "sitting",
-        x: agent.targetX,
-        y: agent.targetY,
-      };
-    }
-    return agent;
+    return {
+      ...agent,
+      mode: "sitting",
+      x: agent.targetX,
+      y: agent.targetY,
+    };
   }
 
   const moveX = (dx / distance) * speed * (deltaTime / 16);

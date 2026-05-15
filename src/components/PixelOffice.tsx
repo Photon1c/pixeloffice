@@ -52,6 +52,7 @@ import {
   CANVAS_WIDTH,
   CANVAS_HEIGHT,
   CHAIR_POSITIONS,
+  ENTRANCE_POSITION,
   getZoneAtPosition,
 } from "../utils/layout";
 
@@ -142,7 +143,21 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
   
+  const entranceDone = localStorage.getItem("pixel_office_entrance_done");
+  const [entranceActive, setEntranceActive] = useState(!entranceDone);
+
   const [agents, setAgents] = useState<Agent[]>(() => {
+    if (!entranceDone) {
+      return INITIAL_AGENTS.map((agent, i) => ({
+        ...agent,
+        x: ENTRANCE_POSITION.x,
+        y: ENTRANCE_POSITION.y + i * 18,
+        targetX: ENTRANCE_POSITION.x,
+        targetY: ENTRANCE_POSITION.y + i * 18,
+        dir: "right",
+        mode: "sitting",
+      }));
+    }
     const saved = localStorage.getItem("pixel_office_agents");
     if (saved) {
       try {
@@ -165,8 +180,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   });
 
   useEffect(() => {
+    if (entranceActive) return;
     localStorage.setItem("pixel_office_agents", JSON.stringify(agents));
-  }, [agents]);
+  }, [agents, entranceActive]);
   const [agentCards, setAgentCards] = useState<AgentCard[]>([]);
   const [dashboardConfig, setDashboardConfig] = useState<DashboardConfig>({
     ...DEFAULT_CONFIG,
@@ -281,6 +297,38 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   sleepModeRef.current = sleepMode;
   const configRef = useRef(dashboardConfig);
   configRef.current = dashboardConfig;
+
+  // Entrance animation: stagger agents walking to desks
+  useEffect(() => {
+    if (!entranceActive) return;
+    INITIAL_AGENTS.forEach((_, i) => {
+      setTimeout(() => {
+        setAgents(prev => prev.map((agent, idx) =>
+          idx === i ? {
+            ...agent,
+            mode: "walking",
+            targetX: CHAIR_POSITIONS[agent.deskIndex].x,
+            targetY: CHAIR_POSITIONS[agent.deskIndex].y,
+          } : agent
+        ));
+      }, 300 + i * 500);
+    });
+  }, [entranceActive]);
+
+  // Detect when all agents have reached their desks
+  useEffect(() => {
+    if (!entranceActive) return;
+    const allSeated = agents.every(a => {
+      const dx = a.x - a.targetX;
+      const dy = a.y - a.targetY;
+      return Math.sqrt(dx * dx + dy * dy) < 10 && a.mode === "sitting";
+    });
+    if (allSeated && agents.length > 0) {
+      setEntranceActive(false);
+      localStorage.setItem("pixel_office_entrance_done", "true");
+    }
+  }, [agents, entranceActive]);
+
   const [currentHour, setCurrentHour] = useState(new Date().getHours());
 
   // Sync sleep mode to server for more frequent cooler/scrum sessions
@@ -838,9 +886,23 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   }, []);
 
   // Sync render agents back to React state at lower rate (10fps)
+  // Merge positions from RAF ref into React state to preserve speech/thought bubbles
   useEffect(() => {
     const interval = setInterval(() => {
-      setAgents([...renderAgentsRef.current]);
+      setAgents(prev => prev.map((agent, i) => {
+        const refAgent = renderAgentsRef.current[i];
+        if (!refAgent) return agent;
+        return {
+          ...agent,
+          x: refAgent.x,
+          y: refAgent.y,
+          dir: refAgent.dir,
+          frame: refAgent.frame,
+          mode: refAgent.mode,
+          targetX: refAgent.targetX,
+          targetY: refAgent.targetY,
+        };
+      }));
     }, 100);
     return () => clearInterval(interval);
   }, []);
@@ -2293,7 +2355,7 @@ const styles: Record<string, React.CSSProperties> = {
   sidebarHidden: { transform: "translateX(-100%)" },
   mainContent: { flex: 1, height: "100%", position: "relative", overflow: "hidden", display: "flex", flexDirection: "row" },
   mainContentNoSidebar: { marginLeft: 0 },
-  canvasWrapper: { width: "100%", height: "100%", position: "relative", flex: 1, minHeight: 0 },
+  canvasWrapper: { height: "100%", position: "relative", flex: 1, minWidth: 0, minHeight: 0 },
   canvas: { width: "100%", height: "100%", display: "block" },
   paramsToggle: { width: "100%", padding: "10px", background: "#1a2a2a", border: "1px solid #2a3548", color: "#4ecdc4", borderRadius: "4px", cursor: "pointer", fontSize: "13px", fontWeight: 600, textAlign: "left" },
   resizeHandle: { position: "absolute", right: 0, top: 0, bottom: 0, width: "4px", cursor: "col-resize", background: "transparent", zIndex: 10 },

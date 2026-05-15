@@ -131,6 +131,8 @@ export const CHAIR_POSITIONS = CUBICLE_POSITIONS.map((pos) => ({
   y: pos.y,
 }));
 
+export const ENTRANCE_POSITION = { x: -60, y: 394 };
+
 // ============================================================================
 // WANDER POINTS (for idle agents)
 // ============================================================================
