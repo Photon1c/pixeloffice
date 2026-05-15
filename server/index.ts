@@ -5,6 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { config } from "dotenv";
 import { rebuildDocIndexes } from "./docs/docIndex.js";
+import { startSupabaseKeepAlive } from "./services/supabaseKeepAlive.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -511,6 +512,9 @@ setInterval(updateAgentMetrics, 30000);
 
 // Initial update
 updateModelMetrics().then(updateAgentMetrics);
+
+// Supabase keep-alive to prevent project pausing due to inactivity
+startSupabaseKeepAlive();
 
 // Stigmergy Metrics (per thought_speech_stigmergy.md)
 const deskStigmergyGauge = new client.Gauge({
