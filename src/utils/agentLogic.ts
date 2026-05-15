@@ -400,8 +400,6 @@ export function updateAgentStatus(
   }
 }
 
-let wanderTimeouts: Map<string, ReturnType<typeof setTimeout>> = new Map();
-
 export function handleWanderLogic(agent: Agent): Agent {
   if (agent.status !== "idle" || agent.mode !== "idle-wander") {
     return agent;
@@ -412,16 +410,9 @@ export function handleWanderLogic(agent: Agent): Agent {
   const distance = Math.sqrt(dx * dx + dy * dy);
 
   if (distance < 10) {
-    if (!wanderTimeouts.has(agent.id)) {
-      const timeout = setTimeout(() => {
-        const newPoint =
-          WANDER_POINTS[Math.floor(Math.random() * WANDER_POINTS.length)];
-        wanderTimeouts.delete(agent.id);
-        agent.x = newPoint.x;
-        agent.y = newPoint.y;
-      }, 2000 + Math.random() * 3000);
-      wanderTimeouts.set(agent.id, timeout);
-    }
+    const newPoint =
+      WANDER_POINTS[Math.floor(Math.random() * WANDER_POINTS.length)];
+    return { ...agent, targetX: newPoint.x, targetY: newPoint.y };
   }
 
   return agent;
@@ -809,8 +800,8 @@ export function applyScheduleToAgents(
     // Default fallback if no zone suggested
     if (!targetZoneId) {
       if (period.period === "night_shift") {
-         // Most go home (off-screen)
          if (agent.id !== "hermitclaw" && agent.id !== "ironclaw") {
+           if (agent.x < 0 && agent.mode === "sitting") return agent;
            return {
              ...agent,
              status: "idle",

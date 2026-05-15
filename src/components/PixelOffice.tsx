@@ -283,6 +283,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [isScrumRunning, setIsScrumRunning] = useState<boolean>(false);
   const [isCoolerTalkRunning, setIsCoolerTalkRunning] = useState<boolean>(false);
   const [sleepMode, setSleepMode] = useState<boolean>(true);
+  const [vacationMode, setVacationMode] = useState<boolean>(false);
+  const [vacationStatus, setVacationStatus] = useState<string>('');
   const [showAgent2Agent, setShowAgent2Agent] = useState<boolean>(true);
   const [showYouTube, setShowYouTube] = useState<boolean>(false);
   const [showReviewHeat, setShowReviewHeat] = useState<boolean>(true);
@@ -781,12 +783,25 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         const next = new Map(prev);
         let changed = false;
         next.forEach((session, id) => {
-          if (session.finished) { next.delete(id); changed = true; return; }
+          if (session.finished) {
+            next.delete(id); changed = true;
+            setAgents(prev => prev.map(a =>
+              a.id === session.initiatorId || a.id === session.partnerId
+                ? { ...a, targetX: CHAIR_POSITIONS[a.deskIndex]?.x || a.x, targetY: CHAIR_POSITIONS[a.deskIndex]?.y || a.y, mode: "walking" as const }
+                : a
+            ));
+            return;
+          }
           const nextLine = session.currentLine + 1;
           if (nextLine >= session.script.length) {
             next.set(id, { ...session, finished: true, currentLine: nextLine });
             changed = true;
             setSpeechBubbles(prevBubbles => prevBubbles.filter(b => b.speakerId !== session.initiatorId && b.speakerId !== session.partnerId));
+            setAgents(prev => prev.map(a =>
+              a.id === session.initiatorId || a.id === session.partnerId
+                ? { ...a, targetX: CHAIR_POSITIONS[a.deskIndex]?.x || a.x, targetY: CHAIR_POSITIONS[a.deskIndex]?.y || a.y, mode: "walking" as const }
+                : a
+            ));
           } else {
             const line = session.script[nextLine];
             setSpeechBubbles(prevBubbles => {
@@ -1078,7 +1093,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           </button>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', padding: '8px 10px', background: '#0f1520', border: '1px solid #1b2333', borderRadius: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', padding: '8px 10px', background: '#0f1520', border: '1px solid #1b2333', borderRadius: '6px' }}>
           <div>
             <div style={{ fontSize: '11px', color: '#a0a0b0', fontWeight: 600 }}>🌙 Sleep Mode</div>
             <div style={{ fontSize: '8px', color: '#6c757d', marginTop: '2px' }}>{sleepMode ? '💬 impromptu chats • 💭 thoughts • ⚡ faster' : 'normal office hours'}</div>
@@ -1098,6 +1113,54 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             }}
           >
             {sleepMode ? 'ON' : 'OFF'}
+          </button>
+        </div>
+
+        {/* VACATION MODE */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', padding: '8px 10px', background: vacationMode ? '#1a0a20' : '#0f1520', border: vacationMode ? '1px solid #9b59b6' : '1px solid #1b2333', borderRadius: '6px' }}>
+          <div>
+            <div style={{ fontSize: '11px', color: vacationMode ? '#bb86fc' : '#a0a0b0', fontWeight: 600 }}>✈️ Vacation Mode</div>
+            <div style={{ fontSize: '8px', color: '#6c757d', marginTop: '2px' }}>{vacationMode ? (vacationStatus || '🤖 cooler + scrum + a2a autopilot') : 'full office autopilot'}</div>
+          </div>
+          <button
+            onClick={async () => {
+              if (vacationMode) {
+                setVacationMode(false);
+                setVacationStatus('deactivating...');
+                try {
+                  const resp = await fetch('/api/office/vacation-mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: false }) });
+                  const data = await resp.json();
+                  setVacationStatus(data.message || 'deactivated');
+                  setSleepMode(false);
+                } catch (e) {
+                  setVacationStatus('deactivation error');
+                }
+              } else {
+                setVacationMode(true);
+                setVacationStatus('activating autopilot...');
+                setSleepMode(true);
+                try {
+                  const resp = await fetch('/api/office/vacation-mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active: true }) });
+                  const data = await resp.json();
+                  setVacationStatus(data.message || 'autopilot engaged');
+                } catch (e) {
+                  setVacationStatus('activation error');
+                }
+              }
+            }}
+            style={{
+              padding: '3px 12px',
+              fontSize: '10px',
+              borderRadius: '10px',
+              border: 'none',
+              cursor: 'pointer',
+              background: vacationMode ? '#9b59b6' : '#2a2a3a',
+              color: vacationMode ? '#fff' : '#666',
+              fontWeight: 600,
+              transition: 'all 0.2s',
+            }}
+          >
+            {vacationMode ? 'ENGAGED' : 'OFF'}
           </button>
         </div>
         
