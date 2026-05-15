@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { OFFICE_SCHEDULE, getPeriodForHour } from "../utils/schedule";
 
 const API_BASE = "";
 
@@ -105,7 +106,7 @@ interface TimeTasksPanelProps {
 }
 
 export default function TimeTasksPanel({ onClose }: TimeTasksPanelProps) {
-  const [activeTab, setActiveTab] = useState<"tasks" | "events" | "plan" | "log">("tasks");
+  const [activeTab, setActiveTab] = useState<"tasks" | "events" | "plan" | "log" | "schedule">("tasks");
   const [tasks, setTasks] = useState<TaskV2[]>([]);
   const [eventsList, setEventsList] = useState<CalendarEvent[]>([]);
   const [todaysPlan, setTodaysPlan] = useState<TodayPlan | null>(null);
@@ -317,7 +318,7 @@ export default function TimeTasksPanel({ onClose }: TimeTasksPanelProps) {
       {error && <div style={styles.error}>{error}</div>}
 
       <div style={styles.tabs}>
-        {["tasks", "events", "plan", "log"].map(tab => (
+        {["tasks", "events", "plan", "log", "schedule"].map(tab => (
           <button
             key={tab}
             style={{...styles.tab, ...(activeTab === tab ? styles.tabActive : {})}}
@@ -587,6 +588,34 @@ export default function TimeTasksPanel({ onClose }: TimeTasksPanelProps) {
           {(!todaysLog.sessions || todaysLog.sessions.length === 0) && (
             <div style={styles.empty}>No sessions today</div>
           )}
+        </div>
+      )}
+      {activeTab === "schedule" && (
+        <div style={styles.content}>
+          <h4 style={styles.sectionTitle}>Office Master Schedule</h4>
+          <div style={styles.list}>
+            {OFFICE_SCHEDULE.map((event, idx) => {
+              const isCurrent = getPeriodForHour(new Date().getHours()).label === event.label;
+              return (
+                <div key={idx} style={{
+                  ...styles.eventItem,
+                  border: isCurrent ? "1px solid #4ecdc4" : "1px solid transparent",
+                  background: isCurrent ? "rgba(78, 205, 196, 0.1)" : "#1a1a2e",
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                    <span style={{ color: isCurrent ? '#4ecdc4' : '#fff', fontWeight: 'bold' }}>
+                      {event.startHour.toString().padStart(2, '0')}:00 - {event.endHour.toString().padStart(2, '0')}:00
+                    </span>
+                    {isCurrent && <span style={{ color: '#4ecdc4', fontSize: '10px' }}>CURRENT</span>}
+                  </div>
+                  <div style={{ marginTop: '4px' }}>
+                    <div style={{ fontSize: '14px', color: '#fff' }}>{event.label}</div>
+                    <div style={{ fontSize: '11px', color: '#888' }}>{event.defaultActivity}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

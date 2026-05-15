@@ -1,5 +1,8 @@
 import { Agent, AgentStatus, AgentMood, Task, TaskStatus, ConversationContext } from "../types";
-import { CHAIR_POSITIONS, WANDER_POINTS, ZONE_CONFIG } from "./layout";
+import { CHAIR_POSITIONS, WANDER_POINTS, ZONE_CONFIG, ROOMS } from "./layout";
+import { getPeriodForHour } from "./schedule";
+import { AGENT_PERSONALITIES, CHAT_TOPICS_POOL, ChatIntensity, ChatEscalationState } from "./agentPersonalities";
+export type { ChatEscalationState, ChatIntensity };
 
 const MOOD_EMOJIS: Record<AgentMood, string> = {
   happy: "😊",
@@ -445,13 +448,66 @@ export function getMoodEmoji(mood: AgentMood): string {
   return MOOD_EMOJIS[mood];
 }
 
-export function getRandomThought(mood: AgentMood, agentId?: string): string {
+const MOOD_EMOJI_PREFIX: Record<AgentMood, string> = {
+  happy: "😊",
+  neutral: "😐",
+  thinking: "🤔",
+  excited: "🤩",
+  tired: "😴",
+  frustrated: "😤",
+};
+
+const MOOD_EMOJI_SUFFIX: Record<AgentMood, string> = {
+  happy: " ✨👍",
+  neutral: "",
+  thinking: " 💭",
+  excited: " 🎉🔥",
+  tired: " ☕💤",
+  frustrated: " 😩💢",
+};
+
+const ROLE_EMOJI: Record<string, string> = {
+  receptionist: "📋",
+  clerk: "📝",
+  custodian: "🔧",
+  archivist: "📚",
+  executive: "💼",
+  specialist: "🔬",
+};
+
+const ACTIVITY_EMOJI: Record<string, string> = {
+  kitchen: "☕🍕",
+  conference: "📢📋",
+  lobby: "🚪👋",
+  archives: "📜🔍",
+  executive: "📊👔",
+  specialist: "🔬⚗️",
+  openOffice: "💻📄",
+  missionControl: "🖥️📡",
+  gym: "💪🏋️",
+};
+
+export function enhanceTextWithEmoji(text: string, mood: AgentMood, agentId?: string, zoneId?: string): string {
+  const prefix = MOOD_EMOJI_PREFIX[mood];
+  const suffix = MOOD_EMOJI_SUFFIX[mood];
+  const roleEmoji = agentId ? ROLE_EMOJI[agentId] || "" : "";
+  const activityEmoji = zoneId ? ACTIVITY_EMOJI[zoneId] || "" : "";
+
+  const extra = [roleEmoji, activityEmoji].filter(Boolean).join(" ");
+  const decorated = extra ? `${prefix} ${extra} ${text}${suffix}` : `${prefix} ${text}${suffix}`;
+  return decorated;
+}
+
+export function getRandomThought(mood: AgentMood, agentId?: string, zoneId?: string): string {
+  let text: string;
   if (agentId && AGENT_SPECIFIC_THOUGHTS[agentId]) {
     const agentThoughts = AGENT_SPECIFIC_THOUGHTS[agentId];
-    return agentThoughts[Math.floor(Math.random() * agentThoughts.length)];
+    text = agentThoughts[Math.floor(Math.random() * agentThoughts.length)];
+  } else {
+    const thoughts = MOOD_THOUGHTS[mood];
+    text = thoughts[Math.floor(Math.random() * thoughts.length)];
   }
-  const thoughts = MOOD_THOUGHTS[mood];
-  return thoughts[Math.floor(Math.random() * thoughts.length)];
+  return enhanceTextWithEmoji(text, mood, agentId, zoneId);
 }
 
 export function updateAgentMood(agent: Agent, newMood: AgentMood): Agent {
@@ -729,4 +785,375 @@ export function selectTaskWithStigmergy(
 
   console.log(`[Stigmergy] Selected agent ${selectedAgent.name} (weight: ${weights.get(selectedAgent.id)?.toFixed(2)}) for task "${selectedTask.title}"`);
   return { agent: selectedAgent, task: selectedTask };
+}
+
+// ============================================================================
+// Schedule-Driven Agent Behavior
+// ============================================================================
+
+export function applyScheduleToAgents(
+  agents: Agent[],
+  hour: number
+): Agent[] {
+  const period = getPeriodForHour(hour);
+  
+  return agents.map(agent => {
+    // If agent is currently in a manual override mode (e.g. testing conversation), skip schedule logic
+    if (agent.mode === "standing") {
+      return agent;
+    }
+
+    let targetZoneId = period.suggestedZones[agent.id] || period.suggestedZones["all"];
+    
+    // Default fallback if no zone suggested
+    if (!targetZoneId) {
+      if (period.period === "night_shift") {
+         // Most go home (off-screen)
+         if (agent.id !== "hermitclaw" && agent.id !== "ironclaw") {
+           return {
+             ...agent,
+             status: "idle",
+             targetX: -100,
+             targetY: agent.y,
+             mode: "walking"
+           };
+         }
+      }
+      targetZoneId = "openOffice";
+    }
+
+    const room = ROOMS[targetZoneId];
+    if (!room) return agent;
+
+    // Calculate a target position within the room (with some random offset to avoid stacking)
+    const padding = 40;
+    const targetX = room.x + padding + Math.random() * (room.width - padding * 2);
+    const targetY = room.y + (room.height * 0.6) + (Math.random() * 20); // Feet on the floor line
+
+    // Only update if target is significantly different to avoid jitter
+    const dx = targetX - agent.targetX;
+    const dy = targetY - agent.targetY;
+    if (Math.sqrt(dx*dx + dy*dy) > 50) {
+      const isNight = period.period === "night_shift";
+      const isMeeting = period.period === "morning_standup" || period.period === "afternoon_sync";
+      
+      let mood: AgentMood = isNight ? "tired" : "neutral";
+      if (isMeeting) mood = "thinking";
+      if (period.period === "lunch_break") mood = "happy";
+
+      const updatedAgent: Agent = {
+        ...agent,
+        status: isNight && agent.id !== "hermitclaw" && agent.id !== "ironclaw" ? "idle" : "working",
+        mood,
+        targetX,
+        targetY,
+        mode: "walking"
+      };
+
+      // Occasionally generate a thought about the schedule change
+      if (Math.random() > 0.7) {
+        const thoughtText = isNight ? "Heading out for the night..." : `Time for ${period.label}!`;
+        return {
+          ...updatedAgent,
+          thoughtBubble: {
+            text: enhanceTextWithEmoji(thoughtText, mood, agent.id, targetZoneId),
+            expiresAt: Date.now() + 4000
+          }
+        };
+      }
+      return updatedAgent;
+    }
+
+    return agent;
+  });
+}
+
+// ============================================================================
+// Walk-Up Chat System
+// ============================================================================
+
+const DEFAULT_TOPIC = "the daily standup notes";
+
+export function generateChatPairKey(a: string, b: string): string {
+  return [a, b].sort().join("::");
+}
+
+export interface ChatScriptLine {
+  speakerId: string;
+  text: string;
+  delayMs: number;
+}
+
+export function selectChatInitiator(agents: Agent[], escalationStates: Map<string, ChatEscalationState>): Agent | null {
+  const candidates = agents.filter(a => {
+    const personality = AGENT_PERSONALITIES[a.id];
+    if (!personality) return false;
+    if (a.mode === "standing" || a.mode === "walking") return false;
+    if (a.status === "idle" && a.targetX < 0) return false;
+    return true;
+  });
+  if (candidates.length < 2) return null;
+
+  const totalWeight = candidates.reduce((sum, a) => {
+    const p = AGENT_PERSONALITIES[a.id];
+    return sum + (p ? p.sociability * (1 + Math.random()) : 0.5);
+  }, 0);
+
+  let roll = Math.random() * totalWeight;
+  for (const a of candidates) {
+    const p = AGENT_PERSONALITIES[a.id];
+    roll -= p ? p.sociability * (1 + Math.random()) : 0.5;
+    if (roll <= 0) return a;
+  }
+  return candidates[0];
+}
+
+export function selectChatPartner(initiator: Agent, agents: Agent[], escalationStates: Map<string, ChatEscalationState>): Agent | null {
+  const personality = AGENT_PERSONALITIES[initiator.id];
+  if (!personality) return null;
+
+  const candidates = agents.filter(a => {
+    if (a.id === initiator.id) return false;
+    if (a.mode === "standing") return false;
+    return true;
+  });
+  if (candidates.length === 0) return null;
+
+  const weighted = candidates.map(partner => {
+    let weight = 0.5;
+
+    // Affinity bonus
+    if (personality.affinities.includes(partner.id)) weight += 0.8;
+    if (personality.rivalries.includes(partner.id)) weight += 0.3;
+
+    // Proximity bonus (agents closer are more likely to chat)
+    const dx = initiator.x - partner.x;
+    const dy = initiator.y - partner.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 300) weight += 0.5;
+    else if (dist < 600) weight += 0.2;
+
+    // Recent chat cooldown — less likely to chat same person again immediately
+    const pairKey = generateChatPairKey(initiator.id, partner.id);
+    const lastChat = escalationStates.get(pairKey);
+    if (lastChat && Date.now() - lastChat.lastChatTime < 120000) {
+      weight *= 0.3;
+    }
+
+    // Partner's own sociability
+    const partnerPersonality = AGENT_PERSONALITIES[partner.id];
+    if (partnerPersonality) weight *= (0.5 + partnerPersonality.sociability);
+
+    return { agent: partner, weight };
+  });
+
+  const totalWeight = weighted.reduce((s, w) => s + w.weight, 0);
+  let roll = Math.random() * totalWeight;
+  for (const w of weighted) {
+    roll -= w.weight;
+    if (roll <= 0) return w.agent;
+  }
+  return weighted[weighted.length - 1].agent;
+}
+
+export function generateChatScript(
+  initiator: Agent,
+  partner: Agent,
+  intensity: ChatIntensity,
+  escalationStates: Map<string, ChatEscalationState>
+): { script: ChatScriptLine[]; newIntensity: ChatIntensity; topic: string } {
+  const pairKey = generateChatPairKey(initiator.id, partner.id);
+  const previous = escalationStates.get(pairKey);
+
+  // Determine topic pool and intensity
+  const prevIntensity = previous ? previous.intensity : "casual";
+  let newIntensity: ChatIntensity = prevIntensity;
+
+  // Escalation logic: volatility + disagreements can escalate
+  const initP = AGENT_PERSONALITIES[initiator.id];
+  const partP = AGENT_PERSONALITIES[partner.id];
+  const avgVolatility = ((initP?.volatility || 0.3) + (partP?.volatility || 0.3)) / 2;
+
+  if (previous && previous.exchanges > 0) {
+    // Check for rivalry escalation
+    const hasRivalry = (initP?.rivalries.includes(partner.id)) || (partP?.rivalries.includes(initiator.id));
+    const escalateChance = hasRivalry ? 0.5 : avgVolatility * 0.3;
+    if (Math.random() < escalateChance) {
+      const levels: ChatIntensity[] = ["casual", "focused", "intense", "heated"];
+      const idx = levels.indexOf(prevIntensity);
+      if (idx < 3) newIntensity = levels[idx + 1];
+    }
+  }
+
+  // Pick a topic
+  const topics = CHAT_TOPICS_POOL[newIntensity];
+  const topic = topics[Math.floor(Math.random() * topics.length)];
+
+  // Generate dialog lines based on intensity
+  const lines: ChatScriptLine[] = [];
+  const turnDelay = 3500;
+  const initName = initiator.name;
+  const partName = partner.name;
+
+  // Determine talkativeness
+  const talkLen = Math.round(((initP?.talkativeness || 0.5) + (partP?.talkativeness || 0.5)) * 3);
+  const totalExchanges = Math.min(Math.max(talkLen, 2), 6);
+
+  const casualOpeners = [
+    `Hey ${partName}, have you noticed ${topic}? 🤔`,
+    `${partName}! Quick thought on ${topic}? 💭`,
+    `What do you think about ${topic}? 🤷`,
+    `Been meaning to ask you about ${topic}... 🤨`,
+  ];
+
+  const casualFollowUps = [
+    `Interesting take! I was thinking the same. 🤝`,
+    `Yeah, I've been following that closely too. 📊`,
+    `Right? It's been on my mind all morning. 😅`,
+    `That's a good point. Hadn't considered that. 🧐`,
+  ];
+
+  const focusedOpeners = [
+    `Hey ${partName}, let's talk about ${topic} — we need alignment. 📋`,
+    `${partName}, I've been reviewing ${topic} — got a moment? 👀`,
+    `Quick sync on ${topic}? I think there's a gap. ⚠️`,
+  ];
+
+  const focusedFollowUps = [
+    `Good callout. Let me check the latest data. 📊`,
+    `I see your point. We should document this. 📝`,
+    `Agreed. Let's flag this for the next standup. 🚩`,
+    `That lines up with what I've been seeing. 👍`,
+  ];
+
+  const intenseOpeners = [
+    `${partName}, we need to address ${topic} — it's becoming a blocker. 🚨`,
+    `I'm concerned about ${topic}. This needs attention. ⚠️`,
+    `${partName}, ${topic} slipped through. We need a fix. 🔴`,
+  ];
+
+  const intenseFollowUps = [
+    `I hear you. Let me escalate this. 📢`,
+    `We need to involve more people on this. 👥`,
+    `This is exactly the kind of thing I was worried about. 😤`,
+    `Let's document this and bring it to the sprint retro. 📋`,
+  ];
+
+  const heatedOpeners = [
+    `${partName}, this ${topic} situation is unacceptable. 😠`,
+    `I told you ${topic} would be a problem. Now it is. 💢`,
+    `${partName}, we can't keep ignoring ${topic}. 🔥`,
+  ];
+
+  const heatedFollowUps = [
+    `Don't blame me for this — the process failed. 😤`,
+    `I'm not taking responsibility for something I flagged weeks ago. 🙅`,
+    `Let's take this to LeslieClaw. This needs management. 📢`,
+    `Fine. But I want this documented in the retro notes. 📋`,
+  ];
+
+  let openers: string[];
+  let followUps: string[];
+
+  switch (newIntensity) {
+    case "heated":
+      openers = heatedOpeners;
+      followUps = heatedFollowUps;
+      break;
+    case "intense":
+      openers = intenseOpeners;
+      followUps = intenseFollowUps;
+      break;
+    case "focused":
+      openers = focusedOpeners;
+      followUps = focusedFollowUps;
+      break;
+    default:
+      openers = casualOpeners;
+      followUps = casualFollowUps;
+  }
+
+  // Generate alternating lines
+  const dominant = initP && partP
+    ? (initP.dominance > partP.dominance ? initiator : partner)
+    : initiator;
+  const submissive = dominant.id === initiator.id ? partner : initiator;
+  let dominantSpeaker = true;
+
+  for (let i = 0; i < totalExchanges; i++) {
+    const speaker = dominantSpeaker ? dominant : submissive;
+    const textPool = i === 0
+      ? (dominantSpeaker ? openers : followUps)
+      : followUps;
+    
+    if (i === 0 && !dominantSpeaker) {
+      // The dominant might preempt
+      lines.push({ speakerId: dominant.id, text: openers[Math.floor(Math.random() * openers.length)], delayMs: 0 });
+      lines.push({ speakerId: submissive.id, text: followUps[Math.floor(Math.random() * followUps.length)], delayMs: turnDelay });
+    } else {
+      const idx = Math.floor(Math.random() * textPool.length);
+      lines.push({ speakerId: speaker.id, text: textPool[idx], delayMs: i === 0 ? 500 : turnDelay });
+    }
+    dominantSpeaker = !dominantSpeaker;
+  }
+
+  return { script: lines, newIntensity, topic };
+}
+
+export interface WalkUpChatSession {
+  initiatorId: string;
+  partnerId: string;
+  meetPoint: { x: number; y: number };
+  intensity: ChatIntensity;
+  topic: string;
+  script: ChatScriptLine[];
+  currentLine: number;
+  startedAt: number;
+  finished: boolean;
+}
+
+export function initiateWalkUpChat(
+  initiator: Agent,
+  partner: Agent,
+  escalationStates: Map<string, ChatEscalationState>
+): WalkUpChatSession | null {
+  const pairKey = generateChatPairKey(initiator.id, partner.id);
+  const previous = escalationStates.get(pairKey);
+  const prevIntensity = previous ? previous.intensity : "casual";
+
+  // Escalation check
+  let intensity: ChatIntensity = prevIntensity;
+  const initP = AGENT_PERSONALITIES[initiator.id];
+  const partP = AGENT_PERSONALITIES[partner.id];
+
+  if (previous && previous.exchanges > 0) {
+    const hasRivalry = (initP?.rivalries.includes(partner.id)) || (partP?.rivalries.includes(initiator.id));
+    const avgVolatility = ((initP?.volatility || 0.3) + (partP?.volatility || 0.3)) / 2;
+    const escalateChance = hasRivalry ? 0.5 : avgVolatility * 0.3;
+    if (Math.random() < escalateChance) {
+      const levels: ChatIntensity[] = ["casual", "focused", "intense", "heated"];
+      const idx = levels.indexOf(prevIntensity);
+      if (idx < 3) intensity = levels[idx + 1];
+    }
+  }
+
+  const { script, topic } = generateChatScript(initiator, partner, intensity, escalationStates);
+
+  // Meet point: midpoint between the two agents
+  const meetPoint = {
+    x: (initiator.x + partner.x) / 2 + (Math.random() * 40 - 20),
+    y: Math.min(initiator.y, partner.y) + (Math.random() * 20 - 10),
+  };
+
+  return {
+    initiatorId: initiator.id,
+    partnerId: partner.id,
+    meetPoint,
+    intensity,
+    topic,
+    script,
+    currentLine: 0,
+    startedAt: Date.now(),
+    finished: false,
+  };
 }

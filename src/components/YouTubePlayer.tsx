@@ -27,6 +27,7 @@ export default function YouTubePlayer() {
   return (
     <div>
       <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "6px" }}>
+        <span style={{ fontSize: "12px" }}>🎵</span>
         <button
           onClick={() => setShowConfig(!showConfig)}
           style={{ background: "none", border: "none", color: "#606070", cursor: "pointer", fontSize: "10px", padding: "2px 4px" }}

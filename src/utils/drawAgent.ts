@@ -72,7 +72,7 @@ export function drawAgent(
   }
   ctx.scale(scale, scale);
 
-  // Add subtle idle bobbing when in conversation zones
+  // Subtle idle animation for all non-walking agents
   const kitchen = ROOMS.kitchen;
   const conference = ROOMS.conference;
   const inKitchen = x >= kitchen.x && x <= kitchen.x + kitchen.width && y >= kitchen.y && y <= kitchen.y + kitchen.height;
@@ -80,11 +80,15 @@ export function drawAgent(
   const inConversationZone = inKitchen || inConference;
   
   let idleBobOffset = 0;
-  if (mode !== "walking" && mode !== "sitting" && inConversationZone) {
-    // Subtle vertical bobbing for idle agents in conversation zones
-    idleBobOffset = Math.sin(Date.now() / 500) * 1.5;
+  let idleTurnOffset = 0;
+  if (mode !== "walking") {
+    idleBobOffset = Math.sin(Date.now() / 800 + agent.deskIndex * 1.5) * 1.2;
+    idleTurnOffset = Math.sin(Date.now() / 1200 + agent.deskIndex * 2.3) * 0.3;
   }
-  ctx.translate(0, idleBobOffset);
+  if (inConversationZone) {
+    idleBobOffset += Math.sin(Date.now() / 500) * 1.0;
+  }
+  ctx.translate(idleTurnOffset, idleBobOffset);
 
   const skinColor = "#e8b89d";
   const hairColor = "#3a2820";
@@ -188,60 +192,25 @@ export function drawAgent(
   }
 
   if (thoughtBubble) {
-    drawThoughtBubble(ctx, x, y - 75, thoughtBubble.text); // Increased offset from 60 to 75
+    drawThoughtBubble(ctx, x, y - 75, thoughtBubble.text, mood);
   }
   if ((agent as any).speechBubble) {
     const offset = (agent as any).speechBubble.offset || 0;
-    drawSpeechBubble(ctx, x, y - 75 - offset, (agent as any).speechBubble.text);
+    drawSpeechBubble(ctx, x, y - 75 - offset, (agent as any).speechBubble.text, mood);
   }
 }
 
-function drawThoughtBubble(ctx: CanvasRenderingContext2D, x: number, y: number, text: string): void {
-  ctx.font = "bold 11px 'JetBrains Mono', monospace";
-  ctx.textAlign = "left";
-  const textWidth = ctx.measureText(text).width;
-  const padding = 8;
-  const maxWidth = Math.min(textWidth + padding * 2, 240); // Increased from 180 to 240
-  const lineHeight = 16;
-  const lines = wrapText(ctx, text, maxWidth - padding * 2);
-  const bubbleHeight = Math.max(lines.length * lineHeight + padding * 2, 32); // Increased min height from 28 to 32
-  const bubbleWidth = Math.min(maxWidth, textWidth + padding * 2);
-  
-  const bubbleX = x - bubbleWidth / 2;
-  const bubbleY = y - bubbleHeight / 2;
-  
-  ctx.save();
-  
-  ctx.fillStyle = "rgba(20, 25, 35, 0.95)";
-  ctx.strokeStyle = "#4a90d9";
-  ctx.lineWidth = 2;
-  
-  ctx.beginPath();
-  ctx.roundRect(bubbleX, bubbleY, bubbleWidth, bubbleHeight, 6);
-  ctx.fill();
-  ctx.stroke();
-  
-  ctx.beginPath();
-  ctx.moveTo(x - 6, bubbleY + bubbleHeight);
-  ctx.lineTo(x - 10, bubbleY + bubbleHeight + 10);
-  ctx.lineTo(x + 6, bubbleY + bubbleHeight);
-  ctx.closePath();
-  ctx.fillStyle = "rgba(20, 25, 35, 0.95)";
-  ctx.fill();
-  ctx.stroke();
-  
-  ctx.fillStyle = "#e8e8f0";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  const textY = bubbleY + bubbleHeight / 2;
-  lines.forEach((line, i) => {
-    ctx.fillText(line, x, textY + (i - (lines.length - 1) / 2) * lineHeight);
-  });
-  
-  ctx.restore();
-}
+const MOOD_BUBBLE_STYLE: Record<string, { bg: string; border: string; text: string }> = {
+  happy: { bg: "rgba(30, 45, 30, 0.95)", border: "#26de81", text: "#d0f0d0" },
+  neutral: { bg: "rgba(20, 25, 35, 0.95)", border: "#4a90d9", text: "#e8e8f0" },
+  thinking: { bg: "rgba(25, 25, 45, 0.95)", border: "#7c5cbf", text: "#e0d8f0" },
+  excited: { bg: "rgba(45, 35, 20, 0.95)", border: "#feca57", text: "#f8f0d0" },
+  tired: { bg: "rgba(25, 25, 25, 0.95)", border: "#888888", text: "#c0c0c0" },
+  frustrated: { bg: "rgba(45, 20, 20, 0.95)", border: "#ff6b6b", text: "#f0d0d0" },
+};
 
-function drawSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: number, text: string): void {
+function drawThoughtBubble(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, mood?: string): void {
+  const style = MOOD_BUBBLE_STYLE[mood || ""] || MOOD_BUBBLE_STYLE.neutral;
   ctx.font = "bold 11px 'JetBrains Mono', monospace";
   ctx.textAlign = "left";
   const textWidth = ctx.measureText(text).width;
@@ -257,8 +226,8 @@ function drawSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: number, t
   
   ctx.save();
   
-  ctx.fillStyle = "rgba(40, 30, 20, 0.95)";
-  ctx.strokeStyle = "#e8a835";
+  ctx.fillStyle = style.bg;
+  ctx.strokeStyle = style.border;
   ctx.lineWidth = 2;
   
   ctx.beginPath();
@@ -271,11 +240,57 @@ function drawSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: number, t
   ctx.lineTo(x - 10, bubbleY + bubbleHeight + 10);
   ctx.lineTo(x + 6, bubbleY + bubbleHeight);
   ctx.closePath();
-  ctx.fillStyle = "rgba(40, 30, 20, 0.95)";
+  ctx.fillStyle = style.bg;
   ctx.fill();
   ctx.stroke();
   
-  ctx.fillStyle = "#f0e8d0";
+  ctx.fillStyle = style.text;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  const textY = bubbleY + bubbleHeight / 2;
+  lines.forEach((line, i) => {
+    ctx.fillText(line, x, textY + (i - (lines.length - 1) / 2) * lineHeight);
+  });
+  
+  ctx.restore();
+}
+
+function drawSpeechBubble(ctx: CanvasRenderingContext2D, x: number, y: number, text: string, mood?: string): void {
+  const style = MOOD_BUBBLE_STYLE[mood || ""] || { bg: "rgba(40, 30, 20, 0.95)", border: "#e8a835", text: "#f0e8d0" };
+  ctx.font = "bold 11px 'JetBrains Mono', monospace";
+  ctx.textAlign = "left";
+  const textWidth = ctx.measureText(text).width;
+  const padding = 8;
+  const maxWidth = Math.min(textWidth + padding * 2, 240);
+  const lineHeight = 16;
+  const lines = wrapText(ctx, text, maxWidth - padding * 2);
+  const bubbleHeight = Math.max(lines.length * lineHeight + padding * 2, 32);
+  const bubbleWidth = Math.min(maxWidth, textWidth + padding * 2);
+  
+  const bubbleX = x - bubbleWidth / 2;
+  const bubbleY = y - bubbleHeight / 2;
+  
+  ctx.save();
+  
+  ctx.fillStyle = style.bg;
+  ctx.strokeStyle = style.border;
+  ctx.lineWidth = 2;
+  
+  ctx.beginPath();
+  ctx.roundRect(bubbleX, bubbleY, bubbleWidth, bubbleHeight, 6);
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(x - 6, bubbleY + bubbleHeight);
+  ctx.lineTo(x - 10, bubbleY + bubbleHeight + 10);
+  ctx.lineTo(x + 6, bubbleY + bubbleHeight);
+  ctx.closePath();
+  ctx.fillStyle = style.bg;
+  ctx.fill();
+  ctx.stroke();
+  
+  ctx.fillStyle = style.text;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   const textY = bubbleY + bubbleHeight / 2;
@@ -375,7 +390,7 @@ function drawSherlobster(
 
   // Draw thought bubble
   if (thoughtBubble) {
-    drawThoughtBubble(ctx, x, y - 80, thoughtBubble.text);
+    drawThoughtBubble(ctx, x, y - 80, thoughtBubble.text, mood);
   }
 }
 

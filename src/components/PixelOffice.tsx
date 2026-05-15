@@ -25,6 +25,7 @@ import {
   initiateWalkUpChat,
   enhanceTextWithEmoji,
   WalkUpChatSession,
+  applyScheduleToAgents,
 } from "../utils/agentLogic";
 import { loadAgentCards, fetchOllamaModels, AgentCard, getAgentCardForRuntimeAgent } from "../utils/agentCards";
 import { createLogger } from "../utils/consoleMonitor";
@@ -146,7 +147,16 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const merged = INITIAL_AGENTS.map(initial => {
+            const savedAgent = parsed.find((a: Agent) => a.id === initial.id);
+            return savedAgent ? { ...initial, ...savedAgent } : initial;
+          });
+          INITIAL_AGENTS.forEach(initial => {
+            if (!merged.find(m => m.id === initial.id)) merged.push(initial);
+          });
+          return merged;
+        }
       } catch (e) {
         console.warn("Failed to load agents from localStorage", e);
       }
@@ -154,7 +164,6 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     return INITIAL_AGENTS;
   });
 
-  // Persist agents to localStorage whenever they change
   useEffect(() => {
     localStorage.setItem("pixel_office_agents", JSON.stringify(agents));
   }, [agents]);
@@ -264,6 +273,15 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [showQuickActions, setShowQuickActions] = useState<boolean>(false);
   const [showThoughtBursts, setShowThoughtBursts] = useState<boolean>(LAB_MODE);
   const [activeWalkUpChats, setActiveWalkUpChats] = useState<Map<string, WalkUpChatSession>>(new Map());
+  const agentsRef = useRef(agents);
+  agentsRef.current = agents;
+  const renderAgentsRef = useRef(agents);
+  renderAgentsRef.current = agents;
+  const sleepModeRef = useRef(sleepMode);
+  sleepModeRef.current = sleepMode;
+  const configRef = useRef(dashboardConfig);
+  configRef.current = dashboardConfig;
+  const [currentHour, setCurrentHour] = useState(new Date().getHours());
 
   // Sync sleep mode to server for more frequent cooler/scrum sessions
   useEffect(() => {
@@ -640,9 +658,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     return () => clearInterval(moodInterval);
   }, [sleepMode]);
 
-  // Sleep mode: impromptu conversations between agents (enhanced socialization)
+  // Agent conversations (more frequent in sleep mode, occasional otherwise)
   useEffect(() => {
-    if (!sleepMode) return;
+    const intervalMs = sleepMode ? 8000 : 25000;
     const convInterval = setInterval(() => {
       setAgents((prevAgents) => {
         const idle = prevAgents.filter(a => a.mode === "sitting" && !a.speechBubble && !activeWalkUpChats.has(a.id));
@@ -665,9 +683,47 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           return a;
         });
       });
-    }, 8000); // New conversation every 8 seconds in sleep mode
+    }, intervalMs);
     return () => clearInterval(convInterval);
   }, [sleepMode]);
+
+  // Periodic schedule application (every 30s, plus on hour change)
+  useEffect(() => {
+    const scheduleInterval = setInterval(() => {
+      const h = new Date().getHours();
+      if (h !== currentHour) setCurrentHour(h);
+      setAgents(prev => applyScheduleToAgents(prev, currentHour));
+    }, 30000);
+    return () => clearInterval(scheduleInterval);
+  }, [currentHour]);
+
+  // Idle agents occasionally stretch or change position for liveliness
+  useEffect(() => {
+    const stretchInterval = setInterval(() => {
+      setAgents(prev => prev.map(agent => {
+        if (agent.mode === "sitting" && agent.status === "working" && Math.random() > 0.85) {
+          return {
+            ...agent,
+            thoughtBubble: {
+              text: enhanceTextWithEmoji("Stretching...", agent.mood, agent.id),
+              expiresAt: Date.now() + 2000
+            }
+          };
+        }
+        if (agent.mode === "sitting" && agent.status === "idle" && Math.random() > 0.7) {
+          return {
+            ...agent,
+            thoughtBubble: {
+              text: enhanceTextWithEmoji("*looks around*", agent.mood, agent.id),
+              expiresAt: Date.now() + 2500
+            }
+          };
+        }
+        return agent;
+      }));
+    }, 12000);
+    return () => clearInterval(stretchInterval);
+  }, []);
 
   // Advance active walk-up chat dialogues periodically
   useEffect(() => {
@@ -781,6 +837,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     return () => clearInterval(zoneInterval);
   }, []);
 
+  // Sync render agents back to React state at lower rate (10fps)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setAgents([...renderAgentsRef.current]);
+    }, 100);
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) {
@@ -793,34 +857,30 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       return;
     }
 
-    // Render loop
-
-    // Test: Fill canvas with a solid color first
-    ctx.fillStyle = "#050509";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
-    // Test rectangle
-    ctx.fillStyle = "#4ecdc4";
-    ctx.fillRect(canvas.width / 2 - 50, canvas.height / 2 - 50, 100, 100);
-
     let animationFrameId: number;
+    let frameCount = 0;
+
     const render = (timestamp: number) => {
       const deltaTime = timestamp - lastFrameTime.current;
       lastFrameTime.current = timestamp;
       walkCycleTimer.current += deltaTime;
+      frameCount++;
 
-      setAgents((prevAgents) =>
-        prevAgents.map((agent) => {
-          const effectiveSpeed = sleepMode ? dashboardConfig.animationSpeed * 0.3 : dashboardConfig.animationSpeed;
-          let updatedAgent = updateAgentPosition(agent, effectiveSpeed, deltaTime);
-          updatedAgent = handleWanderLogic(updatedAgent);
-          if (walkCycleTimer.current > 150 && updatedAgent.mode === "walking") {
-            updatedAgent = { ...updatedAgent, frame: updatedAgent.frame === 0 ? 1 : 0 };
-            walkCycleTimer.current = 0;
-          }
-          return updatedAgent;
-        })
-      );
+      const currentSleepMode = sleepModeRef.current;
+      const currentConfig = configRef.current;
+
+      renderAgentsRef.current = renderAgentsRef.current.map((agent) => {
+        const effectiveSpeed = currentSleepMode ? currentConfig.animationSpeed * 0.3 : currentConfig.animationSpeed;
+        let updatedAgent = updateAgentPosition(agent, effectiveSpeed, deltaTime);
+        updatedAgent = handleWanderLogic(updatedAgent);
+        if (walkCycleTimer.current > 150 && updatedAgent.mode === "walking") {
+          updatedAgent = { ...updatedAgent, frame: updatedAgent.frame === 0 ? 1 : 0 };
+          walkCycleTimer.current = 0;
+        }
+        return updatedAgent;
+      });
+
+      const currentAgents = renderAgentsRef.current;
 
       ctx.save();
       const scaleX = canvas.width / CANVAS_WIDTH;
@@ -830,13 +890,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
       drawFloor(ctx);
       drawWalls(ctx);
-      renderLog.debug("Drew floor/walls");
       drawLobby(ctx);
       drawArchives(ctx);
       drawSpecialistSuite(ctx);
       drawConferenceRoom(ctx);
       
-      const leslieclaw = agents.find(a => a.id === "leslieclaw");
+      const leslieclaw = currentAgents.find(a => a.id === "leslieclaw");
       drawBossOffice(ctx, leslieclaw?.visibility);
       drawSherlockOffice(ctx);
      
@@ -847,29 +906,35 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       drawLounge(ctx);
       drawPlants(ctx);
 
-      agents.forEach((agent) => drawDeskItem(ctx, agent));
+      currentAgents.forEach((agent) => drawDeskItem(ctx, agent));
 
-      const shouldRespectPrivacy = dashboardConfig.viewMode === "public";
-      agents.forEach((agent) => {
-        if (shouldRespectPrivacy && agent.visibility === "offline") return;
-        const speech = speechBubbles.find(sb => sb.speakerId === agent.id);
-        drawAgent(ctx, { ...agent, speechBubble: speech ? { text: speech.text, expiresAt: Date.now() + 5000, offset: (speech.offset || 0) * 55 } : undefined }, dashboardConfig.showNames);
-      });
+      const shouldRespectPrivacy = currentConfig.viewMode === "public";
+      if (frameCount % 4 === 0) {
+        currentAgents.forEach((agent) => {
+          if (shouldRespectPrivacy && agent.visibility === "offline") return;
+          const speech = speechBubbles.find(sb => sb.speakerId === agent.id);
+          drawAgent(ctx, { ...agent, speechBubble: speech ? { text: speech.text, expiresAt: Date.now() + 5000, offset: (speech.offset || 0) * 55 } : undefined }, currentConfig.showNames);
+        });
+      } else {
+        currentAgents.forEach((agent) => {
+          if (shouldRespectPrivacy && agent.visibility === "offline") return;
+          drawAgent(ctx, agent, currentConfig.showNames);
+        });
+      }
 
       drawZoneIndicators(ctx, zoneActivity, stigmergyTraces);
 
-      if (dashboardConfig.showStatusBar) {
-        drawStatusBar(ctx, agents, shouldRespectPrivacy);
+      if (currentConfig.showStatusBar) {
+        drawStatusBar(ctx, currentAgents, shouldRespectPrivacy);
       }
 
       ctx.restore();
-      renderLog.debug("Frame complete", { w: canvas.width, h: canvas.height });
       animationFrameId = requestAnimationFrame(render);
     };
 
     animationFrameId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [agents, dashboardConfig, zoneActivity, stigmergyTraces]);
+  }, [dashboardConfig, zoneActivity, stigmergyTraces, sleepMode]);
 
   const updateConfig = (updates: Partial<DashboardConfig>) => {
     setDashboardConfig((prev) => ({ ...prev, ...updates }));
@@ -921,7 +986,10 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         ...(isMobile && styles.sidebarMobile)
       }}>
         {isMobile && <div style={styles.resizeHandle} />}
-        <OfficeClock embedded onHourChange={(hour) => { const period = getPeriodForHour(hour); }} />
+        <OfficeClock embedded onHourChange={(hour) => {
+          setCurrentHour(hour);
+          setAgents(prev => applyScheduleToAgents(prev, hour));
+        }} />
 
         
         <div style={{ marginBottom: '16px' }}>

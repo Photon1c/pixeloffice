@@ -28,7 +28,7 @@ function App() {
         mockToggleSpeed: 5000,
         showStatusBar: true,
         showNames: true,
-        animationSpeed: 2,
+        animationSpeed: 4,
         canvasScale: 1,
       }}
     />

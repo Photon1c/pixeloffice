@@ -76,8 +76,8 @@ export function createLogger(category: string) {
     group: (label: string) => console.group(`%c${LOG_LEVELS.info.icon} ${label}`, getStyle('info')),
     groupEnd: () => console.groupEnd(),
     
-    time: (label: string) => console.time(`%c${label}`, getStyle('debug')),
-    timeEnd: (label: string) => console.timeEnd(`%c${label}`, getStyle('debug')),
+    time: (label: string) => (console as any).time(`%c${label}`, getStyle('debug')),
+    timeEnd: (label: string) => (console as any).timeEnd(`%c${label}`, getStyle('debug')),
   };
 }
 

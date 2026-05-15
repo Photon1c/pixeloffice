@@ -45,9 +45,9 @@ export const OFFICE_SCHEDULE: ScheduleEvent[] = [
     period: "deep_work_1",
     label: "Deep Work I",
     suggestedZones: {
-      ironclaw: "openOffice",
-      zeroclaw: "specialist",
-      sherlock: "specialist",
+      ironclaw: "dataNodes",
+      zeroclaw: "zeroClaw",
+      sherlock: "sherlock",
       hermitclaw: "archives",
     },
     defaultActivity: "Focused execution"

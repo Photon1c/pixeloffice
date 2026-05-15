@@ -558,6 +558,8 @@ setInterval(() => {
 
 import { depositTrace, getActiveTraces, calculateSocialPotential, getAgentWeightsWithShadows } from "./cooler/stigmergy.js";
 
+const ALL_PARTICIPANTS = ["FrontDesk", "OpenClaw", "IronClaw", "LeslieClaw", "ZeroClaw", "Sherlobster", "HermitClaw", "Hercule Prawnro"];
+
 function selectWeightedParticipants(participants: string[], count: number): string[] {
   if (participants.length <= count) return participants;
   const weights = getAgentWeightsWithShadows(participants);
@@ -565,7 +567,7 @@ function selectWeightedParticipants(participants: string[], count: number): stri
   weighted.sort((a, b) => b.weight - a.weight);
   return weighted.slice(0, count).map(w => w.name);
 }
-import { getActiveHeat } from "./cooler/reviewHeat.js";
+import { getActiveHeat, depositReviewHeat } from "./cooler/reviewHeat.js";
 import { createScrumSession, advanceScrumSession, type ScrumSession } from "./scrum/scrumController.js";
 import { runRoomTurn, exportRoomSession } from "./services/coolerTalkService.js";
 import { generateFn, getLastUsedModel } from "./services/llmGenerateFn.js";
@@ -759,6 +761,38 @@ const opencodeDocPath = path.resolve("/home/sherlockhums/.openclaw/workspace-mai
           }
         } catch (candErr) {
           console.warn('[Cooler→SCRUM] Candidate creation failed:', candErr);
+        }
+      }
+
+      // Deposit conversation residue as stigmergy traces and log
+      if (result.session) {
+        const uttered = result.session.utterances || [];
+        if (uttered.length > 0) {
+          const conversationText = uttered.map((u: any) => u.text || "").join(" ");
+          const reviewHeat = depositReviewHeat(result.session.id, result.session.topic || topic, conversationText, location);
+          if (reviewHeat) {
+            depositTrace({
+              type: "review_heat",
+              intensity: reviewHeat.intensity,
+              roomId: location,
+              topic: result.session.topic || topic,
+              metadata: { source_session_id: result.session.id }
+            });
+          }
+          const logLine = [
+            `\n## ${new Date().toISOString()} | ${result.session.topic || topic}`,
+            `**Participants:** ${(result.session.participants || []).join(", ")}`,
+            `**Session:** ${result.session.id}`,
+            ``,
+            uttered.map((u: any) => `- **${u.speaker}**: ${u.text}`).join("\n"),
+            ``,
+          ].join("\n");
+          const talkLogPath = path.resolve(process.cwd(), "cooler_talk_log.md");
+          try {
+            fs.appendFileSync(talkLogPath, logLine, "utf-8");
+          } catch (logErr) {
+            console.warn("[CoolerTalk] Failed to append to cooler_talk_log.md:", logErr);
+          }
         }
       }
     } catch (mdErr) {
@@ -1863,6 +1897,68 @@ app.get("/api/scrum/github/status", async (req, res) => {
   });
 });
 
+// List GitHub repos accessible by the current token
+app.get("/api/github/repos", async (req, res) => {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) {
+    return res.json({ repos: [], configured: false, message: "GITHUB_TOKEN not configured" });
+  }
+
+  try {
+    const response = await fetch("https://api.github.com/user/repos?per_page=100&sort=updated&affiliation=owner,collaborator,organization_member", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "PixelOffice-RepoSelector",
+      },
+    });
+
+    if (!response.ok) {
+      return res.json({ repos: [], configured: true, error: `GitHub API error: ${response.status}` });
+    }
+
+    const data = await response.json() as Array<{
+      full_name: string;
+      name: string;
+      owner: { login: string };
+      description: string | null;
+      private: boolean;
+      default_branch: string;
+    }>;
+
+    const repos = data.map((r) => ({
+      fullName: r.full_name,
+      name: r.name,
+      owner: r.owner.login,
+      description: r.description,
+      private: r.private,
+      defaultBranch: r.default_branch,
+    }));
+
+    res.json({ repos, configured: true, count: repos.length });
+  } catch (err: any) {
+    res.json({ repos: [], configured: true, error: err.message });
+  }
+});
+
+// Update GitHub repo configuration
+app.post("/api/github/config", async (req, res) => {
+  const { repo, branch } = req.body;
+  if (!repo) {
+    return res.status(400).json({ error: "Repository name is required" });
+  }
+
+  process.env.SAFE_SCRUM_REPO = repo;
+  if (branch) process.env.SAFE_SCRUM_BRANCH = branch;
+
+  console.log(`[GitHubConfig] Updated to ${repo} (${branch || 'default'})`);
+  res.json({ 
+    success: true, 
+    repo: process.env.SAFE_SCRUM_REPO, 
+    branch: process.env.SAFE_SCRUM_BRANCH || "main" 
+  });
+});
+
 // Calendar endpoints for time-based task management
 const deadlines: Map<string, any> = new Map();
 const tickets: Map<string, any> = new Map();
@@ -2264,6 +2360,46 @@ participants: "${selectedParticipants.join(', ')}"
       fs.writeFileSync(coolerPath, logEntry, "utf-8");
       console.log(`[AutoCooler] Saved markdown to ${coolerPath}`);
     }
+
+    // Deposit conversation residue as stigmergy traces and log
+    if (result.session) {
+      const uttered = result.session.utterances || [];
+      if (uttered.length > 0) {
+        const conversationText = uttered.map((u: any) => u.text || "").join(" ");
+        const reviewHeat = depositReviewHeat(sessionId, topic, conversationText, "kitchen");
+        if (reviewHeat) {
+          depositTrace({
+            type: "review_heat",
+            intensity: reviewHeat.intensity,
+            roomId: "kitchen",
+            topic: topic,
+            metadata: { source_session_id: sessionId }
+          });
+          console.log(`[AutoCooler] Deposited review heat: ${reviewHeat.intensity.toFixed(2)}`);
+        }
+        depositTrace({
+          type: "social_potential",
+          intensity: Math.min(1, uttered.length / 20),
+          roomId: "kitchen",
+          metadata: { participantCount: selectedParticipants.length, utteranceCount: uttered.length }
+        });
+        const logLine = [
+          `\n## ${new Date().toISOString()} | ${topic}`,
+          `**Participants:** ${selectedParticipants.join(", ")}`,
+          `**Session:** ${sessionId}`,
+          ``,
+          uttered.map((u: any) => `- **${u.speaker}**: ${u.text}`).join("\n"),
+          ``,
+        ].join("\n");
+        const talkLogPath = path.resolve(process.cwd(), "cooler_talk_log.md");
+        try {
+          fs.appendFileSync(talkLogPath, logLine, "utf-8");
+          console.log(`[AutoCooler] Appended to cooler_talk_log.md`);
+        } catch (logErr) {
+          console.warn("[AutoCooler] Failed to write cooler_talk_log.md:", logErr);
+        }
+      }
+    }
     
     // Trigger automatic Scrum after cooler session (if enabled)
     if (AUTO_SCRUM_ENABLED) {
@@ -2362,7 +2498,8 @@ app.get("/api/cooler/topics", async (req, res) => {
 // Return current topic (latest from fetchNewsTopics)
 app.get("/api/cooler/topics/current", async (req, res) => {
   try {
-    const topics = await fetchNewsTopics();
+    const source = (req.query.source as string) || "auto";
+    const topics = await fetchNewsTopics(source);
     const currentTopic = topics.length > 0 ? topics[0] : null;
     res.json({ topic: currentTopic, topics });
   } catch (error: any) {
@@ -2372,7 +2509,8 @@ app.get("/api/cooler/topics/current", async (req, res) => {
 
 app.post("/api/cooler/topics/refresh", async (req, res) => {
   try {
-    const topics = await fetchNewsTopics();
+    const source = (req.body?.source as string) || "auto";
+    const topics = await fetchNewsTopics(source);
     const currentTopic = topics.length > 0 ? topics[0] : null;
     res.json({ success: true, topic: currentTopic, topics });
   } catch (error: any) {

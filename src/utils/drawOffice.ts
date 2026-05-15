@@ -191,27 +191,7 @@ function drawRoomObjects(ctx: CanvasRenderingContext2D, roomId: string): void {
 // ============================================================================
 
 export function drawPlants(ctx: CanvasRenderingContext2D): void {
-  // Digital clock in status bar area
-  const clockX = CANVAS_WIDTH - 150;
-  const clockY = CANVAS_HEIGHT - STATUS_BAR_HEIGHT + 25;
-  const clockWidth = 120;
-  const clockHeight = 35;
-  
-  ctx.fillStyle = "#0a0a0f";
-  ctx.fillRect(clockX, clockY, clockWidth, clockHeight);
-  ctx.strokeStyle = "#3a5a4a";
-  ctx.lineWidth = 2;
-  ctx.strokeRect(clockX, clockY, clockWidth, clockHeight);
-  
-  const now = new Date();
-  const hours = now.getHours().toString().padStart(2, "0");
-  const minutes = now.getMinutes().toString().padStart(2, "0");
-  const seconds = now.getSeconds().toString().padStart(2, "0");
-  const timeStr = `${hours}:${minutes}:${seconds}`;
-  
-  ctx.fillStyle = "#00ff88";
-  ctx.font = "bold 20px 'JetBrains Mono', monospace";
-  ctx.fillText(timeStr, clockX + 12, clockY + 25);
+  // Previously this drew a clock, now it's a placeholder for room props
 }
 
 export function drawFloor(ctx: CanvasRenderingContext2D): void {
@@ -393,7 +373,7 @@ export function drawPlant(ctx: CanvasRenderingContext2D, x: number, y: number): 
   ctx.fill();
 }
 
-export function drawStatusBar(ctx: CanvasRenderingContext2D, agents: any[], shouldRespectPrivacy: boolean = true): void {
+export function drawStatusBar(ctx: CanvasRenderingContext2D, agents: any[], shouldRespectPrivacy: boolean = true, periodLabel?: string): void {
   const barY = CANVAS_HEIGHT - STATUS_BAR_HEIGHT;
   ctx.fillStyle = COLORS.statusBarBg;
   ctx.fillRect(0, barY, CANVAS_WIDTH, STATUS_BAR_HEIGHT);
@@ -401,6 +381,13 @@ export function drawStatusBar(ctx: CanvasRenderingContext2D, agents: any[], shou
   ctx.strokeStyle = COLORS.wallBorder;
   ctx.lineWidth = 1;
   ctx.strokeRect(0, barY, CANVAS_WIDTH, STATUS_BAR_HEIGHT);
+
+  // Period label
+  if (periodLabel) {
+    ctx.fillStyle = "rgba(78, 205, 196, 0.8)";
+    ctx.font = "bold 11px 'JetBrains Mono', monospace";
+    ctx.fillText(`CURRENT STATUS: ${periodLabel.toUpperCase()}`, 20, barY + 55);
+  }
 
   const agentWidth = 120;
   const startX = (CANVAS_WIDTH - agents.length * agentWidth) / 2;
