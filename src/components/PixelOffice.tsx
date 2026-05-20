@@ -241,18 +241,28 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   
   const frameCountRef = useRef(0);
   const [fps, setFps] = useState(60);
+  const [cpu, setCpu] = useState(0);
+  const [memory, setMemory] = useState(0);
   
   useEffect(() => {
     const interval = setInterval(() => {
       setFps(frameCountRef.current);
       frameCountRef.current = 0;
+      // Simulate CPU based on agent count and activity
+      const currentAgents = agentsRef.current;
+      const activeAgents = currentAgents.filter(a => a.mode === 'walking' || a.speechBubble || a.thoughtBubble).length;
+      setCpu(Math.min(95, 15 + (currentAgents.length * 3) + (activeAgents * 5) + Math.random() * 10));
+      // Simulate memory based on agent state complexity
+      setMemory(Math.min(95, 25 + (currentAgents.length * 4) + Math.random() * 8));
     }, 1000);
     return () => clearInterval(interval);
   }, []);
   
-  // Auto-reset arena on mount so agents show up to work
+  // Auto-reset arena on mount so agents show up to work (skip if entrance animation will run)
   useEffect(() => {
-    handleReset();
+    if (!entranceActive) {
+      handleReset();
+    }
   }, []);
   
   useEffect(() => {
@@ -1690,7 +1700,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           <div style={{ background: '#0f1520', borderRadius: '6px', padding: '8px', border: '1px solid #1b2333', marginBottom: '8px' }}>
             <StabilityMonitor 
               visible={true}
-              metrics={{ cpu: 0, memory: 0, fps }}
+              metrics={{ cpu: Math.round(cpu), memory: Math.round(memory), fps }}
               onReset={handleReset}
               resetInterval={resetInterval}
               onResetIntervalChange={setResetInterval}
