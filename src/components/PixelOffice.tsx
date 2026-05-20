@@ -1078,18 +1078,11 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       currentAgents.forEach((agent) => drawDeskItem(ctx, agent));
 
       const shouldRespectPrivacy = currentConfig.viewMode === "public";
-      if (frameCount % 4 === 0) {
-        currentAgents.forEach((agent) => {
-          if (shouldRespectPrivacy && agent.visibility === "offline") return;
-          const speech = speechBubbles.find(sb => sb.speakerId === agent.id);
-          drawAgent(ctx, { ...agent, speechBubble: speech ? { text: speech.text, expiresAt: Date.now() + 5000, offset: (speech.offset || 0) * 55 } : undefined }, currentConfig.showNames);
-        });
-      } else {
-        currentAgents.forEach((agent) => {
-          if (shouldRespectPrivacy && agent.visibility === "offline") return;
-          drawAgent(ctx, agent, currentConfig.showNames);
-        });
-      }
+      currentAgents.forEach((agent) => {
+        if (shouldRespectPrivacy && agent.visibility === "offline") return;
+        const speech = speechBubbles.find(sb => sb.speakerId === agent.id);
+        drawAgent(ctx, { ...agent, speechBubble: speech ? { text: speech.text, expiresAt: Date.now() + 5000, offset: (speech.offset || 0) * 55 } : undefined }, currentConfig.showNames);
+      });
 
       drawZoneIndicators(ctx, zoneActivity, stigmergyTraces);
 

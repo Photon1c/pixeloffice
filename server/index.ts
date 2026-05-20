@@ -979,8 +979,8 @@ app.post("/api/scrum/test", async (req, res) => {
     const { session, stageResult } = await advanceScrumSession(currentScrumSession);
     currentScrumSession = session;
     
-    // Save conversation transcript to docs/scrum
-    const scrumDocPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/scrum");
+    // Save conversation transcript to SCRUM_REPORTS (easy to find)
+    const scrumDocPath = path.resolve("SCRUM_REPORTS");
     if (!fs.existsSync(scrumDocPath)) fs.mkdirSync(scrumDocPath, { recursive: true });
     
     const dateStr = new Date().toISOString().split('T')[0];
@@ -1011,7 +1011,7 @@ source_session: "${coolerSessionId || 'random'}"
     const scrumPath = path.join(scrumDocPath, filename);
     try {
       fs.writeFileSync(scrumPath, frontmatter, "utf-8");
-      console.log(`[Test SCRUM] Saved markdown to ${scrumPath}`);
+      console.log(`[Test SCRUM] ✅ Saved to ${scrumPath}`);
     } catch (err: any) {
       console.error(`[Test SCRUM] Failed to save to ${scrumPath}:`, err.message);
     }
