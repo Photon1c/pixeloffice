@@ -234,6 +234,18 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     }, 12500);
   };
   
+  const handleReset = () => {
+    localStorage.removeItem("pixel_office_agents");
+    setAgents(INITIAL_AGENTS.map((agent, i) => ({
+      ...agent,
+      x: ENTRANCE_POSITION.x,
+      y: ENTRANCE_POSITION.y + i * 10,
+      mode: "walking",
+      dir: "right"
+    })));
+    console.log('[PixelOffice] Arena reset - agents returning to entrance');
+  };
+
   const entranceDone = localStorage.getItem("pixel_office_entrance_done");
   const [entranceActive, setEntranceActive] = useState(!entranceDone);
 
@@ -1651,6 +1663,13 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         </div>
         {!isMobile && (
         <div style={{ width: '260px', height: '100%', background: '#0a0a12', borderLeft: '1px solid #1b2333', padding: '10px', display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0, gap: '8px' }}>
+          <div style={{ background: '#0f1520', borderRadius: '6px', padding: '8px', border: '1px solid #1b2333', marginBottom: '8px' }}>
+            <StabilityMonitor 
+              visible={true}
+              metrics={{ cpu: 0, memory: 0, fps: 0 }}
+              onReset={handleReset}
+            />
+          </div>
           <div style={{ background: '#0f1520', borderRadius: '6px', padding: '8px', border: '1px solid #1b2333' }}>
             <TSAHealthPanel visible={true} embedded agentActivities={agents.map(a => {
               let activity: "thinking" | "speaking" | "acting" | "idle" = "idle";
