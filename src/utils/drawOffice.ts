@@ -195,6 +195,9 @@ export function drawPlants(ctx: CanvasRenderingContext2D): void {
 }
 
 export function drawFloor(ctx: CanvasRenderingContext2D): void {
+  // Clear canvas first to prevent trailing artifacts
+  ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+  
   ctx.fillStyle = "#050814";
   ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT - STATUS_BAR_HEIGHT);
   

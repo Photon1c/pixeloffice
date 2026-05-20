@@ -14,6 +14,14 @@ interface NewsTopic {
   source: string;
 }
 
+// Import GitHub functions for repo-based topics
+import { 
+  fetchRecentCommits, 
+  fetchRecentPRs, 
+  fetchRecentIssues, 
+  extractRepoInfo 
+} from "./repoQuestionHandler.js";
+
 const FALLBACK_TOPICS: NewsTopic[] = [
   // Workspace and project topics (night shift focus)
   { title: "Reviewing the latest workspace files from hermitclaw's research and projects folders - what discoveries were made?", category: "workspace", source: "office" },
@@ -130,27 +138,105 @@ async function fetchFromWebSearch(): Promise<NewsTopic[]> {
   return [];
 }
 
-export async function fetchNewsTopics(): Promise<NewsTopic[]> {
-  const now = Date.now();
+async function fetchFromGitHub(): Promise<NewsTopic[]> {
+  const repoInfo = extractRepoInfo({});
   
-  if (cachedTopics.length > 0 && now - lastFetchTime < CACHE_DURATION_MS) {
-    return cachedTopics;
+  if (repoInfo.owner === "unknown" || repoInfo.repo === "unknown") {
+    console.log(`[NewsTopics] GitHub: No valid repo configured (SAFE_SCRUM_REPO)`);
+    return [];
   }
   
+  const topics: NewsTopic[] = [];
+  
+  try {
+    // Fetch recent commits
+    const commits = await fetchRecentCommits({
+      owner: repoInfo.owner,
+      repo: repoInfo.repo,
+      limit: 3
+    });
+    
+    if (commits && commits.length > 0) {
+      for (const commit of commits) {
+        topics.push({
+          title: `Latest commit: ${commit.message} (by ${commit.author})`,
+          category: "github",
+          source: "github_commits"
+        });
+      }
+      console.log(`[NewsTopics] Fetched ${commits.length} commit topics from GitHub`);
+    }
+  } catch (error) {
+    console.log(`[NewsTopics] GitHub commits fetch failed: ${error instanceof Error ? error.message : "unknown"}`);
+  }
+  
+  try {
+    // Fetch recent PRs
+    const prs = await fetchRecentPRs({
+      owner: repoInfo.owner,
+      repo: repoInfo.repo,
+      state: "open",
+      limit: 3
+    });
+    
+    if (prs && prs.length > 0) {
+      for (const pr of prs) {
+        topics.push({
+          title: `New PR #${pr.number}: ${pr.title} (by ${pr.author})`,
+          category: "github",
+          source: "github_prs"
+        });
+      }
+      console.log(`[NewsTopics] Fetched ${prs.length} PR topics from GitHub`);
+    }
+  } catch (error) {
+    console.log(`[NewsTopics] GitHub PRs fetch failed: ${error instanceof Error ? error.message : "unknown"}`);
+  }
+  
+  try {
+    // Fetch recent issues
+    const issues = await fetchRecentIssues({
+      owner: repoInfo.owner,
+      repo: repoInfo.repo,
+      state: "open",
+      limit: 3
+    });
+    
+    if (issues && issues.length > 0) {
+      for (const issue of issues) {
+        topics.push({
+          title: `Issue #${issue.number}: ${issue.title} (by ${issue.author})`,
+          category: "github",
+          source: "github_issues"
+        });
+      }
+      console.log(`[NewsTopics] Fetched ${issues.length} issue topics from GitHub`);
+    }
+  } catch (error) {
+    console.log(`[NewsTopics] GitHub issues fetch failed: ${error instanceof Error ? error.message : "unknown"}`);
+  }
+  
+  return topics;
+}
+
+async function fetchFromNewsSources(): Promise<NewsTopic[]> {
+  const now = Date.now();
+  const topics: NewsTopic[] = [];
+
   if (NEWS_API_KEY) {
     const categories = ["technology", "business", "science"];
     try {
       for (const category of categories) {
         const response = await Promise.race([
           fetch(`${NEWS_API_URL}?country=us&category=${category}&apiKey=${NEWS_API_KEY}&pageSize=5`),
-          new Promise<never>((_, reject) => 
+          new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error("timeout")), 5000)
           )
         ]) as Response;
-        
+
         if (response.ok) {
           const data = await response.json() as { articles?: Array<{ title?: string; source?: { name?: string } }> };
-          
+
           if (data.articles && data.articles.length > 0) {
             const categoryTopics = data.articles
               .filter(a => a.title && a.title !== "[Removed]")
@@ -160,43 +246,94 @@ export async function fetchNewsTopics(): Promise<NewsTopic[]> {
                 category: category,
                 source: a.source?.name || "news"
               }));
-            
-            cachedTopics = [...cachedTopics, ...categoryTopics];
-            
-            if (cachedTopics.length >= 5) break;
+
+            topics.push(...categoryTopics);
+            if (topics.length >= 5) break;
           }
         }
       }
-      
-      if (cachedTopics.length > 0) {
-        lastFetchTime = now;
-        console.log(`[NewsTopics] Fetched ${cachedTopics.length} topics from NewsAPI`);
-        return cachedTopics;
+
+      if (topics.length > 0) {
+        console.log(`[NewsTopics] Fetched ${topics.length} topics from NewsAPI`);
+        return topics;
       }
     } catch (error) {
       console.log(`[NewsTopics] NewsAPI fetch failed: ${error instanceof Error ? error.message : "unknown"}`);
     }
   }
-  
+
   const rssTopics = await fetchFromRSS();
   if (rssTopics.length > 0) {
-    cachedTopics = rssTopics;
-    lastFetchTime = now;
-    return cachedTopics;
+    console.log(`[NewsTopics] Fetched ${rssTopics.length} topics from RSS`);
+    return rssTopics;
   }
-  
+
   const webTopics = await fetchFromWebSearch();
   if (webTopics.length > 0) {
-    cachedTopics = webTopics;
+    console.log(`[NewsTopics] Fetched ${webTopics.length} topics from web search`);
+    return webTopics;
+  }
+
+  return [];
+}
+
+function getFallbackTopics(): NewsTopic[] {
+  const shuffled = [...FALLBACK_TOPICS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 5);
+}
+
+export async function fetchNewsTopics(source: string = "auto"): Promise<NewsTopic[]> {
+  const now = Date.now();
+
+  if (cachedTopics.length > 0 && now - lastFetchTime < CACHE_DURATION_MS) {
+    return cachedTopics;
+  }
+
+  if (source === "github") {
+    const githubTopics = await fetchFromGitHub();
+    if (githubTopics.length > 0) {
+      cachedTopics = githubTopics;
+      lastFetchTime = now;
+      console.log(`[NewsTopics] Using ${githubTopics.length} GitHub topics (source=github)`);
+      return cachedTopics;
+    }
+    cachedTopics = getFallbackTopics();
+    lastFetchTime = now;
+    console.log(`[NewsTopics] No GitHub topics, using fallback`);
+    return cachedTopics;
+  }
+
+  if (source === "news") {
+    const newsTopics = await fetchFromNewsSources();
+    if (newsTopics.length > 0) {
+      cachedTopics = newsTopics;
+      lastFetchTime = now;
+      return cachedTopics;
+    }
+    cachedTopics = getFallbackTopics();
     lastFetchTime = now;
     return cachedTopics;
   }
-  
-  const shuffled = [...FALLBACK_TOPICS].sort(() => Math.random() - 0.5);
-  cachedTopics = shuffled.slice(0, 5);
+
+  // auto: Try GitHub topics first
+  const githubTopics = await fetchFromGitHub();
+  if (githubTopics.length > 0) {
+    cachedTopics = githubTopics;
+    lastFetchTime = now;
+    console.log(`[NewsTopics] Using ${githubTopics.length} GitHub topics`);
+    return cachedTopics;
+  }
+
+  const newsTopics = await fetchFromNewsSources();
+  if (newsTopics.length > 0) {
+    cachedTopics = newsTopics;
+    lastFetchTime = now;
+    return cachedTopics;
+  }
+
+  cachedTopics = getFallbackTopics();
   lastFetchTime = now;
-  
-  console.log(`[NewsTopics] Using fallback topics (cached)`);
+  console.log(`[NewsTopics] Using fallback topics`);
   return cachedTopics;
 }
 
@@ -212,7 +349,7 @@ export function getTopicForConversation(): string {
   return topic;
 }
 
-export async function getTopicsForSession(): Promise<string[]> {
-  const topics = await fetchNewsTopics();
+export async function getTopicsForSession(source: string = "auto"): Promise<string[]> {
+  const topics = await fetchNewsTopics(source);
   return topics.map(t => t.title);
 }

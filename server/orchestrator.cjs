@@ -54,6 +54,17 @@ const KERNEL_GOALS = [
   'Check desk stigmergy state and identify hotspots',
 ];
 
+const VACATION_KERNEL_GOALS = [
+  'Run a full autonomous cooler session to generate new ideas and capture stigmergy residue',
+  'Approve the highest-scoring pending SCRUM candidates and run full sessions',
+  'Generate a comprehensive office activity report with stigmergy field analysis',
+  'Check all agent health and trigger Agent2Agent peer reviews for any stale agents',
+  'Run a strategic planning session covering backlog, dependencies, and next priorities',
+  'Analyze recent cooler transcripts and promote actionable items to SCRUM candidates',
+  'Check desk stigmergy state and identify hotspots requiring attention',
+  'Generate a vacation report segment summarizing recent autonomous activity',
+];
+
 let isRunning = false;
 let scheduleTimer = null;
 let randomTimer = null;
@@ -78,7 +89,7 @@ function saveKernelReport(report) {
 }
 
 function apiCall(endpoint, method = 'GET', body = null) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const url = new URL(endpoint, CONFIG.API_BASE);
     const opts = {
       hostname: url.hostname,
@@ -86,6 +97,7 @@ function apiCall(endpoint, method = 'GET', body = null) {
       path: url.pathname + url.search,
       method,
       headers: { 'Content-Type': 'application/json' },
+      timeout: 15000,
     };
     
     const req = http.request(opts, (res) => {
@@ -100,14 +112,24 @@ function apiCall(endpoint, method = 'GET', body = null) {
       });
     });
     
-    req.on('error', reject);
+    req.on('error', () => resolve({ ok: false }));
+    req.on('timeout', () => { req.destroy(); resolve({ ok: false }); });
     if (body) req.write(JSON.stringify(body));
     req.end();
   });
 }
 
+async function checkVacationMode() {
+  try {
+    const result = await apiCall('/api/office/vacation-mode/status');
+    return result && result.active === true;
+  } catch {
+    return false;
+  }
+}
+
 async function callOllama(model, prompt, numPredict = 128) {
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve) => {
     const data = JSON.stringify({
       model,
       prompt,
@@ -120,7 +142,8 @@ async function callOllama(model, prompt, numPredict = 128) {
       port: 11434,
       path: '/api/generate',
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) }
+      headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) },
+      timeout: 30000,
     }, (res) => {
       let result = '';
       res.on('data', chunk => result += chunk);
@@ -134,7 +157,8 @@ async function callOllama(model, prompt, numPredict = 128) {
       });
     });
     
-    req.on('error', reject);
+    req.on('error', () => resolve(''));
+    req.on('timeout', () => { req.destroy(); resolve(''); });
     req.write(data);
     req.end();
   });
@@ -335,8 +359,15 @@ Respond JSON with shouldContinue (boolean), reason (string), decision (continue/
 async function runKernelCycle(goal = null) {
   kernelMemory = loadKernelMemory();
 
+  const isVacation = await checkVacationMode();
+
   if (!goal) {
-    goal = KERNEL_GOALS[Math.floor(Math.random() * KERNEL_GOALS.length)];
+    const pool = isVacation ? VACATION_KERNEL_GOALS : KERNEL_GOALS;
+    goal = pool[Math.floor(Math.random() * pool.length)];
+  }
+
+  if (isVacation) {
+    log('[Kernel] Vacation mode detected - using enhanced goal set');
   }
 
   log('=== Kernel Reasoning Loop STARTING ===');
@@ -393,6 +424,8 @@ async function runKernelCycle(goal = null) {
 
 // ========== Standard Agent Cycles (existing) ==========
 async function runAgentCycle(activityType = 'scheduled') {
+  const isVacation = await checkVacationMode();
+  
   const report = {
     timestamp: new Date().toISOString(),
     activity: activityType,
@@ -401,7 +434,7 @@ async function runAgentCycle(activityType = 'scheduled') {
     actions: [],
   };
   
-  log(`Starting ${activityType} cycle...`);
+  log(`Starting ${activityType} cycle...${isVacation ? ' [VACATION MODE]' : ''}`);
   
   for (const role of AGENT_ROLES) {
     const model = Math.random() > 0.5 ? CONFIG.PRIMARY_MODEL : CONFIG.FALLBACK_MODEL;
@@ -422,20 +455,31 @@ async function runAgentCycle(activityType = 'scheduled') {
     }
   }
   
-  // Agent-to-agent checkins (random pairing)
-  if (activityType === 'random' || Math.random() > 0.5) {
-    const agentA = AGENT_ROLES[Math.floor(Math.random() * AGENT_ROLES.length)];
-    let agentB = AGENT_ROLES[Math.floor(Math.random() * AGENT_ROLES.length)];
-    while (agentB === agentA) agentB = AGENT_ROLES[Math.floor(Math.random() * AGENT_ROLES.length)];
-    
-    try {
-      const prompt = `Agent ${agentA} is checking in with ${agentB}. ${agentA}: "Hey ${agentB}! What are you working on?" Write ${agentB}'s response (brief, 1 sentence).`;
-      const response = await callOllama(CONFIG.PRIMARY_MODEL, prompt);
+  // Agent-to-agent checkins (always happens in vacation mode)
+  const doCheckin = isVacation || activityType === 'random' || Math.random() > 0.5;
+  if (doCheckin) {
+    const numPairs = isVacation ? 2 : 1;
+    for (let ci = 0; ci < numPairs; ci++) {
+      const agentA = AGENT_ROLES[Math.floor(Math.random() * AGENT_ROLES.length)];
+      let agentB = AGENT_ROLES[Math.floor(Math.random() * AGENT_ROLES.length)];
+      while (agentB === agentA) agentB = AGENT_ROLES[Math.floor(Math.random() * AGENT_ROLES.length)];
       
-      report.actions.push({ type: 'checkin', from: agentA, to: agentB, response: response.slice(0, 150) });
-      log(`Checkin: ${agentA} -> ${agentB}: ${response.slice(0, 60)}...`);
-    } catch (err) {
-      log(`Checkin failed: ${err.message}`, 'ERROR');
+      try {
+        const a2aTopics = [
+          `"Hey ${agentB}! What are you working on?"`,
+          `"${agentB}, I noticed something interesting about the latest cooler session — what's your take?"`,
+          `"${agentB}, any blockers I should know about for the next SCRUM?"`,
+          `"${agentB}, let's sync on the stigmergy hotspots I'm seeing in the office."`,
+        ];
+        const topic = a2aTopics[Math.floor(Math.random() * a2aTopics.length)];
+        const prompt = `Agent ${agentA} is checking in with ${agentB}. ${agentA}: ${topic} Write ${agentB}'s response (brief, 1 sentence).`;
+        const response = await callOllama(CONFIG.PRIMARY_MODEL, prompt);
+        
+        report.actions.push({ type: 'checkin', from: agentA, to: agentB, response: response.slice(0, 150) });
+        log(`Checkin: ${agentA} -> ${agentB}: ${response.slice(0, 60)}...`);
+      } catch (err) {
+        log(`Checkin failed: ${err.message}`, 'ERROR');
+      }
     }
   }
   
@@ -458,27 +502,35 @@ function start() {
   log('=== Pixel Office Orchestrator STARTED ===');
   log(`Primary model: ${CONFIG.PRIMARY_MODEL}`);
   log(`Fallback model: ${CONFIG.FALLBACK_MODEL}`);
-  log(`Schedule: Every ${CONFIG.SCHEDULE_INTERVAL_MS / 60000}min + random every ${CONFIG.RANDOM_INTERVAL_MS / 60000}min`);
-  log(`Kernel: Every ${CONFIG.KERNEL_INTERVAL_MS / 60000}min`);
+  
+  checkVacationMode().then(isVacation => {
+    const scheduleInterval = isVacation ? Math.floor(CONFIG.SCHEDULE_INTERVAL_MS * 0.5) : CONFIG.SCHEDULE_INTERVAL_MS;
+    const randomInterval = isVacation ? Math.floor(CONFIG.RANDOM_INTERVAL_MS * 0.5) : CONFIG.RANDOM_INTERVAL_MS;
+    const kernelInterval = isVacation ? Math.floor(CONFIG.KERNEL_INTERVAL_MS * 0.5) : CONFIG.KERNEL_INTERVAL_MS;
+    
+    log(`Schedule: Every ${scheduleInterval / 60000}min + random every ${randomInterval / 60000}min`);
+    log(`Kernel: Every ${kernelInterval / 60000}min`);
+    if (isVacation) log('[Orchestrator] Vacation mode active - intervals doubled for maximum productivity');
+    
+    // Scheduled runs
+    scheduleTimer = setInterval(() => runAgentCycle('scheduled'), scheduleInterval);
+    
+    // Random bursts
+    const scheduleRandom = () => {
+      if (!isRunning) return;
+      runAgentCycle('random').then(() => {
+        randomTimer = setTimeout(scheduleRandom, randomInterval);
+      });
+    };
+    randomTimer = setTimeout(scheduleRandom, randomInterval + Math.random() * 60000);
+    
+    // Kernel reasoning cycles
+    kernelTimer = setInterval(() => runKernelCycle(), kernelInterval);
+  });
   
   // Initial run - both agent cycle and kernel
   runAgentCycle('startup');
   runKernelCycle();
-  
-  // Scheduled runs
-  scheduleTimer = setInterval(() => runAgentCycle('scheduled'), CONFIG.SCHEDULE_INTERVAL_MS);
-  
-  // Random bursts
-  const scheduleRandom = () => {
-    if (!isRunning) return;
-    runAgentCycle('random').then(() => {
-      randomTimer = setTimeout(scheduleRandom, CONFIG.RANDOM_INTERVAL_MS);
-    });
-  };
-  randomTimer = setTimeout(scheduleRandom, CONFIG.RANDOM_INTERVAL_MS + Math.random() * 60000);
-  
-  // Kernel reasoning cycles
-  kernelTimer = setInterval(() => runKernelCycle(), CONFIG.KERNEL_INTERVAL_MS);
 }
 
 function stop() {

@@ -99,12 +99,15 @@ export function setupConsoleMonitor() {
   const originalError = console.error;
   console.error = (...args: any[]) => {
     const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+    // Log the actual error content for debugging
+    console.log('[ConsoleMonitor] Error captured:', args);
     originalError.call(console, `%c❌ [${timestamp}] ERROR:%c`, 'color: #dc3545; font-weight: bold;', '', ...args);
   };
   
   const originalWarn = console.warn;
   console.warn = (...args: any[]) => {
     const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+    console.log('[ConsoleMonitor] Warning captured:', args);
     originalWarn.call(console, `%c⚠️ [${timestamp}] WARN:%c`, 'color: #ffc107; font-weight: bold;', '', ...args);
   };
   

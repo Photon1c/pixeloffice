@@ -1,0 +1,18 @@
+{
+  "active": true,
+  "activatedAt": "2026-05-15T07:07:47.035Z",
+  "deactivatedAt": null,
+  "stats": {
+    "coolerSessions": 749,
+    "scrumSessions": 300,
+    "scrumCandidatesApproved": 1,
+    "reportsGenerated": 50
+  },
+  "lastReportAt": "2026-05-16T07:37:47.058Z",
+  "intervals": {
+    "cooler": null,
+    "scrum": null,
+    "candidate": null,
+    "report": null
+  }
+}

@@ -36,5 +36,5 @@ export default defineConfig({
       ],
     },
   },
-  publicDir: path.resolve(__dirname, '../.handoff'),
+  publicDir: 'public',
 })

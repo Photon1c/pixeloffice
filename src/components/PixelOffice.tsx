@@ -142,6 +142,97 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Test conversation: deploy random agent to another agent workspace
+  // Multi-turn test conversation (5+ turns) with save functionality
+  const handleTestConversation = () => {
+    console.log("[TestConversation] Starting multi-turn agent conversation");
+    
+    // Pick two different random agents
+    const availableAgents = agents.filter(a => a.id !== "frontdesk");
+    if (availableAgents.length < 2) {
+      console.warn("[TestConversation] Not enough agents");
+      return;
+    }
+    
+    const visitorIdx = Math.floor(Math.random() * availableAgents.length);
+    let hostIdx = Math.floor(Math.random() * availableAgents.length);
+    if (hostIdx === visitorIdx) {
+      hostIdx = (hostIdx + 1) % availableAgents.length;
+    }
+    
+    const visitor = availableAgents[visitorIdx];
+    const host = availableAgents[hostIdx];
+    const sessionId = `test-${Date.now()}`;
+    
+    console.log("[TestConversation]", visitor.name, "visiting", host.name);
+    
+    // 5-turn conversation script
+    const conversationScript = [
+      { speaker: visitor.name, text: "Hey, got a minute to chat about the project?", delay: 0 },
+      { speaker: host.name, text: "Sure! What's on your mind?", delay: 1500 },
+      { speaker: visitor.name, text: "I've been thinking about our architecture. Are we happy with the current setup?", delay: 3000 },
+      { speaker: host.name, text: "Good question. I think it's working well, but we could optimize the data flow.", delay: 4500 },
+      { speaker: visitor.name, text: "Exactly! Maybe we should document some improvements?", delay: 6000 },
+      { speaker: host.name, text: "Great idea. Let's bring it up in the next standup.", delay: 7500 },
+      { speaker: visitor.name, text: "Perfect, thanks for the chat!", delay: 9000 },
+      { speaker: host.name, text: "Anytime! That's what teammates are for.", delay: 10500 }
+    ];
+    
+    // Build all bubbles for progressive display
+    const allBubbles = conversationScript.map((turn, i) => ({
+      id: `test-conv-${i}`,
+      speaker: turn.speaker,
+      text: turn.text,
+      timestamp: Date.now() + turn.delay
+    }));
+    
+    // Set visitor to walk to host position
+    setAgents(prev => prev.map(a => {
+      if (a.id === visitor.id) {
+        return { ...a, targetX: host.x, targetY: host.y, mode: "walking", dir: host.x > a.x ? "right" : "left" };
+      }
+      return a;
+    }));
+    
+    // Show conversation progressively
+    conversationScript.forEach((turn, i) => {
+      setTimeout(() => {
+        (window as any).showTestBubbles?.(allBubbles.slice(0, i + 1));
+        
+        // Add speech bubble to canvas
+        const speakerAgent = turn.speaker === visitor.name ? visitor : host;
+        setSpeechBubbles(prev => [...prev, {
+          speakerId: speakerAgent.id,
+          text: turn.text,
+          offset: i % 2,
+          yOffset: -20
+        }]);
+      }, turn.delay);
+    });
+    
+    // Return visitor after conversation
+    setTimeout(() => {
+      setAgents(prev => prev.map(a => {
+        if (a.id === visitor.id) {
+          const deskPos = CHAIR_POSITIONS[a.deskIndex];
+          return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "walking", dir: deskPos.x > a.x ? "right" : "left" };
+        }
+        return a;
+      }));
+    }, 12000);
+    
+    // Add save button to conversation panel
+    setTimeout(() => {
+      (window as any).showTestBubbles?.(allBubbles);
+      (window as any).enableSaveConversation?.({
+        sessionId,
+        participants: [visitor.name, host.name],
+        conversation: conversationScript.map(t => ({ speaker: t.speaker, text: t.text })),
+        timestamp: Date.now()
+      });
+    }, 12500);
+  };
   
   const entranceDone = localStorage.getItem("pixel_office_entrance_done");
   const [entranceActive, setEntranceActive] = useState(!entranceDone);
@@ -1554,7 +1645,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             })} />
           </div>
           <div style={{ borderTop: '1px solid #1b2333', paddingTop: '8px' }}>
-            <AgentIssueMonitor visible={true} embedded onTestConversation={() => {}} />
+            <AgentIssueMonitor visible={true} embedded onTestConversation={handleTestConversation} />
           </div>
           <div style={{ borderTop: '1px solid #1b2333', paddingTop: '8px' }}>
             <YouTubePlayer />

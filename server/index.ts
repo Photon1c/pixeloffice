@@ -3,7 +3,10 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { createRequire } from "module";
 import { config } from "dotenv";
+
+const _require = createRequire(import.meta.url);
 import { rebuildDocIndexes } from "./docs/docIndex.js";
 import { startSupabaseKeepAlive } from "./services/supabaseKeepAlive.js";
 
@@ -2294,6 +2297,38 @@ app.post("/api/office/night-mode", async (req, res) => {
   nightModeActive = active === true;
   console.log(`[Office] Night mode ${nightModeActive ? 'ACTIVATED' : 'deactivated'}. Intervals: ${getActiveInterval(AUTO_COOLER_INTERVAL_MS)/1000}s (cooler), ${getActiveInterval(AUTO_SCRUM_INTERVAL_MS)/1000}s (scrum)`);
   res.json({ ok: true, nightMode: nightModeActive });
+});
+
+// Ghost Executive Vacation Mode - full autopilot
+const vacationMode = _require('./vacationMode.cjs');
+
+app.post("/api/office/vacation-mode", async (req, res) => {
+  const { active } = req.body;
+  if (active === true) {
+    const result = vacationMode.activate();
+    res.json(result);
+  } else {
+    const result = await vacationMode.deactivate();
+    res.json(result);
+  }
+});
+
+app.get("/api/office/vacation-mode/status", async (req, res) => {
+  res.json(vacationMode.status());
+});
+
+app.get("/api/office/vacation-report", async (req, res) => {
+  const report = vacationMode.getReport();
+  if (!report) {
+    res.json({ ok: true, report: null, message: 'No vacation report yet. Activate vacation mode to generate one.' });
+    return;
+  }
+  res.json({ ok: true, report });
+});
+
+app.post("/api/office/vacation-report/refresh", async (req, res) => {
+  const report = await vacationMode.generateVacationReport();
+  res.json({ ok: true, report });
 });
 
 async function runAutoCoolerSession(): Promise<void> {

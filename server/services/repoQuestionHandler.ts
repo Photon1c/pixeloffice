@@ -415,6 +415,148 @@ export async function handleRepoQuestion(
   }
 }
 
+export async function fetchRecentCommits(config: {
+  owner: string;
+  repo: string;
+  token?: string;
+  limit?: number;
+}): Promise<Array<{ sha: string; message: string; author: string; date: string }> | null> {
+  const token = config.token || process.env.GITHUB_TOKEN;
+  
+  if (!token || config.owner === "unknown" || config.repo === "unknown") {
+    return null;
+  }
+  
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${config.owner}/${config.repo}/commits?per_page=${config.limit || 5}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": "PixelOffice-RepoQuestionHandler",
+        },
+      }
+    );
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    const data = await response.json() as Array<{
+      sha: string;
+      commit: { message: string; author: { name: string; date: string } };
+    }>;
+    
+    return data.map((commit) => ({
+      sha: commit.sha.substring(0, 7),
+      message: commit.commit.message.split("\n")[0], // First line only
+      author: commit.commit.author.name,
+      date: commit.commit.author.date,
+    }));
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchRecentPRs(config: {
+  owner: string;
+  repo: string;
+  token?: string;
+  limit?: number;
+  state?: "open" | "closed" | "all";
+}): Promise<Array<{ number: number; title: string; author: string; state: string; created_at: string }> | null> {
+  const token = config.token || process.env.GITHUB_TOKEN;
+  
+  if (!token || config.owner === "unknown" || config.repo === "unknown") {
+    return null;
+  }
+  
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${config.owner}/${config.repo}/pulls?state=${config.state || "open"}&per_page=${config.limit || 5}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": "PixelOffice-RepoQuestionHandler",
+        },
+      }
+    );
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    const data = await response.json() as Array<{
+      number: number;
+      title: string;
+      user: { login: string };
+      state: string;
+      created_at: string;
+    }>;
+    
+    return data.map((pr) => ({
+      number: pr.number,
+      title: pr.title,
+      author: pr.user.login,
+      state: pr.state,
+      created_at: pr.created_at,
+    }));
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchRecentIssues(config: {
+  owner: string;
+  repo: string;
+  token?: string;
+  limit?: number;
+  state?: "open" | "closed" | "all";
+}): Promise<Array<{ number: number; title: string; author: string; state: string; created_at: string }> | null> {
+  const token = config.token || process.env.GITHUB_TOKEN;
+  
+  if (!token || config.owner === "unknown" || config.repo === "unknown") {
+    return null;
+  }
+  
+  try {
+    const response = await fetch(
+      `https://api.github.com/repos/${config.owner}/${config.repo}/issues?state=${config.state || "open"}&per_page=${config.limit || 5}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3+json",
+          "User-Agent": "PixelOffice-RepoQuestionHandler",
+        },
+      }
+    );
+    
+    if (!response.ok) {
+      return null;
+    }
+    
+    const data = await response.json() as Array<{
+      number: number;
+      title: string;
+      user: { login: string };
+      state: string;
+      created_at: string;
+    }>;
+    
+    return data.map((issue) => ({
+      number: issue.number,
+      title: issue.title,
+      author: issue.user.login,
+      state: issue.state,
+      created_at: issue.created_at,
+    }));
+  } catch {
+    return null;
+  }
+}
+
 export function formatAnswerForOffice(result: RepoQuestionResult, agentName: string = "clerk"): string {
   if (!result.isRepoQuestion) {
     return "";

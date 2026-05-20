@@ -1,136 +1,604 @@
 {
   "episodic": [
     {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:00.890Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:00.891Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:00.891Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:00.893Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:00.896Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:00.897Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:00.898Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:18.073Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:18.074Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:18.074Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:18.075Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:18.075Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:18.075Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:18.076Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:30.468Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:30.468Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:30.469Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:49.770Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:49.770Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:49.771Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:49.773Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:49.773Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:49.774Z"
-    },
-    {
-      "success": false,
-      "output": "undefined",
-      "timestamp": "2026-04-23T04:58:49.775Z"
-    },
-    {
       "task": "health_check",
       "success": true,
       "output": "Health metrics available at /metrics",
-      "timestamp": "2026-04-23T04:59:25.769Z"
+      "timestamp": "2026-05-15T19:40:51.402Z"
     },
     {
       "task": "list_scrum",
       "success": true,
       "output": "[object Object]",
-      "timestamp": "2026-04-23T04:59:25.790Z"
+      "timestamp": "2026-05-15T19:40:51.407Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T19:55:51.506Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T19:55:51.510Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T20:10:23.442Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T20:10:23.444Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T20:25:33.829Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T20:25:33.835Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T20:40:51.567Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T20:40:51.572Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T20:55:51.630Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T20:55:51.636Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T21:10:25.591Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T21:10:25.596Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T21:25:26.711Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T21:25:26.714Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T21:40:40.491Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T21:40:40.496Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T21:55:23.908Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T21:55:23.918Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T22:10:35.369Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T22:10:35.375Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T22:25:26.180Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T22:25:26.184Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T22:40:33.818Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T22:40:33.824Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T22:55:22.713Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T22:55:22.717Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T23:10:51.922Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T23:10:51.926Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T23:25:51.933Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T23:25:51.942Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T23:40:24.012Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T23:40:24.015Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-15T23:55:24.569Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-15T23:55:24.573Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T00:10:32.988Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T00:10:32.991Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T00:25:28.471Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T00:25:28.478Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T00:40:52.186Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T00:40:52.193Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T00:55:52.242Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T00:55:52.250Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T01:10:52.230Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T01:10:52.235Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T01:25:52.279Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T01:25:52.291Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T01:40:33.042Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T01:40:33.047Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T01:55:52.372Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T01:55:52.377Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T02:10:52.379Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T02:10:52.383Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T02:25:24.327Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T02:25:24.329Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T02:40:52.458Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T02:40:52.464Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T02:55:29.796Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T02:55:29.800Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T03:10:25.596Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T03:10:25.598Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T03:25:52.490Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T03:25:52.500Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T03:40:37.438Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T03:40:37.443Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T03:55:52.588Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T03:55:52.593Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T04:10:52.653Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T04:10:52.659Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T04:25:52.752Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T04:25:52.756Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T04:40:52.848Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T04:40:52.853Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T04:55:52.947Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T04:55:52.952Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T05:10:24.653Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T05:10:24.660Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T05:25:53.103Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T05:25:53.110Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T05:40:25.287Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T05:40:25.290Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T05:55:53.271Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T05:55:53.281Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T06:10:53.293Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T06:10:53.298Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T06:25:25.841Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T06:25:25.844Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T06:40:53.332Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T06:40:53.341Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T06:55:33.729Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T06:55:33.732Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T07:10:53.440Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T07:10:53.445Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T07:25:53.466Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T07:25:53.473Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T07:40:34.808Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T07:40:34.813Z"
+    },
+    {
+      "task": "health_check",
+      "success": true,
+      "output": "Health metrics available at /metrics",
+      "timestamp": "2026-05-16T07:55:53.498Z"
+    },
+    {
+      "task": "list_scrum",
+      "success": true,
+      "output": "[object Object]",
+      "timestamp": "2026-05-16T07:55:53.507Z"
     }
   ],
   "semantic": {

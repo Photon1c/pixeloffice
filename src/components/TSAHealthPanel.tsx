@@ -56,6 +56,12 @@ interface TSAHealthPanelProps {
   agentActivities?: AgentActivity[];
 }
 
+interface PerformanceMetrics {
+  fps: number;
+  memoryMB: number;
+  agentCount: number;
+}
+
 const DEFAULT_POLL_INTERVAL = 15000;
 
 export function TSAHealthPanel({
@@ -80,6 +86,48 @@ export function TSAHealthPanel({
     agents: undefined,
   });
   const [lastUpdated, setLastUpdated] = useState<number>(Date.now());
+  const [perfMetrics, setPerfMetrics] = useState<PerformanceMetrics>({
+    fps: 0,
+    memoryMB: 0,
+    agentCount: 0,
+  });
+
+  // Performance monitoring
+  useEffect(() => {
+    if (!visible) return;
+    
+    let frameCount = 0;
+    let lastFpsUpdate = performance.now();
+    const fpsInterval = 1000; // Calculate FPS every second
+    
+    const measurePerformance = () => {
+      frameCount++;
+      const now = performance.now();
+      const elapsed = now - lastFpsUpdate;
+      
+      if (elapsed >= fpsInterval) {
+        const fps = Math.round((frameCount * 1000) / elapsed);
+        const perf = performance as any;
+        const memory = perf.memory ? Math.round(perf.memory.usedJSHeapSize / 1048576) : 0;
+        
+        setPerfMetrics({
+          fps,
+          memoryMB: memory,
+          agentCount: agentActivities?.length || 0,
+        });
+        
+        frameCount = 0;
+        lastFpsUpdate = now;
+      }
+      
+      if (visible) {
+        requestAnimationFrame(measurePerformance);
+      }
+    };
+    
+    const animationFrame = requestAnimationFrame(measurePerformance);
+    return () => cancelAnimationFrame(animationFrame);
+  }, [visible, agentActivities?.length]);
 
   const fetchHealthData = async () => {
     try {
@@ -327,6 +375,29 @@ export function TSAHealthPanel({
         >
           −
         </button>
+      </div>
+
+      {/* Performance Metrics */}
+      <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: "4px", padding: "6px", marginBottom: "8px" }}>
+        <div style={{ fontSize: "8px", color: "#6c757d", marginBottom: "4px", textTransform: "uppercase", letterSpacing: "0.5px" }}>Performance</div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4px" }}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "#6c757d" }}>FPS</span>
+            <span style={{ color: perfMetrics.fps >= 55 ? "#20c997" : perfMetrics.fps >= 30 ? "#ffc107" : "#dc3545", fontWeight: "bold" }}>{perfMetrics.fps}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "#6c757d" }}>Memory</span>
+            <span style={{ color: perfMetrics.memoryMB > 200 ? "#ffc107" : "#20c997", fontWeight: "bold" }}>{perfMetrics.memoryMB || "N/A"}MB</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "#6c757d" }}>Agents</span>
+            <span style={{ color: "#17a2b8", fontWeight: "bold" }}>{perfMetrics.agentCount}</span>
+          </div>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
+            <span style={{ color: "#6c757d" }}>Render</span>
+            <span style={{ color: "#6f42c1", fontWeight: "bold" }}>{perfMetrics.fps > 0 ? Math.round(1000/perfMetrics.fps) : 0}ms</span>
+          </div>
+        </div>
       </div>
 
       <div style={{ display: "grid", gap: "4px", marginBottom: "8px" }}>

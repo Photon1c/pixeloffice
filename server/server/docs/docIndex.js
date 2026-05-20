@@ -1,0 +1,145 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+function stripQuotes(s) {
+    const t = s.trim();
+    if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
+        return t.slice(1, -1);
+    }
+    return t;
+}
+function parseFrontmatter(md) {
+    const trimmed = md.startsWith("\n") ? md.slice(1) : md;
+    if (!trimmed.startsWith("---\n"))
+        return { fm: {}, body: md };
+    const end = trimmed.indexOf("\n---", 4);
+    if (end === -1)
+        return { fm: {}, body: md };
+    const fmBlock = trimmed.slice(4, end).trimEnd();
+    const body = trimmed.slice(end + 4);
+    const fm = {};
+    for (const line of fmBlock.split("\n")) {
+        const m = line.match(/^([A-Za-z0-9_\-]+)\s*:\s*(.*)$/);
+        if (!m)
+            continue;
+        fm[m[1]] = stripQuotes(m[2] ?? "");
+    }
+    return { fm, body };
+}
+function countEscalations(body) {
+    const matches = body.match(/\(escalate\b/g);
+    return matches ? matches.length : 0;
+}
+function safeDateKey(dateStr) {
+    const t = Date.parse(dateStr);
+    return Number.isFinite(t) ? t : 0;
+}
+function participantsCount(participants) {
+    return participants
+        .split(",")
+        .map((p) => p.trim())
+        .filter(Boolean).length;
+}
+function mdEscapePipe(s) {
+    return s.replaceAll("|", "\\|");
+}
+async function listMarkdownFiles(dir) {
+    const entries = await fs.readdir(dir, { withFileTypes: true });
+    return entries
+        .filter((e) => e.isFile() && e.name.toLowerCase().endsWith(".md") && e.name.toLowerCase() !== "index.md")
+        .map((e) => e.name)
+        .sort();
+}
+async function buildCoolerIndex(projectRoot) {
+    const coolerDir = path.join(projectRoot, "docs", "cooler");
+    const files = await listMarkdownFiles(coolerDir);
+    const items = [];
+    for (const file of files) {
+        const md = await fs.readFile(path.join(coolerDir, file), "utf8");
+        const { fm, body } = parseFrontmatter(md);
+        const title = fm.title || `Cooler Talk - ${file}`;
+        const date = fm.date || "";
+        const sessionId = fm.session_id || "";
+        const participantsRaw = fm.participants || "";
+        items.push({
+            file,
+            title,
+            date,
+            sessionId,
+            participantsRaw,
+            participantsCount: participantsCount(participantsRaw),
+            escalations: countEscalations(body),
+        });
+    }
+    items.sort((a, b) => safeDateKey(b.date) - safeDateKey(a.date));
+    return items;
+}
+async function buildScrumIndex(projectRoot) {
+    const scrumDir = path.join(projectRoot, "docs", "scrum");
+    try {
+        await fs.access(scrumDir);
+    }
+    catch {
+        return [];
+    }
+    const files = await listMarkdownFiles(scrumDir);
+    const items = [];
+    for (const file of files) {
+        const md = await fs.readFile(path.join(scrumDir, file), "utf8");
+        const { fm, body } = parseFrontmatter(md);
+        const title = fm.title || `SCRUM - ${file}`;
+        const date = fm.date || "";
+        const sourceSession = fm.source_session || "";
+        const stage = (body.match(/\*\*Stage:\*\*\s*(.*)/)?.[1] || "").trim();
+        const summary = (body.match(/\*\*Summary:\*\*\s*(.*)/)?.[1] || "").trim();
+        items.push({ file, title, date, sourceSession, stage, summary });
+    }
+    items.sort((a, b) => safeDateKey(b.date) - safeDateKey(a.date));
+    return items;
+}
+async function writeCoolerIndex(projectRoot, cooler) {
+    const outPath = path.join(projectRoot, "docs", "cooler", "index.md");
+    const now = new Date().toISOString();
+    const lines = [];
+    lines.push("# Cooler Index");
+    lines.push("");
+    lines.push(`_Auto-generated: ${now}_`);
+    lines.push("");
+    lines.push("| date | title | session | participants | escalations |");
+    lines.push("|---|---|---|---:|---:|");
+    for (const item of cooler) {
+        const date = item.date ? item.date.slice(0, 10) : "";
+        const title = mdEscapePipe(item.title);
+        const link = `./${item.file}`;
+        lines.push(`| ${date} | [${title}](${link}) | ${item.sessionId || ""} | ${item.participantsCount} | ${item.escalations} |`);
+    }
+    lines.push("");
+    lines.push(`Total: **${cooler.length}** cooler sessions`);
+    lines.push("");
+    await fs.writeFile(outPath, lines.join("\n"), "utf8");
+}
+async function writeScrumIndex(projectRoot, scrum) {
+    const outPath = path.join(projectRoot, "docs", "scrum", "index.md");
+    const now = new Date().toISOString();
+    const lines = [];
+    lines.push("# Scrum Index");
+    lines.push("");
+    lines.push(`_Auto-generated: ${now}_`);
+    lines.push("");
+    lines.push("| date | title | source_session | stage | summary |");
+    lines.push("|---|---|---|---|---|");
+    for (const item of scrum) {
+        const date = item.date ? item.date.slice(0, 10) : "";
+        const title = mdEscapePipe(item.title);
+        const link = `./${item.file}`;
+        lines.push(`| ${date} | [${title}](${link}) | ${mdEscapePipe(item.sourceSession || "")} | ${mdEscapePipe(item.stage || "")} | ${mdEscapePipe(item.summary || "")} |`);
+    }
+    lines.push("");
+    lines.push(`Total: **${scrum.length}** scrum exports`);
+    lines.push("");
+    await fs.writeFile(outPath, lines.join("\n"), "utf8");
+}
+export async function rebuildDocIndexes(projectRoot) {
+    const [cooler, scrum] = await Promise.all([buildCoolerIndex(projectRoot), buildScrumIndex(projectRoot)]);
+    await Promise.all([writeCoolerIndex(projectRoot, cooler), writeScrumIndex(projectRoot, scrum)]);
+    return { coolerCount: cooler.length, scrumCount: scrum.length };
+}
