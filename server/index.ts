@@ -5167,3 +5167,63 @@ app.post("/api/coolertalk/issues", async (req, res) => {
     res.json({ issues: [] });
   }
 });
+
+// Save conversation transcript from test
+app.post("/api/conversation/save", async (req, res) => {
+  try {
+    const { sessionId, participants, conversation, timestamp } = req.body;
+    
+    if (!sessionId || !participants || !conversation) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+    
+    // Import conversation API
+    const { createCoolerSession, exportSession } = await import("./conversation/api.js");
+    const { persistSession } = await import("./services/coolerTalkService.js");
+    
+    // Create a cooler session from the test conversation
+    const session = createCoolerSession({
+      topic: "Test Conversation",
+      participants,
+      location: "test",
+    });
+    
+    // Add utterances from conversation
+    for (const turn of conversation) {
+      session.utterances.push({
+        speaker: turn.speaker,
+        text: turn.text,
+        intent: "inform" as const,
+        replyTo: session.utterances.length > 0 ? session.utterances.length - 1 : null,
+      });
+      session.currentTurn++;
+    }
+    
+    session.startedAt = new Date(timestamp).toISOString();
+    
+    // Export and save
+    const exportData = exportSession(session);
+    persistSession(session);
+    
+    // Also save markdown to docs/cooler/
+    const docsDir = path.resolve("docs/cooler");
+    if (!fs.existsSync(docsDir)) {
+      fs.mkdirSync(docsDir, { recursive: true });
+    }
+    
+    const dateStr = new Date(timestamp).toISOString().split('T')[0];
+    const mdPath = path.join(docsDir, `${dateStr}_${sessionId}.md`);
+    fs.writeFileSync(mdPath, exportData.markdown, "utf8");
+    
+    console.log(`[Conversation] Saved test conversation ${sessionId} to ${mdPath}`);
+    
+    res.json({ 
+      success: true, 
+      path: mdPath,
+      sessionId 
+    });
+  } catch (error: any) {
+    console.error("Error saving conversation:", error);
+    res.status(500).json({ error: "Failed to save conversation" });
+  }
+});

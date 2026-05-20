@@ -32,6 +32,13 @@ export interface AgentIssueMonitorProps {
   embedded?: boolean;
 }
 
+interface ConversationData {
+  sessionId: string;
+  participants: string[];
+  conversation: { speaker: string; text: string }[];
+  timestamp: number;
+}
+
 interface TestBubble {
   speaker: string;
   text: string;
@@ -127,6 +134,8 @@ export function AgentIssueMonitor({
   const [manualRepo, setManualRepo] = useState("");
   const [currentRepo, setCurrentRepo] = useState("");
   const dismissedRef = useRef<string[]>([]);
+  const [conversationData, setConversationData] = useState<ConversationData | null>(null);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   
   const clearAndDismiss = (id: string) => {
     dismissedRef.current.push(id);
@@ -239,6 +248,32 @@ export function AgentIssueMonitor({
     }, 15000);
   };
   
+  const saveConversation = async () => {
+    if (!conversationData) return;
+    
+    setSaveStatus('saving');
+    try {
+      const res = await fetch('/api/conversation/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(conversationData)
+      });
+      const result = await res.json();
+      if (result.success) {
+        setSaveStatus('saved');
+        setTimeout(() => {
+          setSaveStatus('idle');
+          setConversationData(null);
+        }, 3000);
+      } else {
+        setSaveStatus('error');
+      }
+    } catch (err) {
+      console.error('[AgentIssueMonitor] Failed to save conversation:', err);
+      setSaveStatus('error');
+    }
+  };
+  
   // Called by parent when agent walk completes
   useEffect(() => {
     (window as any).showTestBubbles = (bubbles: TestBubble[]) => {
@@ -258,9 +293,15 @@ export function AgentIssueMonitor({
       setTimeout(() => setTestStatus("idle"), 4000);
     };
     
+    (window as any).enableSaveConversation = (data: ConversationData) => {
+      setConversationData(data);
+      setSaveStatus('idle');
+    };
+    
     return () => {
       delete (window as any).showTestBubbles;
       delete (window as any).showTestError;
+      delete (window as any).enableSaveConversation;
     };
   }, []);
   
@@ -558,8 +599,29 @@ export function AgentIssueMonitor({
         <>
           {testBubbles.length > 0 && (
             <div style={{ marginBottom: '12px' }}>
-              <div style={{ color: '#17a2b8', fontWeight: 'bold', marginBottom: '6px', fontSize: '10px' }}>
-                Test Bubbles
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                <div style={{ color: '#17a2b8', fontWeight: 'bold', fontSize: '10px' }}>
+                  Test Conversation ({testBubbles.length} turns)
+                </div>
+                {conversationData && (
+                  <button
+                    onClick={saveConversation}
+                    disabled={saveStatus === 'saving' || saveStatus === 'saved'}
+                    style={{
+                      padding: '3px 8px',
+                      fontSize: '9px',
+                      background: saveStatus === 'saved' ? '#20c997' : saveStatus === 'error' ? '#dc3545' : '#17a2b8',
+                      border: 'none',
+                      borderRadius: '3px',
+                      color: 'white',
+                      cursor: saveStatus === 'saving' ? 'not-allowed' : 'pointer',
+                      opacity: saveStatus === 'saving' ? 0.6 : 1,
+                    }}
+                    title="Save conversation transcript as .md file"
+                  >
+                    {saveStatus === 'saving' ? 'Saving...' : saveStatus === 'saved' ? '✓ Saved' : saveStatus === 'error' ? 'Error' : 'Save'}
+                  </button>
+                )}
               </div>
               {testBubbles.map((bubble, i) => (
                 <div key={i} style={{
