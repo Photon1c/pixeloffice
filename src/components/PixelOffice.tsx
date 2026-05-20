@@ -263,12 +263,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     localStorage.removeItem("pixel_office_agents");
     setAgents(INITIAL_AGENTS.map((agent, i) => ({
       ...agent,
-      x: ENTRANCE_POSITION.x,
-      y: ENTRANCE_POSITION.y + i * 10,
-      mode: "walking",
+      x: CHAIR_POSITIONS[agent.deskIndex].x,
+      y: CHAIR_POSITIONS[agent.deskIndex].y,
+      targetX: CHAIR_POSITIONS[agent.deskIndex].x,
+      targetY: CHAIR_POSITIONS[agent.deskIndex].y,
+      mode: "sitting",
       dir: "right"
     })));
-    console.log('[PixelOffice] Arena reset - agents returning to entrance');
+    console.log('[PixelOffice] Arena reset - agents at desks');
   };
 
   const entranceDone = localStorage.getItem("pixel_office_entrance_done");
