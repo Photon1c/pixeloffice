@@ -269,7 +269,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     localStorage.setItem("pixel_office_reset_interval", String(resetInterval));
   }, [resetInterval]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     localStorage.removeItem("pixel_office_agents");
     setAgents(INITIAL_AGENTS.map((agent, i) => ({
       ...agent,
@@ -281,7 +281,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       dir: "right"
     })));
     console.log('[PixelOffice] Arena reset - agents at desks');
-  };
+  }, []);
 
   const entranceDone = localStorage.getItem("pixel_office_entrance_done");
   const [entranceActive, setEntranceActive] = useState(!entranceDone);
