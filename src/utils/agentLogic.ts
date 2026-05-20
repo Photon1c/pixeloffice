@@ -1,5 +1,5 @@
 import { Agent, AgentStatus, AgentMood, Task, TaskStatus, ConversationContext } from "../types";
-import { CHAIR_POSITIONS, WANDER_POINTS, ZONE_CONFIG, ROOMS } from "./layout";
+import { CHAIR_POSITIONS, WANDER_POINTS, ZONE_CONFIG, ROOMS, CANVAS_WIDTH, CANVAS_HEIGHT, STATUS_BAR_HEIGHT } from "./layout";
 import { getPeriodForHour } from "./schedule";
 import { AGENT_PERSONALITIES, CHAT_TOPICS_POOL, ChatIntensity, ChatEscalationState } from "./agentPersonalities";
 export type { ChatEscalationState, ChatIntensity };
@@ -362,11 +362,15 @@ export function updateAgentPosition(
 
   const newDir = dx > 0 ? "right" : "left";
   const newFrame: 0 | 1 = agent.frame === 0 ? 1 : 0;
+  
+  // Apply boundary constraints
+  const newX = Math.max(0, Math.min(CANVAS_WIDTH - 40, agent.x + moveX));
+  const newY = Math.max(0, Math.min(CANVAS_HEIGHT - STATUS_BAR_HEIGHT - 40, agent.y + moveY));
 
   return {
     ...agent,
-    x: agent.x + moveX,
-    y: agent.y + moveY,
+    x: newX,
+    y: newY,
     dir: newDir,
     frame: newFrame,
   };
