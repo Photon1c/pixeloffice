@@ -1033,7 +1033,7 @@ source_session: "${coolerSessionId || 'random'}"
       console.error(`[Test SCRUM] Failed to save to ${opencodePath}:`, err.message);
     }
 
-    // Rebuild Pixel Office doc indexes (so docs/scrum/index.md stays current)
+    // Rebuild Pixel Office doc indexes (so docs/cooler/index.md stays current)
     try {
       const { coolerCount, scrumCount } = await rebuildDocIndexes(
         "/home/sherlockhums/apps/pixelworld/pixel_office"
