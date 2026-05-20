@@ -275,6 +275,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     localStorage.setItem("pixel_office_agents", JSON.stringify(agents));
   }, [agents, entranceActive]);
   const [agentCards, setAgentCards] = useState<AgentCard[]>([]);
+  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [dashboardConfig, setDashboardConfig] = useState<DashboardConfig>({
     ...DEFAULT_CONFIG,
     ...config,
@@ -284,10 +285,13 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [showScrum, setShowScrum] = useState<boolean>(false);
   const [showScrumSettings, setShowScrumSettings] = useState<boolean>(false);
   const [showChat, setShowChat] = useState<boolean>(false);
+  const [showGenealogyLab, setShowGenealogyLab] = useState<boolean>(false);
+  const [showAdminAssistant, setShowAdminAssistant] = useState<boolean>(false);
+  const [showStockForecasts, setShowStockForecasts] = useState<boolean>(false);
+  const [showConvoViewer, setShowConvoViewer] = useState<boolean>(false);
   const [showEditor, setShowEditor] = useState<boolean>(false);
   const [scrumRepo, setScrumRepo] = useState<string>("");
   const [scrumTask, setScrumTask] = useState<string>("");
-  const [showConvoViewer, setShowConvoViewer] = useState<boolean>(false);
   const [convoViewerType, setConvoViewerType] = useState<"cooler" | "scrum">("cooler");
   const [convoSessions, setConvoSessions] = useState<any[]>([]);
   const [selectedSession, setSelectedSession] = useState<any>(null);

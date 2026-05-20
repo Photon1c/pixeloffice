@@ -1,20 +1,14 @@
 [
   {
-    "id": "trace-1779239153825-208",
-    "type": "task_shadow",
-    "intensity": 0.6,
-    "agentId": "ironclaw",
-    "roomId": "openOffice",
-    "created_at": "2026-05-20T01:05:53.825Z",
-    "expires_at": "2026-05-20T01:15:53.825Z"
-  },
-  {
-    "id": "trace-1779239461305-289",
-    "type": "task_shadow",
-    "intensity": 0.6,
-    "agentId": "ironclaw",
-    "roomId": "openOffice",
-    "created_at": "2026-05-20T01:11:01.305Z",
-    "expires_at": "2026-05-20T01:21:01.305Z"
+    "id": "trace-1779244115748-285",
+    "type": "review_heat",
+    "intensity": 0.2,
+    "topic": "Latest commit: fix: agents disappearing from scene after running for a while (by Sherlock)",
+    "roomId": "kitchen",
+    "created_at": "2026-05-20T02:28:35.748Z",
+    "expires_at": "2026-05-20T02:43:35.748Z",
+    "metadata": {
+      "source_session_id": "ct-1779244098747"
+    }
   }
 ]

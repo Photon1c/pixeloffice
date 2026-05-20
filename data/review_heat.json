@@ -1,12 +1,12 @@
 [
   {
-    "id": "heat-1779226806105-49",
+    "id": "heat-1779244115748-242",
     "trace_type": "review_heat",
-    "source_session_id": "ct-1779221966855",
-    "intensity": 0.4,
-    "topic": "Latest commit: Sync local changes with upstream for Pixel Office (by Sherlock)",
+    "source_session_id": "ct-1779244098747",
+    "intensity": 0.2,
+    "topic": "Latest commit: fix: agents disappearing from scene after running for a while (by Sherlock)",
     "anchor": "kitchen",
-    "created_at": "2026-05-19T21:40:06.105Z",
-    "expires_at": "2026-05-19T21:50:06.105Z"
+    "created_at": "2026-05-20T02:28:35.748Z",
+    "expires_at": "2026-05-20T02:38:35.748Z"
   }
 ]
