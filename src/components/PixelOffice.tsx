@@ -1493,19 +1493,59 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           <button id="coolertalk-btn" style={{...styles.paramsToggle, background: '#7c5cbf', opacity: (!currentTopic || currentTopic === "" || isScrumRunning || isCoolerTalkRunning) ? 0.5 : 1}} disabled={!currentTopic || currentTopic === "" || isScrumRunning || isCoolerTalkRunning} onClick={() => {
             setIsCoolerTalkRunning(true);
             setActiveConversationZone("kitchen");
-            // Move agents to kitchen positions
-            const kitchenAgents = agents.slice(0, 6);
-            setAgents(prev => prev.map((agent, idx) => {
-              if (kitchenAgents.find(a => a.id === agent.id)) {
-                const pos = getKitchenPosition(idx);
-                return { ...agent, targetX: pos.x, targetY: pos.y, mode: "standing" };
+            // Move 3-4 agents to kitchen positions
+            const kitchenPositions = [
+              { x: 980, y: 80 },
+              { x: 1040, y: 80 },
+              { x: 1100, y: 80 },
+              { x: 980, y: 140 },
+            ];
+            const participatingAgents = agents.slice(0, 4);
+            
+            // Clear previous bubbles
+            setSpeechBubbles([]);
+            
+            // Move agents to kitchen
+            setAgents(prev => prev.map((agent) => {
+              const participantIdx = participatingAgents.findIndex(a => a.id === agent.id);
+              if (participantIdx >= 0) {
+                const pos = kitchenPositions[participantIdx];
+                return { ...agent, targetX: pos.x, targetY: pos.y, mode: "standing", dir: "right" };
               }
               return agent;
             }));
+            
+            // Simulate conversation with stacked bubbles
+            const conversationLines = [
+              { agentIdx: 0, text: `So about "${currentTopic.slice(0, 50)}..."`, delay: 1000 },
+              { agentIdx: 1, text: "Interesting point! What do you think?", delay: 2500 },
+              { agentIdx: 2, text: "I think we should investigate further.", delay: 4000 },
+              { agentIdx: 0, text: "Agreed. Let's bring this to SCRUM.", delay: 5500 },
+              { agentIdx: 3, text: "Good idea! I'll prepare the analysis.", delay: 7000 },
+            ];
+            
+            conversationLines.forEach((line, i) => {
+              setTimeout(() => {
+                const agent = agentsRef.current.find(a => a.id === participatingAgents[line.agentIdx].id);
+                if (agent) {
+                  setSpeechBubbles(prev => {
+                    // Keep previous bubbles (stacking) but limit to 4
+                    const filtered = prev.slice(-3);
+                    return [...filtered, {
+                      speakerId: agent.id,
+                      text: line.text,
+                      offset: i % 2,
+                      yOffset: -20 - (filtered.length * 25)
+                    }];
+                  });
+                }
+              }, line.delay);
+            });
+            
             fetch('/api/rooms/kitchen/cooler/run-turn', {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ topic: currentTopic, participants: agents.map(a => a.name).slice(0, 6) })
+              body: JSON.stringify({ topic: currentTopic, participants: participatingAgents.map(a => a.name) })
             }).then(r => r.json()).then(data => {
               console.log("[CoolerTalk] Response:", data);
               console.log("[CoolerTalk] Topic sent:", currentTopic);
@@ -1522,6 +1562,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                   targetY: CHAIR_POSITIONS[agent.deskIndex]?.y || agent.y,
                   mode: "sitting"
                 })));
+                // Clear bubbles
+                setSpeechBubbles([]);
               }, 8000);
             });
           }}>Cooler Talk</button>
