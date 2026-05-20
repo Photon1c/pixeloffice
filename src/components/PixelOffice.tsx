@@ -169,25 +169,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     
     // 5-turn conversation script
     const conversationScript = [
-      { speaker: visitor.name, text: "Hey, got a minute to chat about the project?", delay: 0 },
-      { speaker: host.name, text: "Sure! What's on your mind?", delay: 1500 },
-      { speaker: visitor.name, text: "I've been thinking about our architecture. Are we happy with the current setup?", delay: 3000 },
-      { speaker: host.name, text: "Good question. I think it's working well, but we could optimize the data flow.", delay: 4500 },
-      { speaker: visitor.name, text: "Exactly! Maybe we should document some improvements?", delay: 6000 },
-      { speaker: host.name, text: "Great idea. Let's bring it up in the next standup.", delay: 7500 },
-      { speaker: visitor.name, text: "Perfect, thanks for the chat!", delay: 9000 },
-      { speaker: host.name, text: "Anytime! That's what teammates are for.", delay: 10500 }
+      { speaker: visitor.name, text: "Hey, got a minute to chat about the project?", delay: 1500 },
+      { speaker: host.name, text: "Sure! What's on your mind?", delay: 3000 },
+      { speaker: visitor.name, text: "I've been thinking about our architecture. Are we happy with the current setup?", delay: 4500 },
+      { speaker: host.name, text: "Good question. I think it's working well, but we could optimize the data flow.", delay: 6000 },
+      { speaker: visitor.name, text: "Exactly! Maybe we should document some improvements?", delay: 7500 },
+      { speaker: host.name, text: "Great idea. Let's bring it up in the next standup.", delay: 9000 },
+      { speaker: visitor.name, text: "Perfect, thanks for the chat!", delay: 10500 },
+      { speaker: host.name, text: "Anytime! That's what teammates are for.", delay: 12000 }
     ];
     
-    // Build all bubbles for progressive display
-    const allBubbles = conversationScript.map((turn, i) => ({
-      id: `test-conv-${i}`,
-      speaker: turn.speaker,
-      text: turn.text,
-      timestamp: Date.now() + turn.delay
-    }));
-    
-    // Set visitor to walk to host position
+    // Set visitor to walk to host position ONCE
     setAgents(prev => prev.map(a => {
       if (a.id === visitor.id) {
         return { ...a, targetX: host.x, targetY: host.y, mode: "walking", dir: host.x > a.x ? "right" : "left" };
@@ -195,19 +187,26 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       return a;
     }));
     
-    // Show conversation progressively
+    // Clear any existing test bubbles first
+    setSpeechBubbles([]);
+    
+    // Show conversation progressively - use functional updates to avoid stale closures
     conversationScript.forEach((turn, i) => {
       setTimeout(() => {
-        (window as any).showTestBubbles?.(allBubbles.slice(0, i + 1));
+        const hostCurrent = agentsRef.current.find(a => a.id === host.id) || host;
+        const visitorCurrent = agentsRef.current.find(a => a.id === visitor.id) || visitor;
+        const speakerAgent = turn.speaker === visitor.name ? visitorCurrent : hostCurrent;
         
-        // Add speech bubble to canvas
-        const speakerAgent = turn.speaker === visitor.name ? visitor : host;
-        setSpeechBubbles(prev => [...prev, {
-          speakerId: speakerAgent.id,
-          text: turn.text,
-          offset: i % 2,
-          yOffset: -20
-        }]);
+        setSpeechBubbles(prev => {
+          // Remove previous bubbles for these agents
+          const filtered = prev.filter(b => b.speakerId !== visitor.id && b.speakerId !== host.id);
+          return [...filtered, {
+            speakerId: speakerAgent.id,
+            text: turn.text,
+            offset: i % 2,
+            yOffset: -20
+          }];
+        });
       }, turn.delay);
     });
     
@@ -220,11 +219,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         }
         return a;
       }));
+      // Clear bubbles when done
+      setTimeout(() => setSpeechBubbles([]), 2000);
     }, 12000);
     
-    // Add save button to conversation panel
+    // Enable save button for conversation panel
     setTimeout(() => {
-      (window as any).showTestBubbles?.(allBubbles);
       (window as any).enableSaveConversation?.({
         sessionId,
         participants: [visitor.name, host.name],
@@ -248,12 +248,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     const interval = setInterval(() => {
       setFps(frameCountRef.current);
       frameCountRef.current = 0;
-      // Simulate CPU based on agent count and activity
+      // Simulate CPU based on agent count and activity (more realistic values)
       const currentAgents = agentsRef.current;
       const activeAgents = currentAgents.filter(a => a.mode === 'walking' || a.speechBubble || a.thoughtBubble).length;
-      setCpu(Math.min(95, 15 + (currentAgents.length * 3) + (activeAgents * 5) + Math.random() * 10));
+      setCpu(Math.min(95, 8 + (currentAgents.length * 1.5) + (activeAgents * 2) + Math.random() * 5));
       // Simulate memory based on agent state complexity
-      setMemory(Math.min(95, 25 + (currentAgents.length * 4) + Math.random() * 8));
+      setMemory(Math.min(95, 15 + (currentAgents.length * 2) + Math.random() * 5));
     }, 1000);
     return () => clearInterval(interval);
   }, []);
