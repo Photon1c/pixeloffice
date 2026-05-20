@@ -280,12 +280,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     ...config,
   });
   const [showParams, setShowParams] = useState<boolean>(false);
-  const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
-  const [showGenealogyLab, setShowGenealogyLab] = useState<boolean>(false);
-  const [showAdminAssistant, setShowAdminAssistant] = useState<boolean>(false);
-  const [showStockForecasts, setShowStockForecasts] = useState<boolean>(false);
   const [showTimeTasks, setShowTimeTasks] = useState<boolean>(false);
   const [showScrum, setShowScrum] = useState<boolean>(false);
+  const [showScrumSettings, setShowScrumSettings] = useState<boolean>(false);
   const [showChat, setShowChat] = useState<boolean>(false);
   const [showEditor, setShowEditor] = useState<boolean>(false);
   const [scrumRepo, setScrumRepo] = useState<string>("");
@@ -1490,18 +1487,41 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         </div>
 
         <div style={{ marginBottom: '12px', background: '#0f1520', border: '1px solid #1b2333', borderRadius: '6px', padding: '8px' }}>
-          <input
-            placeholder="Repo (e.g., photon1c/pixeloffice)"
-            value={scrumRepo}
-            onChange={(e) => setScrumRepo(e.target.value)}
-            style={{ width: '100%', fontSize: '10px', padding: '4px', background: '#2a2a3a', color: 'white', border: '1px solid #444', borderRadius: '3px', marginBottom: '4px', boxSizing: 'border-box' }}
-          />
-          <input
-            placeholder="Task (e.g., review sprint issues)"
-            value={scrumTask}
-            onChange={(e) => setScrumTask(e.target.value)}
-            style={{ width: '100%', fontSize: '10px', padding: '4px', background: '#2a2a3a', color: 'white', border: '1px solid #444', borderRadius: '3px', marginBottom: '6px', boxSizing: 'border-box' }}
-          />
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+            <span style={{ fontSize: '11px', color: '#2ecc71', fontWeight: 600 }}>SCRUM Settings</span>
+            <button
+              onClick={() => setShowScrumSettings(!showScrumSettings)}
+              style={{
+                padding: '2px 6px',
+                fontSize: '9px',
+                background: showScrumSettings ? '#2ecc71' : '#495057',
+                border: 'none',
+                borderRadius: '3px',
+                color: 'white',
+                cursor: 'pointer',
+              }}
+            >
+              {showScrumSettings ? '▼' : '▶'}
+            </button>
+          </div>
+          
+          {showScrumSettings && (
+            <>
+              <input
+                placeholder="Repo (e.g., photon1c/pixeloffice)"
+                value={scrumRepo}
+                onChange={(e) => setScrumRepo(e.target.value)}
+                style={{ width: '100%', fontSize: '10px', padding: '4px', background: '#2a2a3a', color: 'white', border: '1px solid #444', borderRadius: '3px', marginBottom: '4px', boxSizing: 'border-box' }}
+              />
+              <input
+                placeholder="Task (e.g., review sprint issues)"
+                value={scrumTask}
+                onChange={(e) => setScrumTask(e.target.value)}
+                style={{ width: '100%', fontSize: '10px', padding: '4px', background: '#2a2a3a', color: 'white', border: '1px solid #444', borderRadius: '3px', marginBottom: '6px', boxSizing: 'border-box' }}
+              />
+            </>
+          )}
+          
           <button id="scrum-btn" style={{width: '100%', padding: '6px', background: '#2ecc71', border: 'none', borderRadius: '4px', color: 'white', cursor: 'pointer', fontSize: '11px', fontWeight: 600, opacity: (isScrumRunning || isCoolerTalkRunning) ? 0.5 : 1}} disabled={isScrumRunning || isCoolerTalkRunning} onClick={async () => {
             setIsScrumRunning(true);
             setActiveConversationZone("conference");
@@ -1517,17 +1537,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             }));
             
             try {
-              const topic = scrumTask || currentTopic || "Daily standup";
-              const repo = scrumRepo || undefined;
+              // Test a random pending scrum - no repo/task required
+              const topic = currentTopic || "Daily standup";
               
               const scrumRes = await fetch('/api/scrum/test', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic, repo, coolerSessionId: undefined })
+                body: JSON.stringify({ topic, coolerSessionId: undefined })
               });
               const scrumData = await scrumRes.json();
               
-              console.log('[SCRUM] Response:', scrumData);
+              console.log('[TEST SCRUM] Response:', scrumData);
               
               if (scrumData.assignments && scrumData.assignments.length > 0) {
                 const assignmentMap = new Map(scrumData.assignments.map((a: any) => [a.agentId, { x: a.targetX, y: a.targetY }]));
@@ -1540,7 +1560,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                 }));
               }
             } catch (err) {
-              console.error('[SCRUM] Error:', err);
+              console.error('[TEST SCRUM] Error:', err);
             }
             
             setTimeout(() => {
@@ -1553,7 +1573,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                 mode: "sitting"
               })));
             }, 8000);
-          }}>Run SCRUM</button>
+          }}>TEST SCRUM</button>
         </div>
 
         <div style={{ marginBottom: '12px' }}>
