@@ -239,6 +239,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     return saved ? parseInt(saved, 10) : 20;
   });
   
+  const frameCountRef = useRef(0);
+  const [fps, setFps] = useState(60);
+  
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setFps(frameCountRef.current);
+      frameCountRef.current = 0;
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+  
   // Auto-reset arena on mount so agents show up to work
   useEffect(() => {
     handleReset();
@@ -1053,13 +1064,10 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     }
 
     let animationFrameId: number;
-    let frameCount = 0;
 
     const render = (timestamp: number) => {
+      frameCountRef.current++;
       const deltaTime = timestamp - lastFrameTime.current;
-      lastFrameTime.current = timestamp;
-      walkCycleTimer.current += deltaTime;
-      frameCount++;
 
       const currentSleepMode = sleepModeRef.current;
       const currentConfig = configRef.current;
@@ -1680,7 +1688,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           <div style={{ background: '#0f1520', borderRadius: '6px', padding: '8px', border: '1px solid #1b2333', marginBottom: '8px' }}>
             <StabilityMonitor 
               visible={true}
-              metrics={{ cpu: 0, memory: 0, fps: 0 }}
+              metrics={{ cpu: 0, memory: 0, fps }}
               onReset={handleReset}
               resetInterval={resetInterval}
               onResetIntervalChange={setResetInterval}
