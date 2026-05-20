@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const DEFAULT_PLAYLIST_ID = "PLrAXtmErZgOeiKm4sgNOknGvNjby9efdf";
+const DEFAULT_PLAYLIST_ID = "PLfk0U1GyjVCZCxHNHlaxwswG2IPL774yX";
 
 export default function YouTubePlayer() {
   const [playlistId, setPlaylistId] = useState(() => {

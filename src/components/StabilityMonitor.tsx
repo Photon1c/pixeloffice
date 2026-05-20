@@ -24,6 +24,8 @@ export interface StabilityMonitorProps {
   visible?: boolean;
   onReset?: () => void;
   embedded?: boolean;
+  resetInterval?: number;
+  onResetIntervalChange?: (interval: number) => void;
 }
 
 export interface AgentIssueMonitorProps { 
@@ -50,9 +52,34 @@ type TestStatus = "idle" | "testing" | "success" | "error";
 export function StabilityMonitor({ 
   metrics,
   visible = true,
-  onReset
+  onReset,
+  resetInterval = 20,
+  onResetIntervalChange
 }: StabilityMonitorProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [intervalValue, setIntervalValue] = useState(String(resetInterval));
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (resetInterval > 0 && onReset) {
+      intervalRef.current = setInterval(() => {
+        onReset();
+      }, resetInterval * 1000);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [resetInterval, onReset]);
+  
+  const handleIntervalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setIntervalValue(val);
+    const num = parseInt(val, 10);
+    if (!isNaN(num) && num > 0 && onResetIntervalChange) {
+      onResetIntervalChange(num);
+    }
+  };
   
   if (!visible) return null;
   
@@ -91,6 +118,29 @@ export function StabilityMonitor({
           </div>
           <div style={{ marginBottom: '12px' }}>
             FPS: <span style={{ color: metrics.fps < 30 ? '#dc3545' : '#28a745' }}>{metrics.fps}</span>
+          </div>
+          
+          <div style={{ marginBottom: '8px' }}>
+            <label style={{ fontSize: '9px', color: '#6c757d', display: 'block', marginBottom: '4px' }}>
+              Reset Arena Interval (seconds)
+            </label>
+            <input
+              type="number"
+              min="0"
+              value={intervalValue}
+              onChange={handleIntervalChange}
+              style={{
+                width: '100%',
+                padding: '4px 6px',
+                fontSize: '10px',
+                background: '#1a1a2e',
+                border: '1px solid #2a3548',
+                borderRadius: '4px',
+                color: '#e9ecef',
+                boxSizing: 'border-box',
+              }}
+              placeholder="0 to disable"
+            />
           </div>
           
           <button 

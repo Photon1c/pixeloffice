@@ -234,6 +234,20 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     }, 12500);
   };
   
+  const [resetInterval, setResetInterval] = useState(() => {
+    const saved = localStorage.getItem("pixel_office_reset_interval");
+    return saved ? parseInt(saved, 10) : 20;
+  });
+  
+  // Auto-reset arena on mount so agents show up to work
+  useEffect(() => {
+    handleReset();
+  }, []);
+  
+  useEffect(() => {
+    localStorage.setItem("pixel_office_reset_interval", String(resetInterval));
+  }, [resetInterval]);
+
   const handleReset = () => {
     localStorage.removeItem("pixel_office_agents");
     setAgents(INITIAL_AGENTS.map((agent, i) => ({
@@ -1668,6 +1682,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               visible={true}
               metrics={{ cpu: 0, memory: 0, fps: 0 }}
               onReset={handleReset}
+              resetInterval={resetInterval}
+              onResetIntervalChange={setResetInterval}
             />
           </div>
           <div style={{ background: '#0f1520', borderRadius: '6px', padding: '8px', border: '1px solid #1b2333' }}>
