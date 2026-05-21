@@ -1505,12 +1505,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             // Clear previous bubbles
             setSpeechBubbles([]);
             
-            // Move agents to kitchen
+            // Move agents to kitchen (walking mode for smooth animation)
             setAgents(prev => prev.map((agent) => {
               const participantIdx = participatingAgents.findIndex(a => a.id === agent.id);
               if (participantIdx >= 0) {
                 const pos = kitchenPositions[participantIdx];
-                return { ...agent, targetX: pos.x, targetY: pos.y, mode: "standing", dir: "right" };
+                return { ...agent, targetX: pos.x, targetY: pos.y, mode: "walking", dir: pos.x > agent.x ? "right" : "left" };
               }
               return agent;
             }));
@@ -1555,12 +1555,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               setTimeout(() => {
                 setIsCoolerTalkRunning(false);
                 setActiveConversationZone(null);
-                // Return agents to their desks
+                // Return agents to their desks (walking mode)
                 setAgents(prev => prev.map(agent => ({
                   ...agent,
                   targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,
                   targetY: CHAIR_POSITIONS[agent.deskIndex]?.y || agent.y,
-                  mode: "sitting"
+                  mode: "walking"
                 })));
                 // Clear bubbles
                 setSpeechBubbles([]);
@@ -1611,12 +1611,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             setIsScrumRunning(true);
             setActiveConversationZone("conference");
             
-            // Move agents to conference positions
+            // Move agents to conference positions (walking mode for smooth animation)
             const confAgents = agents.slice(0, 8);
             setAgents(prev => prev.map((agent, idx) => {
               if (confAgents.find(a => a.id === agent.id)) {
                 const pos = getConferencePosition(idx);
-                return { ...agent, targetX: pos.x, targetY: pos.y, mode: "standing" };
+                return { ...agent, targetX: pos.x, targetY: pos.y, mode: "walking", dir: pos.x > agent.x ? "right" : "left" };
               }
               return agent;
             }));
@@ -1655,7 +1655,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                 ...agent,
                 targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,
                 targetY: CHAIR_POSITIONS[agent.deskIndex]?.y || agent.y,
-                mode: "sitting"
+                mode: "walking"
               })));
             }, 8000);
           }}>TEST SCRUM</button>

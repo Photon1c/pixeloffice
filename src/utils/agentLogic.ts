@@ -340,7 +340,7 @@ export function updateAgentPosition(
   speed: number,
   deltaTime: number
 ): Agent {
-  if (agent.mode !== "walking" && agent.mode !== "idle-wander") {
+  if (agent.mode !== "walking" && agent.mode !== "idle-wander" && agent.mode !== "standing") {
     return agent;
   }
 
@@ -348,10 +348,19 @@ export function updateAgentPosition(
   const dy = agent.targetY - agent.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
 
+  // Only snap to sitting mode for walking agents, keep standing agents in place
   if (distance < 4) {
+    if (agent.mode === "walking") {
+      return {
+        ...agent,
+        mode: "sitting",
+        x: agent.targetX,
+        y: agent.targetY,
+      };
+    }
+    // For standing mode, just snap to position without changing mode
     return {
       ...agent,
-      mode: "sitting",
       x: agent.targetX,
       y: agent.targetY,
     };
