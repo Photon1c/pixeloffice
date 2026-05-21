@@ -336,41 +336,40 @@ function drawSherlobster(
   }
 
   // Draw Sherlobster image
+  const isSitting = mode === "sitting";
+  const charHeight = isSitting ? 150 : 180; // 3x larger (was 50/60)
+  const charWidth = 102; // 3x larger (was 34)
+  
   if (sherlobsterImg) {
-    // Character is standing or sitting
-    const isSitting = mode === "sitting";
-    const height = isSitting ? 50 : 60;
-    const width = 34;
-    
     // Add slight bobbing when walking
     let bobOffset = 0;
     if (mode === "walking") {
-      bobOffset = Math.sin(frame * Math.PI) * 2;
+      bobOffset = Math.sin(frame * Math.PI) * 6; // 3x larger bob
     }
 
     ctx.globalAlpha = 0.9;
     ctx.drawImage(
       sherlobsterImg,
-      -width / 2,
-      -height + bobOffset,
-      width,
-      height
+      -charWidth / 2,
+      -charHeight + bobOffset,
+      charWidth,
+      charHeight
     );
     ctx.globalAlpha = 1;
   }
 
   ctx.restore();
 
-  // Draw name
+  // Draw name (positioned higher for larger character)
   if (showNames) {
     ctx.fillStyle = COLORS.white;
     ctx.font = "400 10px 'JetBrains Mono', monospace";
     ctx.textAlign = "center";
-    ctx.fillText(agent.name, x, y - 55);
+    ctx.fillText(agent.name, x, y - charHeight - 10);
     
     // Draw mood emoji
     ctx.font = "400 12px sans-serif";
-    ctx.fillText(getMoodEmoji(mood), x, y - 65);
+    ctx.fillText(getMoodEmoji(mood), x, y - charHeight - 20);
     ctx.textAlign = "start";
     
     // Draw working indicator
@@ -378,12 +377,12 @@ function drawSherlobster(
       ctx.fillStyle = COLORS.statusWorking;
       ctx.globalAlpha = 0.3;
       ctx.beginPath();
-      ctx.arc(x + 20, y - 55, 6, 0, Math.PI * 2);
+      ctx.arc(x + 20, y - charHeight - 10, 6, 0, Math.PI * 2);
       ctx.fill();
       ctx.globalAlpha = 1;
       ctx.fillStyle = COLORS.statusWorking;
       ctx.beginPath();
-      ctx.arc(x + 20, y - 55, 3, 0, Math.PI * 2);
+      ctx.arc(x + 20, y - charHeight - 10, 3, 0, Math.PI * 2);
       ctx.fill();
     }
   }

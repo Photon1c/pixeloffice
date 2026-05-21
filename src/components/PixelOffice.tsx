@@ -1065,22 +1065,21 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
   useEffect(() => {
     const zoneInterval = setInterval(() => {
-      setAgents(prevAgents => {
-        const newActivity = new Map<string, ZoneActivity>();
-        prevAgents.forEach(agent => {
-          const zone = getZoneAtPosition(agent.x, agent.y);
-          if (!zone) return;
-          const existing = newActivity.get(zone) || {
-            zoneId: zone, agentCount: 0, busyLevel: "quiet" as const, lastActivity: Date.now(), conversationActive: false,
-          };
-          existing.agentCount += 1;
-          if (agent.status === "working") existing.busyLevel = existing.agentCount > 2 ? "busy" : "moderate";
-          existing.lastActivity = Date.now();
-          newActivity.set(zone, existing);
-        });
-        setZoneActivity(newActivity);
-        return prevAgents;
+      // Only update zoneActivity map, don't trigger agent state updates
+      const newActivity = new Map<string, ZoneActivity>();
+      const currentAgents = agentsRef.current;
+      currentAgents.forEach(agent => {
+        const zone = getZoneAtPosition(agent.x, agent.y);
+        if (!zone) return;
+        const existing = newActivity.get(zone) || {
+          zoneId: zone, agentCount: 0, busyLevel: "quiet" as const, lastActivity: Date.now(), conversationActive: false,
+        };
+        existing.agentCount += 1;
+        if (agent.status === "working") existing.busyLevel = existing.agentCount > 2 ? "busy" : "moderate";
+        existing.lastActivity = Date.now();
+        newActivity.set(zone, existing);
       });
+      setZoneActivity(newActivity);
     }, 2000);
     return () => clearInterval(zoneInterval);
   }, []);
@@ -1159,13 +1158,10 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       currentAgents.forEach((agent) => drawDeskItem(ctx, agent));
 
       const shouldRespectPrivacy = currentConfig.viewMode === "public";
-      // Filter expired bubbles (only if they have expiresAt set)
-      const now = Date.now();
-      const activeBubbles = speechBubbles.filter(sb => !sb.expiresAt || sb.expiresAt > now);
       
       currentAgents.forEach((agent) => {
         if (shouldRespectPrivacy && agent.visibility === "offline") return;
-        const speech = activeBubbles.find(sb => sb.speakerId === agent.id);
+        const speech = speechBubbles.find(sb => sb.speakerId === agent.id);
         drawAgent(ctx, { ...agent, speechBubble: speech ? { text: speech.text, offset: (speech.offset || 0) * 55, expiresAt: 0 } : undefined }, currentConfig.showNames);
       });
 
