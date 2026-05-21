@@ -147,6 +147,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   // Multi-turn test conversation (5+ turns) with save functionality
   const testTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const [isTestRunning, setIsTestRunning] = useState(false);
+  const testAgentIdsRef = useRef<{visitor: string; host: string} | null>(null);
   
   const handleTestConversation = () => {
     if (isTestRunning) {
@@ -180,6 +181,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     const host = availableAgents[hostIdx];
     const sessionId = `test-${Date.now()}`;
     
+    // Track which agents are in the test (to suspend their wandering)
+    testAgentIdsRef.current = { visitor: visitor.id, host: host.id };
+    
     // Position agents side-by-side with 60px spacing for conversation
     // Host stays put, visitor moves to position 60px to the right
     const conversationSpacing = 60;
@@ -202,15 +206,18 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       { speaker: host.name, text: "Anytime! That's what teammates are for.", delay: 12000 }
     ];
     
-    // Move both agents to conversation positions (side-by-side)
+    // Pause wandering for ALL agents during test (more order)
+    // Move visitor to host position with faster animation
     setAgents(prev => prev.map(a => {
       if (a.id === host.id) {
-        return { ...a, targetX: hostTargetX, targetY: hostTargetY, mode: "standing", dir: "right" };
+        return { ...a, targetX: hostTargetX, targetY: hostTargetY, mode: "standing", dir: "right", status: "idle" as const };
       }
       if (a.id === visitor.id) {
-        return { ...a, targetX: visitorTargetX, targetY: visitorTargetY, mode: "walking", dir: "right" };
+        return { ...a, targetX: visitorTargetX, targetY: visitorTargetY, mode: "walking", dir: "right", status: "idle" as const };
       }
-      return a;
+      // Other agents stay at their desks (no wandering during test)
+      const deskPos = CHAIR_POSITIONS[a.deskIndex];
+      return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "sitting", status: "idle" as const };
     }));
     
     // Clear any existing test bubbles first
@@ -242,16 +249,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     // Return visitor after conversation
     const returnTimeout = setTimeout(() => {
       setAgents(prev => prev.map(a => {
-        if (a.id === visitor.id) {
-          const deskPos = CHAIR_POSITIONS[a.deskIndex];
-          return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "walking", dir: deskPos.x > a.x ? "right" : "left" };
-        }
-        if (a.id === host.id) {
+        if (a.id === visitor.id || a.id === host.id) {
           const deskPos = CHAIR_POSITIONS[a.deskIndex];
           return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "walking", dir: deskPos.x > a.x ? "right" : "left" };
         }
         return a;
       }));
+      // Clear test agent tracking
+      testAgentIdsRef.current = null;
       // Clear bubbles when done
       const clearTimeoutId = setTimeout(() => {
         setSpeechBubbles([]);
@@ -1107,8 +1112,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
       renderAgentsRef.current = renderAgentsRef.current.map((agent) => {
         const effectiveSpeed = currentSleepMode ? currentConfig.animationSpeed * 0.3 : currentConfig.animationSpeed;
+        
+        // Suspend wandering for test conversation agents (more order)
+        const isTestAgent = testAgentIdsRef.current && (agent.id === testAgentIdsRef.current.visitor || agent.id === testAgentIdsRef.current.host);
+        
         let updatedAgent = updateAgentPosition(agent, effectiveSpeed, deltaTime);
-        updatedAgent = handleWanderLogic(updatedAgent);
+        
+        // Only apply wander logic if NOT a test agent and NOT in conversation zone
+        if (!isTestAgent) {
+          updatedAgent = handleWanderLogic(updatedAgent);
+        }
+        
         if (walkCycleTimer.current > 150 && updatedAgent.mode === "walking") {
           updatedAgent = { ...updatedAgent, frame: updatedAgent.frame === 0 ? 1 : 0 };
           walkCycleTimer.current = 0;
