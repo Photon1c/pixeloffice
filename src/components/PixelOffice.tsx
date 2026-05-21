@@ -257,7 +257,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   
   const [resetInterval, setResetInterval] = useState(() => {
     const saved = localStorage.getItem("pixel_office_reset_interval");
-    return saved ? parseInt(saved, 10) : 20;
+    return saved ? parseInt(saved, 10) : 10;
   });
   
   const frameCountRef = useRef(0);
@@ -1062,8 +1062,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     return () => clearInterval(zoneInterval);
   }, []);
 
-  // Sync render agents back to React state at lower rate (5fps) to preserve speech/thought bubbles
+  // Sync render agents back to React state at lower rate (2fps) to preserve speech/thought bubbles
   // Only sync position/movement data, not visual state
+  // Reduced frequency to minimize state thrashing and flickering
   useEffect(() => {
     const interval = setInterval(() => {
       setAgents(prev => {
@@ -1071,9 +1072,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         if (!renderAgentsRef.current || renderAgentsRef.current.length === 0) {
           return prev;
         }
-        return prev.map((agent, i) => {
+        // Only sync if there are actual changes (prevent unnecessary re-renders)
+        let hasChanges = false;
+        const updated = prev.map((agent, i) => {
           const refAgent = renderAgentsRef.current[i];
           if (!refAgent) return agent;
+          if (refAgent.x !== agent.x || refAgent.y !== agent.y || refAgent.mode !== agent.mode) {
+            hasChanges = true;
+          }
           return {
             ...agent,
             x: refAgent.x,
@@ -1085,8 +1091,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             targetY: refAgent.targetY,
           };
         });
+        return hasChanges ? updated : prev;
       });
-    }, 200);
+    }, 500);
     return () => clearInterval(interval);
   }, []);
 
@@ -1173,7 +1180,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
     animationFrameId = requestAnimationFrame(render);
     return () => cancelAnimationFrame(animationFrameId);
-  }, [dashboardConfig, zoneActivity, stigmergyTraces, sleepMode]);
+  }, []); // Empty deps - render loop runs independently, uses refs for all dynamic values
 
   const updateConfig = (updates: Partial<DashboardConfig>) => {
     setDashboardConfig((prev) => ({ ...prev, ...updates }));
