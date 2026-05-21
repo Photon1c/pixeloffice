@@ -1,12 +1,22 @@
 [
   {
-    "id": "heat-1779245616095-992",
+    "id": "heat-1779315157007-543",
     "trace_type": "review_heat",
-    "source_session_id": "ct-1779245598480",
+    "source_session_id": "ct-1779307394159",
     "intensity": 0.2,
-    "topic": "Latest commit: fix: Add missing state variables for GenealogyLab, AdminAssistant, StockForecasts (by Sherlock)",
+    "topic": "Latest commit: feat: Add back StabilityMonitor with Reset Arena button (by Sherlock)",
     "anchor": "kitchen",
-    "created_at": "2026-05-20T02:53:36.095Z",
-    "expires_at": "2026-05-20T03:03:36.095Z"
+    "created_at": "2026-05-20T22:12:37.007Z",
+    "expires_at": "2026-05-20T22:22:37.007Z"
+  },
+  {
+    "id": "heat-1779315158936-140",
+    "trace_type": "review_heat",
+    "source_session_id": "ct-1779307394159",
+    "intensity": 0.2,
+    "topic": "Latest commit: feat: Add back StabilityMonitor with Reset Arena button (by Sherlock)",
+    "anchor": "kitchen",
+    "created_at": "2026-05-20T22:12:38.936Z",
+    "expires_at": "2026-05-20T22:22:38.936Z"
   }
 ]

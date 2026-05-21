@@ -1,9 +1,12 @@
 # Scrum Index
 
-_Auto-generated: 2026-05-20T02:53:35.756Z_
+_Auto-generated: 2026-05-20T22:12:38.417Z_
 
 | date | title | source_session | stage | summary |
 |---|---|---|---|---|
+| 2026-05-20 | [SCRUM (Planning): Pixel Office Follow-up](./2026-05-20T03-25-10-219Z_scrum-planning-scrumcand-1779175700136-g4ry06.md) |  |  |  |
+| 2026-05-20 | [SCRUM (Planning): Pixel Office Follow-up](./2026-05-20T03-25-09-215Z_scrum-planning-scrumcand-1779176899314-dnz5hs.md) |  |  |  |
+| 2026-05-20 | [SCRUM (Planning): Pixel Office Follow-up](./2026-05-20T03-25-07-525Z_scrum-planning-scrumcand-1779226806103-8ynl5x.md) |  |  |  |
 | 2026-05-15 | [SCRUM (Planning): Pixel Office Follow-up](./2026-05-15T07-07-47-078Z_scrum-planning-scrumcand-1778791696755-hyjitk.md) |  |  |  |
 | 2026-05-14 | [SCRUM (Planning): Pixel Office Follow-up](./2026-05-14T08-49-19-260Z_scrum-planning-scrumcand-1778745893800-99fglk.md) |  |  |  |
 | 2026-05-14 | [Test SCRUM: Latest commit: Sync local changes with upstream for Pixel Office (by Sherlock)](./2026-05-14_scrum-scrum-1778748300238-xrmhp8.md) | ct-1778398747018 | check | N/A |
@@ -25,4 +28,4 @@ _Auto-generated: 2026-05-20T02:53:35.756Z_
 | 2026-04-09 | [Test SCRUM: Test SCRUM from cooler session](./2026-04-09_scrum-scrum-1775776097379-9lcztk.md) | random | check | N/A |
 | 2026-04-09 | [Test SCRUM: Test SCRUM from cooler session](./2026-04-09_scrum-scrum-1775761038722-ydxixs.md) | random | check | N/A |
 
-Total: **20** scrum exports
+Total: **23** scrum exports
