@@ -392,6 +392,12 @@ function drawSherlobster(
   if (thoughtBubble) {
     drawThoughtBubble(ctx, x, y - 80, thoughtBubble.text, mood);
   }
+  
+  // Draw speech bubble
+  if ((agent as any).speechBubble) {
+    const offset = (agent as any).speechBubble.offset || 0;
+    drawSpeechBubble(ctx, x, y - 80 - offset, (agent as any).speechBubble.text, mood);
+  }
 }
 
 function drawGlobe(ctx: CanvasRenderingContext2D, x: number, y: number): void {

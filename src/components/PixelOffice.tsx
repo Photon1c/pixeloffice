@@ -350,7 +350,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [stigmergyTraces, setStigmergyTraces] = useState<any[]>([]);
   const [socialPotential, setSocialPotential] = useState<{sessionCount: number; participantCount: number; intensity: number} | null>(null);
   const [currentTopic, setCurrentTopic] = useState<string>("");
-  const [speechBubbles, setSpeechBubbles] = useState<{speakerId: string; text: string; offset?: number; yOffset?: number; model?: string}[]>([]);
+  const [speechBubbles, setSpeechBubbles] = useState<{speakerId: string; text: string; offset?: number; yOffset?: number; model?: string; expiresAt?: number}[]>([]);
   
   // Thought Burst / Loop Detection State
   const [thoughtBurstConfig] = useState({
@@ -1041,25 +1041,31 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     return () => clearInterval(zoneInterval);
   }, []);
 
-  // Sync render agents back to React state at lower rate (10fps)
-  // Merge positions from RAF ref into React state to preserve speech/thought bubbles
+  // Sync render agents back to React state at lower rate (5fps) to preserve speech/thought bubbles
+  // Only sync position/movement data, not visual state
   useEffect(() => {
     const interval = setInterval(() => {
-      setAgents(prev => prev.map((agent, i) => {
-        const refAgent = renderAgentsRef.current[i];
-        if (!refAgent) return agent;
-        return {
-          ...agent,
-          x: refAgent.x,
-          y: refAgent.y,
-          dir: refAgent.dir,
-          frame: refAgent.frame,
-          mode: refAgent.mode,
-          targetX: refAgent.targetX,
-          targetY: refAgent.targetY,
-        };
-      }));
-    }, 100);
+      setAgents(prev => {
+        // Skip sync if renderAgentsRef hasn't been initialized
+        if (!renderAgentsRef.current || renderAgentsRef.current.length === 0) {
+          return prev;
+        }
+        return prev.map((agent, i) => {
+          const refAgent = renderAgentsRef.current[i];
+          if (!refAgent) return agent;
+          return {
+            ...agent,
+            x: refAgent.x,
+            y: refAgent.y,
+            dir: refAgent.dir,
+            frame: refAgent.frame,
+            mode: refAgent.mode,
+            targetX: refAgent.targetX,
+            targetY: refAgent.targetY,
+          };
+        });
+      });
+    }, 200);
     return () => clearInterval(interval);
   }, []);
 
@@ -1124,10 +1130,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       currentAgents.forEach((agent) => drawDeskItem(ctx, agent));
 
       const shouldRespectPrivacy = currentConfig.viewMode === "public";
+      // Filter expired bubbles (only if they have expiresAt set)
+      const now = Date.now();
+      const activeBubbles = speechBubbles.filter(sb => !sb.expiresAt || sb.expiresAt > now);
+      
       currentAgents.forEach((agent) => {
         if (shouldRespectPrivacy && agent.visibility === "offline") return;
-        const speech = speechBubbles.find(sb => sb.speakerId === agent.id);
-        drawAgent(ctx, { ...agent, speechBubble: speech ? { text: speech.text, expiresAt: Date.now() + 5000, offset: (speech.offset || 0) * 55 } : undefined }, currentConfig.showNames);
+        const speech = activeBubbles.find(sb => sb.speakerId === agent.id);
+        drawAgent(ctx, { ...agent, speechBubble: speech ? { text: speech.text, offset: (speech.offset || 0) * 55, expiresAt: 0 } : undefined }, currentConfig.showNames);
       });
 
       drawZoneIndicators(ctx, zoneActivity, stigmergyTraces);
