@@ -179,9 +179,16 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     const visitor = availableAgents[visitorIdx];
     const host = availableAgents[hostIdx];
     const sessionId = `test-${Date.now()}`;
-    const hostPos = { x: host.x, y: host.y }; // Capture host position once
     
-    console.log("[TestConversation]", visitor.name, "visiting", host.name, "at", hostPos);
+    // Position agents side-by-side with 60px spacing for conversation
+    // Host stays put, visitor moves to position 60px to the right
+    const conversationSpacing = 60;
+    const hostTargetX = host.x;
+    const hostTargetY = host.y;
+    const visitorTargetX = host.x + conversationSpacing;
+    const visitorTargetY = host.y;
+    
+    console.log("[TestConversation]", visitor.name, "visiting", host.name);
     
     // 5-turn conversation script
     const conversationScript = [
@@ -195,10 +202,13 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       { speaker: host.name, text: "Anytime! That's what teammates are for.", delay: 12000 }
     ];
     
-    // Set visitor to walk to host position ONCE
+    // Move both agents to conversation positions (side-by-side)
     setAgents(prev => prev.map(a => {
+      if (a.id === host.id) {
+        return { ...a, targetX: hostTargetX, targetY: hostTargetY, mode: "standing", dir: "right" };
+      }
       if (a.id === visitor.id) {
-        return { ...a, targetX: hostPos.x, targetY: hostPos.y, mode: "walking", dir: hostPos.x > a.x ? "right" : "left" };
+        return { ...a, targetX: visitorTargetX, targetY: visitorTargetY, mode: "walking", dir: "right" };
       }
       return a;
     }));
@@ -206,10 +216,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     // Clear any existing test bubbles first
     setSpeechBubbles([]);
     
-    // Show conversation progressively - schedule all updates upfront
+    // Show conversation progressively with stacked bubbles
+    // Bubbles stack vertically: -20, -70, -120, -170 (50px spacing each)
     conversationScript.forEach((turn, i) => {
       const timeoutId = setTimeout(() => {
         const speakerAgentId = turn.speaker === visitor.name ? visitor.id : host.id;
+        const bubbleStackIndex = i % 4; // Max 4 visible bubbles
+        const verticalSpacing = 50;
+        const yOffset = -20 - (bubbleStackIndex * verticalSpacing);
         
         setSpeechBubbles(prev => {
           // Remove previous bubbles for these two agents only
@@ -217,8 +231,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           return [...filtered, {
             speakerId: speakerAgentId,
             text: turn.text,
-            offset: i % 2,
-            yOffset: -20
+            offset: bubbleStackIndex * 55, // 55px horizontal offset per bubble
+            yOffset: yOffset
           }];
         });
       }, turn.delay);
@@ -229,6 +243,10 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     const returnTimeout = setTimeout(() => {
       setAgents(prev => prev.map(a => {
         if (a.id === visitor.id) {
+          const deskPos = CHAIR_POSITIONS[a.deskIndex];
+          return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "walking", dir: deskPos.x > a.x ? "right" : "left" };
+        }
+        if (a.id === host.id) {
           const deskPos = CHAIR_POSITIONS[a.deskIndex];
           return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "walking", dir: deskPos.x > a.x ? "right" : "left" };
         }
@@ -1062,40 +1080,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     return () => clearInterval(zoneInterval);
   }, []);
 
-  // Sync render agents back to React state at lower rate (2fps) to preserve speech/thought bubbles
-  // Only sync position/movement data, not visual state
-  // Reduced frequency to minimize state thrashing and flickering
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setAgents(prev => {
-        // Skip sync if renderAgentsRef hasn't been initialized
-        if (!renderAgentsRef.current || renderAgentsRef.current.length === 0) {
-          return prev;
-        }
-        // Only sync if there are actual changes (prevent unnecessary re-renders)
-        let hasChanges = false;
-        const updated = prev.map((agent, i) => {
-          const refAgent = renderAgentsRef.current[i];
-          if (!refAgent) return agent;
-          if (refAgent.x !== agent.x || refAgent.y !== agent.y || refAgent.mode !== agent.mode) {
-            hasChanges = true;
-          }
-          return {
-            ...agent,
-            x: refAgent.x,
-            y: refAgent.y,
-            dir: refAgent.dir,
-            frame: refAgent.frame,
-            mode: refAgent.mode,
-            targetX: refAgent.targetX,
-            targetY: refAgent.targetY,
-          };
-        });
-        return hasChanges ? updated : prev;
-      });
-    }, 500);
-    return () => clearInterval(interval);
-  }, []);
+  // No sync interval - render loop handles all animation directly via renderAgentsRef
+  // React state (agents) is only updated for explicit actions (reset, conversations, etc.)
+  // This eliminates the flickering caused by constant state sync
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -1531,12 +1518,13 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           <button id="coolertalk-btn" style={{...styles.paramsToggle, background: '#7c5cbf', opacity: (!currentTopic || currentTopic === "" || isScrumRunning || isCoolerTalkRunning) ? 0.5 : 1}} disabled={!currentTopic || currentTopic === "" || isScrumRunning || isCoolerTalkRunning} onClick={() => {
             setIsCoolerTalkRunning(true);
             setActiveConversationZone("kitchen");
-            // Move 3-4 agents to kitchen positions
+            
+            // Kitchen conversation positions - agents form a semi-circle with 50px spacing
             const kitchenPositions = [
               { x: 980, y: 80 },
-              { x: 1040, y: 80 },
-              { x: 1100, y: 80 },
-              { x: 980, y: 140 },
+              { x: 1030, y: 80 },
+              { x: 1080, y: 80 },
+              { x: 1130, y: 80 },
             ];
             const participatingAgents = agents.slice(0, 4);
             
@@ -1553,7 +1541,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               return agent;
             }));
             
-            // Simulate conversation with stacked bubbles
+            // Simulate conversation with stacked bubbles (50px vertical spacing)
             const conversationLines = [
               { agentIdx: 0, text: `So about "${currentTopic.slice(0, 50)}..."`, delay: 1000 },
               { agentIdx: 1, text: "Interesting point! What do you think?", delay: 2500 },
@@ -1563,21 +1551,24 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             ];
             
             conversationLines.forEach((line, i) => {
-              setTimeout(() => {
-                const agent = agentsRef.current.find(a => a.id === participatingAgents[line.agentIdx].id);
-                if (agent) {
-                  setSpeechBubbles(prev => {
-                    // Keep previous bubbles (stacking) but limit to 4
-                    const filtered = prev.slice(-3);
-                    return [...filtered, {
-                      speakerId: agent.id,
-                      text: line.text,
-                      offset: i % 2,
-                      yOffset: -20 - (filtered.length * 25)
-                    }];
-                  });
-                }
+              const timeoutId = setTimeout(() => {
+                const agentId = participatingAgents[line.agentIdx].id;
+                const bubbleStackIndex = i % 4;
+                const verticalSpacing = 50;
+                const yOffset = -20 - (bubbleStackIndex * verticalSpacing);
+                
+                setSpeechBubbles(prev => {
+                  // Remove old bubbles for participating agents, keep max 4 stacked
+                  const filtered = prev.filter(b => !participatingAgents.find(a => a.id === b.speakerId));
+                  return [...filtered, {
+                    speakerId: agentId,
+                    text: line.text,
+                    offset: bubbleStackIndex * 55,
+                    yOffset: yOffset
+                  }];
+                });
               }, line.delay);
+              // Track timeout for cleanup
             });
             
             fetch('/api/rooms/kitchen/cooler/run-turn', {
@@ -1673,11 +1664,11 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               console.log('[TEST SCRUM] Response:', scrumData);
               
               if (scrumData.assignments && scrumData.assignments.length > 0) {
-                const assignmentMap = new Map(scrumData.assignments.map((a: any) => [a.agentId, { x: a.targetX, y: a.targetY }]));
+                const assignmentMap = new Map(scrumData.assignments.map((a: any) => [a.agentId, { targetX: a.targetX, targetY: a.targetY }]));
                 setAgents(prev => prev.map(agent => {
                   const assignment = assignmentMap.get(agent.id);
                   if (assignment) {
-                    return { ...agent, targetX: assignment.x, targetY: assignment.y, mode: "standing" as const };
+                    return { ...agent, targetX: assignment.targetX, targetY: assignment.targetY, mode: "standing" as const };
                   }
                   return agent;
                 }));
