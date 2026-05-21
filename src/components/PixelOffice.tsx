@@ -145,13 +145,28 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
   // Test conversation: deploy random agent to another agent workspace
   // Multi-turn test conversation (5+ turns) with save functionality
+  const testTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const [isTestRunning, setIsTestRunning] = useState(false);
+  
   const handleTestConversation = () => {
-    console.log("[TestConversation] Starting multi-turn agent conversation");
+    if (isTestRunning) {
+      console.log("[TestConversation] Already running, skipping");
+      return;
+    }
     
-    // Pick two different random agents
-    const availableAgents = agents.filter(a => a.id !== "frontdesk");
+    console.log("[TestConversation] Starting multi-turn agent conversation");
+    setIsTestRunning(true);
+    
+    // Clear any pending timeouts from previous test
+    testTimeoutsRef.current.forEach(clearTimeout);
+    testTimeoutsRef.current = [];
+    
+    // Pick two different random agents from current state
+    const currentAgents = agentsRef.current;
+    const availableAgents = currentAgents.filter(a => a.id !== "frontdesk");
     if (availableAgents.length < 2) {
       console.warn("[TestConversation] Not enough agents");
+      setIsTestRunning(false);
       return;
     }
     
@@ -164,8 +179,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     const visitor = availableAgents[visitorIdx];
     const host = availableAgents[hostIdx];
     const sessionId = `test-${Date.now()}`;
+    const hostPos = { x: host.x, y: host.y }; // Capture host position once
     
-    console.log("[TestConversation]", visitor.name, "visiting", host.name);
+    console.log("[TestConversation]", visitor.name, "visiting", host.name, "at", hostPos);
     
     // 5-turn conversation script
     const conversationScript = [
@@ -182,7 +198,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     // Set visitor to walk to host position ONCE
     setAgents(prev => prev.map(a => {
       if (a.id === visitor.id) {
-        return { ...a, targetX: host.x, targetY: host.y, mode: "walking", dir: host.x > a.x ? "right" : "left" };
+        return { ...a, targetX: hostPos.x, targetY: hostPos.y, mode: "walking", dir: hostPos.x > a.x ? "right" : "left" };
       }
       return a;
     }));
@@ -190,28 +206,27 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     // Clear any existing test bubbles first
     setSpeechBubbles([]);
     
-    // Show conversation progressively - use functional updates to avoid stale closures
+    // Show conversation progressively - schedule all updates upfront
     conversationScript.forEach((turn, i) => {
-      setTimeout(() => {
-        const hostCurrent = agentsRef.current.find(a => a.id === host.id) || host;
-        const visitorCurrent = agentsRef.current.find(a => a.id === visitor.id) || visitor;
-        const speakerAgent = turn.speaker === visitor.name ? visitorCurrent : hostCurrent;
+      const timeoutId = setTimeout(() => {
+        const speakerAgentId = turn.speaker === visitor.name ? visitor.id : host.id;
         
         setSpeechBubbles(prev => {
-          // Remove previous bubbles for these agents
+          // Remove previous bubbles for these two agents only
           const filtered = prev.filter(b => b.speakerId !== visitor.id && b.speakerId !== host.id);
           return [...filtered, {
-            speakerId: speakerAgent.id,
+            speakerId: speakerAgentId,
             text: turn.text,
             offset: i % 2,
             yOffset: -20
           }];
         });
       }, turn.delay);
+      testTimeoutsRef.current.push(timeoutId);
     });
     
     // Return visitor after conversation
-    setTimeout(() => {
+    const returnTimeout = setTimeout(() => {
       setAgents(prev => prev.map(a => {
         if (a.id === visitor.id) {
           const deskPos = CHAIR_POSITIONS[a.deskIndex];
@@ -220,11 +235,16 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         return a;
       }));
       // Clear bubbles when done
-      setTimeout(() => setSpeechBubbles([]), 2000);
+      const clearTimeoutId = setTimeout(() => {
+        setSpeechBubbles([]);
+        setIsTestRunning(false);
+      }, 2000);
+      testTimeoutsRef.current.push(clearTimeoutId);
     }, 12000);
+    testTimeoutsRef.current.push(returnTimeout);
     
     // Enable save button for conversation panel
-    setTimeout(() => {
+    const saveTimeout = setTimeout(() => {
       (window as any).enableSaveConversation?.({
         sessionId,
         participants: [visitor.name, host.name],
@@ -232,6 +252,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         timestamp: Date.now()
       });
     }, 12500);
+    testTimeoutsRef.current.push(saveTimeout);
   };
   
   const [resetInterval, setResetInterval] = useState(() => {
