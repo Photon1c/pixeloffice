@@ -207,8 +207,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     ];
     
     // Pause wandering for ALL agents during test (more order)
-    // Move visitor to host position with faster animation
-    setAgents(prev => prev.map(a => {
+    // CRITICAL: Must update renderAgentsRef.current directly since render loop reads from it
+    renderAgentsRef.current = renderAgentsRef.current.map(a => {
       if (a.id === host.id) {
         return { ...a, targetX: hostTargetX, targetY: hostTargetY, mode: "standing", dir: "right", status: "idle" as const };
       }
@@ -216,6 +216,18 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         return { ...a, targetX: visitorTargetX, targetY: visitorTargetY, mode: "walking", dir: "right", status: "idle" as const };
       }
       // Other agents stay at their desks (no wandering during test)
+      const deskPos = CHAIR_POSITIONS[a.deskIndex];
+      return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "sitting", status: "idle" as const };
+    });
+    
+    // Also update React state for consistency
+    setAgents(prev => prev.map(a => {
+      if (a.id === host.id) {
+        return { ...a, targetX: hostTargetX, targetY: hostTargetY, mode: "standing", dir: "right", status: "idle" as const };
+      }
+      if (a.id === visitor.id) {
+        return { ...a, targetX: visitorTargetX, targetY: visitorTargetY, mode: "walking", dir: "right", status: "idle" as const };
+      }
       const deskPos = CHAIR_POSITIONS[a.deskIndex];
       return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "sitting", status: "idle" as const };
     }));
@@ -248,6 +260,16 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     
     // Return visitor after conversation
     const returnTimeout = setTimeout(() => {
+      // CRITICAL: Update renderAgentsRef.current directly for visual movement
+      renderAgentsRef.current = renderAgentsRef.current.map(a => {
+        if (a.id === visitor.id || a.id === host.id) {
+          const deskPos = CHAIR_POSITIONS[a.deskIndex];
+          return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "walking", dir: deskPos.x > a.x ? "right" : "left" };
+        }
+        return a;
+      });
+      
+      // Also update React state for consistency
       setAgents(prev => prev.map(a => {
         if (a.id === visitor.id || a.id === host.id) {
           const deskPos = CHAIR_POSITIONS[a.deskIndex];
@@ -255,6 +277,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         }
         return a;
       }));
+      
       // Clear test agent tracking
       testAgentIdsRef.current = null;
       // Clear bubbles when done
@@ -1560,7 +1583,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             // Clear previous bubbles
             setSpeechBubbles([]);
             
-            // Move agents to kitchen (walking mode for smooth animation)
+            // CRITICAL: Update renderAgentsRef.current directly for visual movement
+            renderAgentsRef.current = renderAgentsRef.current.map((agent) => {
+              const participantIdx = participatingAgents.findIndex(a => a.id === agent.id);
+              if (participantIdx >= 0) {
+                const pos = kitchenPositions[participantIdx];
+                return { ...agent, targetX: pos.x, targetY: pos.y, mode: "walking", dir: pos.x > agent.x ? "right" : "left" };
+              }
+              return agent;
+            });
+            
+            // Also update React state for consistency
             setAgents(prev => prev.map((agent) => {
               const participantIdx = participatingAgents.findIndex(a => a.id === agent.id);
               if (participantIdx >= 0) {
@@ -1613,7 +1646,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               setTimeout(() => {
                 setIsCoolerTalkRunning(false);
                 setActiveConversationZone(null);
-                // Return agents to their desks (walking mode)
+                // CRITICAL: Update renderAgentsRef.current directly for visual movement
+                renderAgentsRef.current = renderAgentsRef.current.map(agent => ({
+                  ...agent,
+                  targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,
+                  targetY: CHAIR_POSITIONS[agent.deskIndex]?.y || agent.y,
+                  mode: "walking"
+                }));
+                // Also update React state for consistency
                 setAgents(prev => prev.map(agent => ({
                   ...agent,
                   targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,
@@ -1669,8 +1709,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             setIsScrumRunning(true);
             setActiveConversationZone("conference");
             
-            // Move agents to conference positions (walking mode for smooth animation)
-            const confAgents = agents.slice(0, 8);
+            // CRITICAL: Update renderAgentsRef.current directly for visual movement
+            const confAgents = agentsRef.current.slice(0, 8);
+            renderAgentsRef.current = renderAgentsRef.current.map((agent, idx) => {
+              if (confAgents.find(a => a.id === agent.id)) {
+                const pos = getConferencePosition(idx);
+                return { ...agent, targetX: pos.x, targetY: pos.y, mode: "walking", dir: pos.x > agent.x ? "right" : "left" };
+              }
+              return agent;
+            });
+            
+            // Also update React state for consistency
             setAgents(prev => prev.map((agent, idx) => {
               if (confAgents.find(a => a.id === agent.id)) {
                 const pos = getConferencePosition(idx);
@@ -1694,6 +1743,15 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               
               if (scrumData.assignments && scrumData.assignments.length > 0) {
                 const assignmentMap = new Map(scrumData.assignments.map((a: any) => [a.agentId, { targetX: a.targetX, targetY: a.targetY }]));
+                // Update renderAgentsRef for visual movement
+                renderAgentsRef.current = renderAgentsRef.current.map(agent => {
+                  const assignment = assignmentMap.get(agent.id);
+                  if (assignment) {
+                    return { ...agent, targetX: assignment.targetX, targetY: assignment.targetY, mode: "standing" as const };
+                  }
+                  return agent;
+                });
+                // Also update React state
                 setAgents(prev => prev.map(agent => {
                   const assignment = assignmentMap.get(agent.id);
                   if (assignment) {
@@ -1709,6 +1767,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             setTimeout(() => {
               setIsScrumRunning(false);
               setActiveConversationZone(null);
+              // Update renderAgentsRef for visual movement
+              renderAgentsRef.current = renderAgentsRef.current.map(agent => ({
+                ...agent,
+                targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,
+                targetY: CHAIR_POSITIONS[agent.deskIndex]?.y || agent.y,
+                mode: "walking"
+              }));
+              // Also update React state
               setAgents(prev => prev.map(agent => ({
                 ...agent,
                 targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,

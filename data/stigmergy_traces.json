@@ -1,20 +1,20 @@
 [
   {
-    "id": "trace-1779424210502-684",
+    "id": "trace-1779424834161-390",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
     "roomId": "dataNodes",
-    "created_at": "2026-05-22T04:30:10.502Z",
-    "expires_at": "2026-05-22T04:40:10.502Z"
+    "created_at": "2026-05-22T04:40:34.161Z",
+    "expires_at": "2026-05-22T04:50:34.161Z"
   },
   {
-    "id": "trace-1779424520493-854",
+    "id": "trace-1779425155529-120",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
     "roomId": "dataNodes",
-    "created_at": "2026-05-22T04:35:20.492Z",
-    "expires_at": "2026-05-22T04:45:20.492Z"
+    "created_at": "2026-05-22T04:45:55.529Z",
+    "expires_at": "2026-05-22T04:55:55.529Z"
   }
 ]
