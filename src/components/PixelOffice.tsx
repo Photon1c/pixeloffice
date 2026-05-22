@@ -924,11 +924,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
   // Agent conversations (more frequent in sleep mode, occasional otherwise)
   // Updates renderAgentsRef directly to avoid React re-renders
+  // Now triggers MORE frequently to enable natural agent interactions
   useEffect(() => {
-    const intervalMs = sleepMode ? 8000 : 25000;
+    const intervalMs = sleepMode ? 5000 : 12000; // More frequent: 5s/12s (was 8s/25s)
     const convInterval = setInterval(() => {
       const currentAgents = renderAgentsRef.current;
-      const idle = currentAgents.filter(a => a.mode === "sitting" && !a.speechBubble && !activeWalkUpChats.has(a.id));
+      // Allow standing agents to join conversations too (not just sitting)
+      const idle = currentAgents.filter(a => 
+        (a.mode === "sitting" || a.mode === "standing") && 
+        !a.speechBubble && 
+        !activeWalkUpChats.has(a.id)
+      );
       if (idle.length < 2) return;
       const initiator = idle[Math.floor(Math.random() * idle.length)];
       const partners = idle.filter(a => a.id !== initiator.id);

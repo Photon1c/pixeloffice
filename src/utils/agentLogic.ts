@@ -414,7 +414,14 @@ export function updateAgentStatus(
 }
 
 export function handleWanderLogic(agent: Agent): Agent {
-  if (agent.status !== "idle" || agent.mode !== "idle-wander") {
+  // Allow wandering for both idle AND working agents (not just idle)
+  // This enables free movement around the office for conversations
+  if (agent.status !== "idle" && agent.status !== "working") {
+    return agent;
+  }
+  
+  // Only wander if in walking or idle-wander mode
+  if (agent.mode !== "walking" && agent.mode !== "idle-wander") {
     return agent;
   }
 
@@ -423,9 +430,11 @@ export function handleWanderLogic(agent: Agent): Agent {
   const distance = Math.sqrt(dx * dx + dy * dy);
 
   if (distance < 10) {
-    const newPoint =
-      WANDER_POINTS[Math.floor(Math.random() * WANDER_POINTS.length)];
-    return { ...agent, targetX: newPoint.x, targetY: newPoint.y };
+    // 40% chance to pick a new wander point, 60% chance to stay put (more natural)
+    if (Math.random() > 0.6) {
+      const newPoint = WANDER_POINTS[Math.floor(Math.random() * WANDER_POINTS.length)];
+      return { ...agent, targetX: newPoint.x, targetY: newPoint.y, mode: "idle-wander" as const };
+    }
   }
 
   return agent;
@@ -808,6 +817,19 @@ export function applyScheduleToAgents(
       return agent;
     }
 
+    // 30% chance to let agent wander freely instead of following schedule
+    // This enables natural movement and conversations around the office
+    if (Math.random() < 0.3) {
+      const wanderPoint = WANDER_POINTS[Math.floor(Math.random() * WANDER_POINTS.length)];
+      return {
+        ...agent,
+        status: "idle" as const,
+        targetX: wanderPoint.x,
+        targetY: wanderPoint.y,
+        mode: "idle-wander" as const
+      };
+    }
+
     let targetZoneId = period.suggestedZones[agent.id] || period.suggestedZones["all"];
     
     // Default fallback if no zone suggested
@@ -817,10 +839,10 @@ export function applyScheduleToAgents(
            if (agent.x < 0 && agent.mode === "sitting") return agent;
            return {
              ...agent,
-             status: "idle",
+             status: "idle" as const,
              targetX: -100,
              targetY: agent.y,
-             mode: "walking"
+             mode: "walking" as const
            };
          }
       }

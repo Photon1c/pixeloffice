@@ -134,17 +134,39 @@ export const CHAIR_POSITIONS = CUBICLE_POSITIONS.map((pos) => ({
 export const ENTRANCE_POSITION = { x: -60, y: 394 };
 
 // ============================================================================
-// WANDER POINTS (for idle agents)
+// WANDER POINTS (for idle agents) - Expanded for free movement
 // ============================================================================
 export const WANDER_POINTS = [
-  { x: 120, y: 394 },    // Lobby (row 1)
-  { x: 360, y: 394 },    // Open Office
-  { x: 1080, y: 154 },   // Kitchen (row 0)
-  { x: 1080, y: 394 },   // Archives (row 1)
-  { x: 120, y: 154 },    // Executive (row 0)
-  { x: 840, y: 154 },    // Conference (row 0)
-  { x: 120, y: 634 },    // Gym (row 2)
-  { x: 600, y: 634 },    // Mission Ctrl (row 2)
+  // Row 0 (y: 154)
+  { x: 120, y: 154 },    // Executive
+  { x: 360, y: 154 },    // Open Office (north)
+  { x: 600, y: 154 },    // Center hallway
+  { x: 840, y: 154 },    // Conference
+  { x: 1080, y: 154 },   // Kitchen
+  
+  // Row 1 (y: 394)
+  { x: 120, y: 394 },    // Lobby
+  { x: 360, y: 394 },    // Open Office (center)
+  { x: 600, y: 394 },    // Center hallway
+  { x: 840, y: 394 },    // War Room
+  { x: 1080, y: 394 },   // Archives
+  
+  // Row 2 (y: 634)
+  { x: 120, y: 634 },    // Gym
+  { x: 360, y: 634 },    // Open Office (south)
+  { x: 600, y: 634 },    // Mission Control
+  { x: 840, y: 634 },    // Data Nodes
+  { x: 1080, y: 634 },   // Lounge
+  
+  // Additional hallway and transition points
+  { x: 240, y: 274 },    // Between exec and open office
+  { x: 480, y: 274 },    // Center north
+  { x: 720, y: 274 },    // Center north
+  { x: 960, y: 274 },    // Between conference and kitchen
+  { x: 240, y: 514 },    // Between lobby and gym
+  { x: 480, y: 514 },    // Center south
+  { x: 720, y: 514 },    // Center south
+  { x: 960, y: 514 },    // Between archives and lounge
 ];
 
 export const ZONE_CONFIG: Record<string, { mood: string; intensity: "high" | "medium" | "low"; color: string }> = {
