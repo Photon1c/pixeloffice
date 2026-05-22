@@ -874,49 +874,51 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
   useEffect(() => {
     // Sleep mode = MORE agent conversations and thoughts!
+    // Only update renderAgentsRef directly to avoid React re-renders
     const moodInterval = setInterval(() => {
       // When sleeping, 70% chance to continue (more active)
       // When awake, 30% chance to skip (less active due to user presence)
       if (!sleepMode && Math.random() > 0.7) return;
       
-      setAgents((prevAgents) =>
-        prevAgents.map((agent) => {
-          const randomMood = MOOD_OPTIONS[Math.floor(Math.random() * MOOD_OPTIONS.length)];
-          let updated = updateAgentMood(agent, randomMood);
-          // More thought bubbles in sleep mode
-          const thoughtChance = sleepMode ? 0.7 : 0.5;
-          if (Math.random() > (1 - thoughtChance)) updated = generateThoughtBubble(updated);
-          return clearExpiredThoughts(updated);
-        })
-      );
+      // Update renderAgentsRef directly instead of React state
+      renderAgentsRef.current = renderAgentsRef.current.map((agent) => {
+        const randomMood = MOOD_OPTIONS[Math.floor(Math.random() * MOOD_OPTIONS.length)];
+        let updated = updateAgentMood(agent, randomMood);
+        // More thought bubbles in sleep mode
+        const thoughtChance = sleepMode ? 0.7 : 0.5;
+        if (Math.random() > (1 - thoughtChance)) updated = generateThoughtBubble(updated);
+        return clearExpiredThoughts(updated);
+      });
     }, sleepMode ? 2000 : 4000); // Faster updates when sleeping
     return () => clearInterval(moodInterval);
   }, [sleepMode]);
 
   // Agent conversations (more frequent in sleep mode, occasional otherwise)
+  // Updates renderAgentsRef directly to avoid React re-renders
   useEffect(() => {
     const intervalMs = sleepMode ? 8000 : 25000;
     const convInterval = setInterval(() => {
-      setAgents((prevAgents) => {
-        const idle = prevAgents.filter(a => a.mode === "sitting" && !a.speechBubble && !activeWalkUpChats.has(a.id));
-        if (idle.length < 2) return prevAgents;
-        const initiator = idle[Math.floor(Math.random() * idle.length)];
-        const partners = idle.filter(a => a.id !== initiator.id);
-        if (partners.length === 0) return prevAgents;
-        const partner = partners[Math.floor(Math.random() * partners.length)];
-        const session = initiateWalkUpChat(initiator, partner, new Map());
-        if (!session) return prevAgents;
-        setActiveWalkUpChats(prev => { const m = new Map(prev); m.set(session.initiatorId, session); return m; });
-        setSpeechBubbles(prev => [...prev, {
-          speakerId: session.initiatorId,
-          text: enhanceTextWithEmoji(session.script[0]?.text || "Hey!", prevAgents.find(a => a.id === session.initiatorId)?.mood || "neutral", session.initiatorId),
-        }]);
-        return prevAgents.map(a => {
-          if (a.id === session.initiatorId || a.id === session.partnerId) {
-            return { ...a, targetX: session.meetPoint.x + (a.id === session.initiatorId ? -20 : 20), targetY: session.meetPoint.y, mode: "standing" as const };
-          }
-          return a;
-        });
+      const currentAgents = renderAgentsRef.current;
+      const idle = currentAgents.filter(a => a.mode === "sitting" && !a.speechBubble && !activeWalkUpChats.has(a.id));
+      if (idle.length < 2) return;
+      const initiator = idle[Math.floor(Math.random() * idle.length)];
+      const partners = idle.filter(a => a.id !== initiator.id);
+      if (partners.length === 0) return;
+      const partner = partners[Math.floor(Math.random() * partners.length)];
+      const session = initiateWalkUpChat(initiator, partner, new Map());
+      if (!session) return;
+      setActiveWalkUpChats(prev => { const m = new Map(prev); m.set(session.initiatorId, session); return m; });
+      setSpeechBubbles(prev => [...prev, {
+        speakerId: session.initiatorId,
+        text: enhanceTextWithEmoji(session.script[0]?.text || "Hey!", currentAgents.find(a => a.id === session.initiatorId)?.mood || "neutral", session.initiatorId),
+      }]);
+      
+      // Update renderAgentsRef directly
+      renderAgentsRef.current = currentAgents.map(a => {
+        if (a.id === session.initiatorId || a.id === session.partnerId) {
+          return { ...a, targetX: session.meetPoint.x + (a.id === session.initiatorId ? -20 : 20), targetY: session.meetPoint.y, mode: "standing" as const };
+        }
+        return a;
       });
     }, intervalMs);
     return () => clearInterval(convInterval);
@@ -933,9 +935,10 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   }, [currentHour]);
 
   // Idle agents occasionally stretch or change position for liveliness
+  // Updates renderAgentsRef directly to avoid React re-renders
   useEffect(() => {
     const stretchInterval = setInterval(() => {
-      setAgents(prev => prev.map(agent => {
+      renderAgentsRef.current = renderAgentsRef.current.map(agent => {
         if (agent.mode === "sitting" && agent.status === "working" && Math.random() > 0.85) {
           return {
             ...agent,
@@ -955,12 +958,13 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           };
         }
         return agent;
-      }));
+      });
     }, 12000);
     return () => clearInterval(stretchInterval);
   }, []);
 
   // Advance active walk-up chat dialogues periodically
+  // Updates renderAgentsRef directly to avoid React re-renders
   useEffect(() => {
     if (!sleepMode || activeWalkUpChats.size === 0) return;
     const advanceInterval = setInterval(() => {
@@ -970,11 +974,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         next.forEach((session, id) => {
           if (session.finished) {
             next.delete(id); changed = true;
-            setAgents(prev => prev.map(a =>
+            // Update renderAgentsRef directly
+            renderAgentsRef.current = renderAgentsRef.current.map(a =>
               a.id === session.initiatorId || a.id === session.partnerId
                 ? { ...a, targetX: CHAIR_POSITIONS[a.deskIndex]?.x || a.x, targetY: CHAIR_POSITIONS[a.deskIndex]?.y || a.y, mode: "walking" as const }
                 : a
-            ));
+            );
             return;
           }
           const nextLine = session.currentLine + 1;
@@ -982,11 +987,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             next.set(id, { ...session, finished: true, currentLine: nextLine });
             changed = true;
             setSpeechBubbles(prevBubbles => prevBubbles.filter(b => b.speakerId !== session.initiatorId && b.speakerId !== session.partnerId));
-            setAgents(prev => prev.map(a =>
+            // Update renderAgentsRef directly
+            renderAgentsRef.current = renderAgentsRef.current.map(a =>
               a.id === session.initiatorId || a.id === session.partnerId
                 ? { ...a, targetX: CHAIR_POSITIONS[a.deskIndex]?.x || a.x, targetY: CHAIR_POSITIONS[a.deskIndex]?.y || a.y, mode: "walking" as const }
                 : a
-            ));
+            );
           } else {
             const line = session.script[nextLine];
             setSpeechBubbles(prevBubbles => {
