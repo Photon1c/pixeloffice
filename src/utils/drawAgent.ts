@@ -387,15 +387,15 @@ function drawSherlobster(
     }
   }
 
-  // Draw thought bubble
+  // Draw thought bubble (positioned above the 3x larger character)
   if (thoughtBubble) {
-    drawThoughtBubble(ctx, x, y - 80, thoughtBubble.text, mood);
+    drawThoughtBubble(ctx, x, y - charHeight - 30, thoughtBubble.text, mood);
   }
   
-  // Draw speech bubble
+  // Draw speech bubble (positioned above the 3x larger character)
   if ((agent as any).speechBubble) {
     const offset = (agent as any).speechBubble.offset || 0;
-    drawSpeechBubble(ctx, x, y - 80 - offset, (agent as any).speechBubble.text, mood);
+    drawSpeechBubble(ctx, x, y - charHeight - 30 - offset, (agent as any).speechBubble.text, mood);
   }
 }
 
