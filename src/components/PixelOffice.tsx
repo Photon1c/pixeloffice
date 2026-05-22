@@ -127,6 +127,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [isResizing, setIsResizing] = useState(false);
   
   const [isMobile, setIsMobile] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(true);
+  const [showRightPanel, setShowRightPanel] = useState(true);
   
   useEffect(() => {
     const checkMobile = () => {
@@ -134,9 +136,15 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       setIsMobile(mobile);
       if (mobile && window.innerWidth < 480) {
         setSidebarWidth(window.innerWidth - 20);
+        setShowMobileSidebar(false); // Start collapsed on small screens
       } else if (mobile) {
         setSidebarWidth(Math.min(280, window.innerWidth - 40));
+        setShowMobileSidebar(true);
+      } else {
+        setShowMobileSidebar(true);
       }
+      // Hide right panel on mobile by default for more canvas space
+      setShowRightPanel(!mobile);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
@@ -1271,12 +1279,61 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       ...styles.container,
       flexDirection: isMobile ? "column" : "row"
     }}>
+      {/* Mobile sidebar toggle */}
+      {isMobile && (
+        <button
+          onClick={() => setShowMobileSidebar(!showMobileSidebar)}
+          style={{
+            position: 'absolute',
+            top: 10,
+            left: 10,
+            zIndex: 100,
+            background: '#1a2a2a',
+            border: '1px solid #2a3548',
+            color: '#4ecdc4',
+            padding: '10px 14px',
+            borderRadius: '6px',
+            fontSize: '18px',
+            cursor: 'pointer',
+            minHeight: '44px',
+            minWidth: '44px',
+          }}
+        >
+          {showMobileSidebar ? '✕' : '☰'}
+        </button>
+      )}
+      
+      {/* Right panel toggle (mobile) */}
+      {isMobile && (
+        <button
+          onClick={() => setShowRightPanel(!showRightPanel)}
+          style={{
+            position: 'absolute',
+            top: 10,
+            right: 10,
+            zIndex: 100,
+            background: '#1a2a2a',
+            border: '1px solid #2a3548',
+            color: '#4ecdc4',
+            padding: '10px 14px',
+            borderRadius: '6px',
+            fontSize: '16px',
+            cursor: 'pointer',
+            minHeight: '44px',
+            minWidth: '44px',
+          }}
+        >
+          {showRightPanel ? '◀' : '▶'}
+        </button>
+      )}
+      
       <div style={{
         ...styles.sidebar, 
         width: sidebarWidth,
-        ...(isMobile && styles.sidebarMobile)
+        ...(isMobile && styles.sidebarMobile),
+        ...(isMobile && !showMobileSidebar && styles.sidebarHidden)
       }}>
-        {isMobile && <div style={styles.resizeHandle} />}
+        {isMobile && <div style={{ height: '50px' }} />} {/* Spacer for toggle button */}
         <OfficeClock embedded onHourChange={(hour) => {
           setCurrentHour(hour);
           setAgents(prev => applyScheduleToAgents(prev, hour));
@@ -1867,8 +1924,21 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               />
             )}
         </div>
-        {!isMobile && (
-        <div style={{ width: '260px', height: '100%', background: '#0a0a12', borderLeft: '1px solid #1b2333', padding: '10px', display: 'flex', flexDirection: 'column', overflowY: 'auto', flexShrink: 0, gap: '8px' }}>
+        {!isMobile || (isMobile && showRightPanel) ? (
+        <div style={{ 
+          width: isMobile ? '100%' : '260px', 
+          height: '100%', 
+          background: '#0a0a12', 
+          borderLeft: '1px solid #1b2333', 
+          padding: '10px', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          overflowY: 'auto', 
+          flexShrink: 0, 
+          gap: '8px',
+          ...(isMobile && { position: 'absolute', right: 0, top: 0, bottom: 0, zIndex: 50, width: '100%', maxWidth: '320px' })
+        }}>
+          {isMobile && <div style={{ height: '50px' }} />} {/* Spacer for toggle button */}
           <div style={{ background: '#0f1520', borderRadius: '6px', padding: '8px', border: '1px solid #1b2333', marginBottom: '8px' }}>
             <StabilityMonitor 
               visible={true}
@@ -1895,7 +1965,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             <YouTubePlayer />
           </div>
         </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -2746,31 +2816,138 @@ const actionCardStyles: Record<string, React.CSSProperties> = {
 };
 
 const styles: Record<string, React.CSSProperties> = {
-  container: { display: "flex", width: "100vw", height: "100vh", background: "#050509", overflow: "hidden", color: "#e8e8f0", fontFamily: "'JetBrains Mono', monospace" },
-  sidebar: { height: "100%", background: "#0a0a12", borderRight: "1px solid #1b2333", padding: "20px", display: "flex", flexDirection: "column", overflowY: "auto", position: "relative", flexShrink: 0 },
+  container: { 
+    display: "flex", 
+    width: "100vw", 
+    height: "100vh", 
+    background: "#050509", 
+    overflow: "hidden", 
+    color: "#e8e8f0", 
+    fontFamily: "'JetBrains Mono', monospace",
+    // App mode optimizations
+    WebkitOverflowScrolling: "touch",
+    touchAction: "none",
+  },
+  sidebar: { 
+    height: "100%", 
+    background: "#0a0a12", 
+    borderRight: "1px solid #1b2333", 
+    padding: "20px", 
+    display: "flex", 
+    flexDirection: "column", 
+    overflowY: "auto", 
+    position: "relative", 
+    flexShrink: 0,
+    // Better mobile scrolling
+    WebkitOverflowScrolling: "touch",
+  },
   sidebarCollapsed: { width: "60px", padding: "10px" },
-  sidebarMobile: { position: "absolute", left: 0, top: 0, bottom: 0, zIndex: 50, width: "85vw", maxWidth: "320px", transform: "translateX(0)", transition: "transform 0.3s ease" },
+  sidebarMobile: { 
+    position: "absolute", 
+    left: 0, 
+    top: 0, 
+    bottom: 0, 
+    zIndex: 50, 
+    width: "100vw", 
+    maxWidth: "100%",
+    background: "#0a0a12",
+    transform: "translateX(0)", 
+    transition: "transform 0.3s ease",
+    // Touch-friendly
+    WebkitOverflowScrolling: "touch",
+  },
   sidebarHidden: { transform: "translateX(-100%)" },
-  mainContent: { flex: 1, height: "100%", position: "relative", overflow: "hidden", display: "flex", flexDirection: "row" },
+  mainContent: { 
+    flex: 1, 
+    height: "100%", 
+    position: "relative", 
+    overflow: "hidden", 
+    display: "flex", 
+    flexDirection: "row",
+    // App mode: full viewport
+    width: "100%",
+    maxWidth: "100vw",
+  },
   mainContentNoSidebar: { marginLeft: 0 },
-  canvasWrapper: { height: "100%", position: "relative", flex: 1, minWidth: 0, minHeight: 0 },
-  canvas: { width: "100%", height: "100%", display: "block" },
-  paramsToggle: { width: "100%", padding: "10px", background: "#1a2a2a", border: "1px solid #2a3548", color: "#4ecdc4", borderRadius: "4px", cursor: "pointer", fontSize: "13px", fontWeight: 600, textAlign: "left" },
+  canvasWrapper: { 
+    height: "100%", 
+    position: "relative", 
+    flex: 1, 
+    minWidth: 0, 
+    minHeight: 0,
+    // Touch interactions
+    touchAction: "none",
+  },
+  canvas: { 
+    width: "100%", 
+    height: "100%", 
+    display: "block",
+    // Prevent touch scrolling on canvas
+    touchAction: "none",
+  },
+  paramsToggle: { 
+    width: "100%", 
+    padding: "12px", 
+    background: "#1a2a2a", 
+    border: "1px solid #2a3548", 
+    color: "#4ecdc4", 
+    borderRadius: "6px", 
+    cursor: "pointer", 
+    fontSize: "14px", 
+    fontWeight: 600, 
+    textAlign: "left",
+    // Touch-friendly size
+    minHeight: "44px",
+  },
   resizeHandle: { position: "absolute", right: 0, top: 0, bottom: 0, width: "4px", cursor: "col-resize", background: "transparent", zIndex: 10 },
   subPanel: { background: "#161625", padding: "15px", borderRadius: "8px", border: "1px solid #2a3548", marginTop: "10px" },
   commandLink: { color: "#4ecdc4", textDecoration: "none", fontSize: "12px", padding: "4px 8px", border: "1px solid #2a3548", borderRadius: "4px", background: "#0a0a12" },
-  secondaryBtn: { width: "100%", padding: "8px", background: "#2a3548", color: "#fff", border: "none", borderRadius: "4px", marginTop: "8px", cursor: "pointer", fontSize: "12px" },
-  agentCard: { position: "absolute", bottom: "100px", right: "20px", width: "300px", background: "rgba(15, 15, 25, 0.95)", border: "1px solid #3a3a5a", borderRadius: "12px", padding: "20px", zIndex: 100, boxShadow: "0 10px 30px rgba(0,0,0,0.5)", maxWidth: "calc(100vw - 40px)" },
-  agentCardMobile: { width: "calc(100vw - 40px)", right: "20px", left: "20px", bottom: "80px" },
-  closeBtn: { background: "none", border: "none", color: "#fff", fontSize: "20px", cursor: "pointer" },
+  secondaryBtn: { 
+    width: "100%", 
+    padding: "12px", 
+    background: "#2a3548", 
+    color: "#fff", 
+    border: "none", 
+    borderRadius: "6px", 
+    marginTop: "8px", 
+    cursor: "pointer", 
+    fontSize: "14px",
+    // Touch-friendly
+    minHeight: "44px",
+  },
+  agentCard: { 
+    position: "absolute", 
+    bottom: "100px", 
+    right: "20px", 
+    width: "300px", 
+    background: "rgba(15, 15, 25, 0.95)", 
+    border: "1px solid #3a3a5a", 
+    borderRadius: "12px", 
+    padding: "20px", 
+    zIndex: 100, 
+    boxShadow: "0 10px 30px rgba(0,0,0,0.5)", 
+    maxWidth: "calc(100vw - 40px)",
+    // Mobile responsive
+    maxHeight: "60vh",
+    overflowY: "auto",
+    WebkitOverflowScrolling: "touch",
+  },
+  agentCardMobile: { 
+    width: "calc(100vw - 40px)", 
+    right: "20px", 
+    left: "20px", 
+    bottom: "80px",
+    maxHeight: "50vh",
+  },
+  closeBtn: { background: "none", border: "none", color: "#fff", fontSize: "20px", cursor: "pointer", padding: "8px" },
   chatBox: { height: "400px", overflowY: "auto", background: "rgba(0,0,0,0.2)", borderRadius: "4px", padding: "8px", fontSize: "11px", margin: "12px 0", border: "1px solid #2a2a3a" },
-  input: { flex: 1, background: "#0a0a15", border: "1px solid #2a2a3a", color: "#fff", padding: "6px", borderRadius: "4px", fontSize: "12px" },
-  sendBtn: { background: "#4a90d9", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontSize: "12px" },
-  moodBtn: { background: "#2a2a3a", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer" },
-  iconBtn: { background: "none", border: "none", color: "#ff6432", cursor: "pointer", fontSize: "14px" },
-  badge: { padding: "2px 6px", borderRadius: "4px", fontSize: "10px", fontWeight: "bold", color: "#000" },
+  input: { flex: 1, background: "#0a0a15", border: "1px solid #2a2a3a", color: "#fff", padding: "12px", borderRadius: "6px", fontSize: "14px", minHeight: "44px" },
+  sendBtn: { background: "#4a90d9", color: "#fff", border: "none", padding: "12px 20px", borderRadius: "6px", cursor: "pointer", fontSize: "14px", minHeight: "44px" },
+  moodBtn: { background: "#2a2a3a", border: "none", padding: "8px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "16px", minHeight: "44px" },
+  iconBtn: { background: "none", border: "none", color: "#ff6432", cursor: "pointer", fontSize: "18px", padding: "8px" },
+  badge: { padding: "4px 8px", borderRadius: "6px", fontSize: "11px", fontWeight: "bold", color: "#000" },
   modelStatus: { display: 'flex', alignItems: 'center', margin: '8px 0' },
-  formGroup: { marginBottom: '8px' }
+  formGroup: { marginBottom: '12px' }
 };
 
 // ConvoViewer Component - displays stored cooler/scrum conversations
