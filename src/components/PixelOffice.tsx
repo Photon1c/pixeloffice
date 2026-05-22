@@ -11,6 +11,7 @@ import TimeTasksPanel from "./TimeTasksPanel";
 import ScrumPanel from "./ScrumPanel";
 import OfficeClock from "./OfficeClock";
 import YouTubePlayer from "./YouTubePlayer";
+import InventoryWorkflowDemo from "./InventoryWorkflowDemo";
 import { getPeriodForHour } from "../utils/schedule";
 import {
   INITIAL_AGENTS,
@@ -506,6 +507,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [showReviewHeat, setShowReviewHeat] = useState<boolean>(true);
   const [showQuickActions, setShowQuickActions] = useState<boolean>(false);
   const [showThoughtBursts, setShowThoughtBursts] = useState<boolean>(LAB_MODE);
+  const [showInventoryWorkflow, setShowInventoryWorkflow] = useState<boolean>(false);
   const [activeWalkUpChats, setActiveWalkUpChats] = useState<Map<string, WalkUpChatSession>>(new Map());
   const agentsRef = useRef(agents);
   agentsRef.current = agents;
@@ -1629,6 +1631,16 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           </button>
         </div>
 
+        <div style={{ marginBottom: '16px' }}>
+          <button 
+            id="inventory-workflow-btn"
+            style={{...styles.paramsToggle, background: showInventoryWorkflow ? '#1a2a2a' : '#0a0a12', borderColor: '#ff6b6b'}} 
+            onClick={() => setShowInventoryWorkflow(!showInventoryWorkflow)}
+          >
+            {showInventoryWorkflow ? "▼ Inventory" : "▶ Inventory"}
+          </button>
+        </div>
+
          <div style={{ marginBottom: '16px' }}>
           <button id="coolertalk-btn" style={{...styles.paramsToggle, background: '#7c5cbf', opacity: (!currentTopic || currentTopic === "" || isScrumRunning || isCoolerTalkRunning) ? 0.5 : 1}} disabled={!currentTopic || currentTopic === "" || isScrumRunning || isCoolerTalkRunning} onClick={() => {
             setIsCoolerTalkRunning(true);
@@ -1858,6 +1870,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         {showTimeTasks && <TimeTasksPanel onClose={() => setShowTimeTasks(false)} />}
         {showScrum && <ScrumPanel />}
         {showChat && <ChatOverlay onClose={() => setShowChat(false)} />}
+        {showInventoryWorkflow && <InventoryWorkflowDemo />}
       </div>
 
       <div style={styles.mainContent}>
