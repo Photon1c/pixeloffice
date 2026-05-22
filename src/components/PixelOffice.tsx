@@ -881,13 +881,19 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       if (!sleepMode && Math.random() > 0.7) return;
       
       // Update renderAgentsRef directly instead of React state
+      // Preserve position data, only update mood/thoughtBubble
       renderAgentsRef.current = renderAgentsRef.current.map((agent) => {
         const randomMood = MOOD_OPTIONS[Math.floor(Math.random() * MOOD_OPTIONS.length)];
         let updated = updateAgentMood(agent, randomMood);
         // More thought bubbles in sleep mode
         const thoughtChance = sleepMode ? 0.7 : 0.5;
         if (Math.random() > (1 - thoughtChance)) updated = generateThoughtBubble(updated);
-        return clearExpiredThoughts(updated);
+        // Preserve position and movement state from render loop
+        return {
+          ...agent, // Keep x, y, mode, targetX, targetY, dir, frame from render loop
+          mood: updated.mood,
+          thoughtBubble: updated.thoughtBubble
+        };
       });
     }, sleepMode ? 2000 : 4000); // Faster updates when sleeping
     return () => clearInterval(moodInterval);
@@ -1110,7 +1116,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
     const render = (timestamp: number) => {
       frameCountRef.current++;
-      const deltaTime = timestamp - lastFrameTime.current;
+      
+      // Initialize lastFrameTime on first render to prevent NaN deltaTime
+      if (lastFrameTime.current === 0) {
+        lastFrameTime.current = timestamp;
+      }
+      
+      const deltaTime = Math.min(timestamp - lastFrameTime.current, 100); // Cap at 100ms to prevent teleportation
+      lastFrameTime.current = timestamp;
 
       const currentSleepMode = sleepModeRef.current;
       const currentConfig = configRef.current;
