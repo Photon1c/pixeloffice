@@ -1,15 +1,53 @@
 # TODO: Restore Missing Features
 
-## 1. Starbucks Inventory Test Button ❌ MISSING
+## 1. Starbucks Inventory Test Button ✅ RESTORED
 
-**Status**: Need to locate original implementation  
-**Description**: User mentions a "Starbucks inventory test" button that existed previously  
-**Location**: Unknown - may have been in sidebar or InventoryWorkflowDemo  
+**Status**: IMPLEMENTED  
+**Location**: Left sidebar (orange button)  
+**Integration**: Emits routes to ~/tools/router-visualizer  
+
+**Features**:
+- ☕ "Starbucks Inventory Test" button in left sidebar
+- Triggers inventory workflow animation automatically
+- Emits agent routing events to router visualizer
+- Route flow: frontdesk → openclaw → zeroclaw → ironclaw → sherlobster
+
+**To Test**:
+```bash
+# Terminal 1: Start router visualizer
+cd ~/tools/router-visualizer
+python app.py
+# Open http://localhost:5006
+
+# Terminal 2: Start Pixel Office (if not running)
+cd ~/apps/pixelworld/pixel_office
+npm run dev
+
+# Click the orange "☕ Starbucks Inventory Test" button
+# Watch routes animate in the visualizer!
+```
+
+---
+
+## 2. Tiny-Router Integration ⚠️ PARTIAL
+
+**Status**: Documented but not fully integrated  
+**References**: 
+- `docs/active/may_upgrade2.md` mentions "tiny-router app"
+- `CHANGELOG_orchestrator.md` has tiny-router evaluation section
+- Router visualizer exists at `~/tools/router-visualizer`
+
+**Description**: tiny-router is a compact multi-head text classifier for routing decisions  
+
+**Current Integration**:
+- ✅ Inventory workflow emits routes to visualizer
+- ✅ Agent-to-agent routing visualization works
+- ❌ tiny-router classification not integrated in decision flow
 
 **Action Required**:
-- [ ] Search git history for "Starbucks" references
-- [ ] Restore inventory test functionality
-- [ ] Add button to sidebar alongside existing Inventory Workflow button
+- [ ] Locate tiny-router library/code
+- [ ] Integrate with agent routing decisions
+- [ ] Add UI indicator for router classification confidence
 
 ---
 
