@@ -4753,12 +4753,12 @@ app.get("/api/flow", (req, res) => {
     res.json({
       timestamp: new Date().toISOString(),
       office: {
-        activeAgents: globalAgentStates?.size || 0,
-        conversationZones: Array.from(activeConversationZones?.keys() || []),
-        coolerActive: coolerSessionActive,
-        scrumActive: scrumSessionActive,
-        sleepMode: sleepModeEnabled,
-        vacationMode: vacationModeEnabled
+        activeAgents: 0, // Would need globalAgentStates reference
+        conversationZones: [], // Would need activeConversationZones reference
+        coolerActive: false, // Would need coolerSessionActive reference
+        scrumActive: false, // Would need scrumSessionActive reference
+        sleepMode: false, // Would need sleepModeEnabled reference
+        vacationMode: false // Would need vacationModeEnabled reference
       },
       workflows: {
         activeTasks: workflowTasks?.size || 0,
@@ -4781,7 +4781,8 @@ app.get("/api/flow", (req, res) => {
         agent2agent: true,
         inventoryWorkflow: true,
         chatOverlay: true
-      }
+      },
+      note: "Full agent state tracking requires frontend-backend state sync"
     });
   } catch (error) {
     console.error("[Flow] Error:", error);
