@@ -1714,12 +1714,15 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                 setSpeechBubbles(prev => {
                   // Remove old bubbles for participating agents, keep max 4 stacked (prevent duplicates)
                   const filtered = prev.filter(b => !participatingAgents.find(a => a.id === b.speakerId));
-                  return [{
-                    speakerId: agentId,
-                    text: line.text,
-                    offset: bubbleStackIndex * 55,
-                    yOffset: yOffset
-                  }];
+                  return [
+                    ...filtered,
+                    {
+                      speakerId: agentId,
+                      text: line.text,
+                      offset: bubbleStackIndex * 55,
+                      yOffset: yOffset
+                    }
+                  ];
                 });
               }, line.delay);
               // Track timeout for cleanup
