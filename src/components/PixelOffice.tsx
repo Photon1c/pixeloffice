@@ -193,8 +193,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     // Track which agents are in the test (to suspend their wandering)
     testAgentIdsRef.current = { visitor: visitor.id, host: host.id };
     
-    // Position agents side-by-side with 60px spacing for conversation
-    // Host stays put, visitor moves to position 60px to the right
+    // Position agents: visitor walks to host's location
+    // Host stays put (standing), visitor walks over
     const conversationSpacing = 60;
     const hostTargetX = host.x;
     const hostTargetY = host.y;
@@ -203,26 +203,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     
     console.log("[TestConversation]", visitor.name, "visiting", host.name);
     
-    // 5-turn conversation script
-    const conversationScript = [
-      { speaker: visitor.name, text: "Hey, got a minute to chat about the project?", delay: 1500 },
-      { speaker: host.name, text: "Sure! What's on your mind?", delay: 3000 },
-      { speaker: visitor.name, text: "I've been thinking about our architecture. Are we happy with the current setup?", delay: 4500 },
-      { speaker: host.name, text: "Good question. I think it's working well, but we could optimize the data flow.", delay: 6000 },
-      { speaker: visitor.name, text: "Exactly! Maybe we should document some improvements?", delay: 7500 },
-      { speaker: host.name, text: "Great idea. Let's bring it up in the next standup.", delay: 9000 },
-      { speaker: visitor.name, text: "Perfect, thanks for the chat!", delay: 10500 },
-      { speaker: host.name, text: "Anytime! That's what teammates are for.", delay: 12000 }
-    ];
-    
-    // Pause wandering for ALL agents during test (more order)
-    // CRITICAL: Must update renderAgentsRef.current directly since render loop reads from it
+    // Set host to standing (waiting for visitor)
+    // Set visitor to walking (moving to host)
     renderAgentsRef.current = renderAgentsRef.current.map(a => {
       if (a.id === host.id) {
         return { ...a, targetX: hostTargetX, targetY: hostTargetY, mode: "standing", dir: "right", status: "idle" as const };
       }
       if (a.id === visitor.id) {
-        return { ...a, targetX: visitorTargetX, targetY: visitorTargetY, mode: "walking", dir: "right", status: "idle" as const };
+        return { ...a, targetX: visitorTargetX, targetY: visitorTargetY, mode: "walking", dir: visitorTargetX > a.x ? "right" : "left", status: "idle" as const };
       }
       // Other agents stay at their desks (no wandering during test)
       const deskPos = CHAIR_POSITIONS[a.deskIndex];
@@ -235,7 +223,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         return { ...a, targetX: hostTargetX, targetY: hostTargetY, mode: "standing", dir: "right", status: "idle" as const };
       }
       if (a.id === visitor.id) {
-        return { ...a, targetX: visitorTargetX, targetY: visitorTargetY, mode: "walking", dir: "right", status: "idle" as const };
+        return { ...a, targetX: visitorTargetX, targetY: visitorTargetY, mode: "walking", dir: visitorTargetX > a.x ? "right" : "left", status: "idle" as const };
       }
       const deskPos = CHAIR_POSITIONS[a.deskIndex];
       return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "sitting", status: "idle" as const };
@@ -256,12 +244,15 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         setSpeechBubbles(prev => {
           // Remove previous bubbles for these two agents only (prevent duplicates)
           const filtered = prev.filter(b => b.speakerId !== visitor.id && b.speakerId !== host.id);
-          return [{
-            speakerId: speakerAgentId,
-            text: turn.text,
-            offset: bubbleStackIndex * 55, // 55px horizontal offset per bubble
-            yOffset: yOffset
-          }];
+          return [
+            ...filtered,
+            {
+              speakerId: speakerAgentId,
+              text: turn.text,
+              offset: bubbleStackIndex * 55, // 55px horizontal offset per bubble
+              yOffset: yOffset
+            }
+          ];
         });
       }, turn.delay);
       testTimeoutsRef.current.push(timeoutId);
