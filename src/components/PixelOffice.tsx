@@ -1045,11 +1045,15 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           } else {
             const line = session.script[nextLine];
             setSpeechBubbles(prevBubbles => {
-              // Remove existing bubble for this speaker (prevent duplicates)
-              return [{
-                speakerId: line.speakerId,
-                text: enhanceTextWithEmoji(line.text, "neutral", line.speakerId)
-              }];
+              // Remove existing bubble for THIS speaker only (preserve other conversations)
+              const filtered = prevBubbles.filter(b => b.speakerId !== line.speakerId);
+              return [
+                ...filtered,
+                {
+                  speakerId: line.speakerId,
+                  text: enhanceTextWithEmoji(line.text, "neutral", line.speakerId)
+                }
+              ];
             });
             next.set(id, { ...session, currentLine: nextLine });
             changed = true;
