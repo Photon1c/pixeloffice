@@ -947,10 +947,13 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       setSpeechBubbles(prev => {
         // Remove any existing bubbles for these agents (prevent duplicates)
         const filtered = prev.filter(b => b.speakerId !== session.initiatorId && b.speakerId !== session.partnerId);
-        return [{
-          speakerId: session.initiatorId,
-          text: enhanceTextWithEmoji(session.script[0]?.text || "Hey!", currentAgents.find(a => a.id === session.initiatorId)?.mood || "neutral", session.initiatorId),
-        }];
+        return [
+          ...filtered,
+          {
+            speakerId: session.initiatorId,
+            text: enhanceTextWithEmoji(session.script[0]?.text || "Hey!", currentAgents.find(a => a.id === session.initiatorId)?.mood || "neutral", session.initiatorId),
+          }
+        ];
       });
       
       // Update renderAgentsRef directly
