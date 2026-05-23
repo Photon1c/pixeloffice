@@ -254,9 +254,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         const yOffset = -20 - (bubbleStackIndex * verticalSpacing);
         
         setSpeechBubbles(prev => {
-          // Remove previous bubbles for these two agents only
+          // Remove previous bubbles for these two agents only (prevent duplicates)
           const filtered = prev.filter(b => b.speakerId !== visitor.id && b.speakerId !== host.id);
-          return [...filtered, {
+          return [{
             speakerId: speakerAgentId,
             text: turn.text,
             offset: bubbleStackIndex * 55, // 55px horizontal offset per bubble
@@ -953,10 +953,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       const session = initiateWalkUpChat(initiator, partner, new Map());
       if (!session) return;
       setActiveWalkUpChats(prev => { const m = new Map(prev); m.set(session.initiatorId, session); return m; });
-      setSpeechBubbles(prev => [...prev, {
-        speakerId: session.initiatorId,
-        text: enhanceTextWithEmoji(session.script[0]?.text || "Hey!", currentAgents.find(a => a.id === session.initiatorId)?.mood || "neutral", session.initiatorId),
-      }]);
+      setSpeechBubbles(prev => {
+        // Remove any existing bubbles for these agents (prevent duplicates)
+        const filtered = prev.filter(b => b.speakerId !== session.initiatorId && b.speakerId !== session.partnerId);
+        return [{
+          speakerId: session.initiatorId,
+          text: enhanceTextWithEmoji(session.script[0]?.text || "Hey!", currentAgents.find(a => a.id === session.initiatorId)?.mood || "neutral", session.initiatorId),
+        }];
+      });
       
       // Update renderAgentsRef directly
       renderAgentsRef.current = currentAgents.map(a => {
@@ -1041,9 +1045,11 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           } else {
             const line = session.script[nextLine];
             setSpeechBubbles(prevBubbles => {
-              const filtered = prevBubbles.filter(b => b.speakerId !== line.speakerId);
-              const mood = prevBubbles.length > 0 ? "neutral" : "neutral";
-              return [...filtered, { speakerId: line.speakerId, text: enhanceTextWithEmoji(line.text, mood, line.speakerId) }];
+              // Remove existing bubble for this speaker (prevent duplicates)
+              return [{
+                speakerId: line.speakerId,
+                text: enhanceTextWithEmoji(line.text, "neutral", line.speakerId)
+              }];
             });
             next.set(id, { ...session, currentLine: nextLine });
             changed = true;
@@ -1708,9 +1714,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                 const yOffset = -20 - (bubbleStackIndex * verticalSpacing);
                 
                 setSpeechBubbles(prev => {
-                  // Remove old bubbles for participating agents, keep max 4 stacked
+                  // Remove old bubbles for participating agents, keep max 4 stacked (prevent duplicates)
                   const filtered = prev.filter(b => !participatingAgents.find(a => a.id === b.speakerId));
-                  return [...filtered, {
+                  return [{
                     speakerId: agentId,
                     text: line.text,
                     offset: bubbleStackIndex * 55,
