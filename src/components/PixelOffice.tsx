@@ -1641,6 +1641,19 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           </button>
         </div>
 
+        <div style={{ marginBottom: '16px' }}>
+          <button 
+            id="agent2agent-test-btn"
+            style={{...styles.paramsToggle, background: '#26de81', color: '#000', fontWeight: 700}} 
+            onClick={() => {
+              console.log("[Agent2Agent] Triggering test conversation from sidebar");
+              handleTestConversation();
+            }}
+          >
+            🤖 Test Agent Conversation
+          </button>
+        </div>
+
          <div style={{ marginBottom: '16px' }}>
           <button id="coolertalk-btn" style={{...styles.paramsToggle, background: '#7c5cbf', opacity: (!currentTopic || currentTopic === "" || isScrumRunning || isCoolerTalkRunning) ? 0.5 : 1}} disabled={!currentTopic || currentTopic === "" || isScrumRunning || isCoolerTalkRunning} onClick={() => {
             setIsCoolerTalkRunning(true);
@@ -1722,6 +1735,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                 setIsCoolerTalkRunning(false);
                 setActiveConversationZone(null);
                 // CRITICAL: Update renderAgentsRef.current directly for visual movement
+                // Must use "walking" mode so agents actually move back to desks
                 renderAgentsRef.current = renderAgentsRef.current.map(agent => ({
                   ...agent,
                   targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,
@@ -1843,6 +1857,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               setIsScrumRunning(false);
               setActiveConversationZone(null);
               // Update renderAgentsRef for visual movement
+              // Must use "walking" mode so agents actually move back to desks
               renderAgentsRef.current = renderAgentsRef.current.map(agent => ({
                 ...agent,
                 targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,
@@ -1869,7 +1884,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         {showParams && <Dashboard config={dashboardConfig} onUpdate={updateConfig} onOpenGenealogyLab={() => setShowGenealogyLab(true)} onOpenAdminAssistant={() => setShowAdminAssistant(true)} onOpenStockForecasts={() => setShowStockForecasts(true)} onOpenConvoViewer={() => { setConvoViewerType("cooler"); setShowConvoViewer(true); }} />}
         {showTimeTasks && <TimeTasksPanel onClose={() => setShowTimeTasks(false)} />}
         {showScrum && <ScrumPanel />}
-        {showChat && <ChatOverlay onClose={() => setShowChat(false)} />}
+        {showChat && <ChatOverlay currentTopic={currentTopic} onClose={() => setShowChat(false)} />}
         {showInventoryWorkflow && <InventoryWorkflowDemo />}
       </div>
 
@@ -2636,7 +2651,7 @@ function WorkflowResultPanel({ result, onClose }: WorkflowResultPanelProps) {
   );
 }
 
-function ChatOverlay({ onClose }: { onClose: () => void }) {
+function ChatOverlay({ currentTopic, onClose }: { currentTopic: string | null; onClose: () => void }) {
   const [messages, setMessages] = useState<{role: "user" | "assistant"; content: string}[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);

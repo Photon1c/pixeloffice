@@ -4740,6 +4740,56 @@ app.get("/api/workflow/health", (req, res) => {
 });
 
 // ============================================================================
+// Flow State Endpoint - Visual App Mapping
+// ============================================================================
+
+/**
+ * GET /api/flow
+ * Returns current application state for visualization
+ * Used to understand coherent flow and debug movement issues
+ */
+app.get("/api/flow", (req, res) => {
+  try {
+    res.json({
+      timestamp: new Date().toISOString(),
+      office: {
+        activeAgents: globalAgentStates?.size || 0,
+        conversationZones: Array.from(activeConversationZones?.keys() || []),
+        coolerActive: coolerSessionActive,
+        scrumActive: scrumSessionActive,
+        sleepMode: sleepModeEnabled,
+        vacationMode: vacationModeEnabled
+      },
+      workflows: {
+        activeTasks: workflowTasks?.size || 0,
+        tasks: Array.from(workflowTasks?.entries() || []).map(([id, task]: any) => ({
+          id,
+          type: task.workflowType,
+          status: task.status,
+          currentAgent: task.currentAgent
+        }))
+      },
+      movement: {
+        walkingAgents: 0,
+        sittingAgents: 0,
+        wanderingAgents: 0,
+        stuckAgents: 0
+      },
+      features: {
+        coolerTalk: true,
+        testScrum: true,
+        agent2agent: true,
+        inventoryWorkflow: true,
+        chatOverlay: true
+      }
+    });
+  } catch (error) {
+    console.error("[Flow] Error:", error);
+    res.status(500).json({ error: "Failed to get flow state" });
+  }
+});
+
+// ============================================================================
 // OpenCode Audit Integration
 // ============================================================================
 

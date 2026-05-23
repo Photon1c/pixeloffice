@@ -76,7 +76,7 @@ export function InventoryWorkflowDemo({ onComplete }: InventoryWorkflowDemoProps
   const [workflow, setWorkflow] = useState<InventoryWorkflowStep[]>(INITIAL_WORKFLOW);
   const [logMessages, setLogMessages] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
-  const animationRef = useRef<NodeJS.Timeout | null>(null);
+  const animationRefs = useRef<NodeJS.Timeout[]>([]);
   const stepIndexRef = useRef(0);
 
   const getStatusColor = (step: InventoryWorkflowStep) => {
@@ -126,9 +126,10 @@ export function InventoryWorkflowDemo({ onComplete }: InventoryWorkflowDemoProps
     setIsRunning(true);
     setLogMessages([]);
     stepIndexRef.current = 0;
+    animationRefs.current = [];
 
     sequence.forEach(({ stepId, delay, logIndex }) => {
-      animationRef.current = setTimeout(() => {
+      const timeoutId = setTimeout(() => {
         setWorkflow(prev => prev.map(step => ({
           ...step,
           status: step.id === stepId ? "active" : step.status
@@ -162,6 +163,7 @@ export function InventoryWorkflowDemo({ onComplete }: InventoryWorkflowDemoProps
           }, 1000);
         }
       }, delay);
+      animationRefs.current.push(timeoutId);
     });
   };
 
@@ -175,8 +177,8 @@ export function InventoryWorkflowDemo({ onComplete }: InventoryWorkflowDemoProps
 
   useEffect(() => {
     return () => {
-      if (animationRef.current) {
-        clearTimeout(animationRef.current);
+      if (animationRefs.current) {
+        animationRefs.current.forEach(timeoutId => clearTimeout(timeoutId));
       }
     };
   }, []);
