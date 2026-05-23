@@ -111,16 +111,36 @@ export function InventoryWorkflowDemo({ onComplete }: InventoryWorkflowDemoProps
     setLogMessages(prev => [...prev, message].slice(-7));
   };
 
+  // Emit route to router visualizer
+  const emitRoute = (from: string, to: string, confidence: number, taskType?: string) => {
+    const payload = {
+      from: from.toUpperCase(),
+      to: to.toUpperCase(),
+      confidence,
+      model: "local",
+      task_id: `inventory-${Date.now()}`,
+      route_type: taskType || "inventory"
+    };
+    
+    fetch('http://localhost:5006/api/route', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).catch(err => {
+      console.log('[Router Visualizer] Route emit failed (visualizer may not be running):', err.message);
+    });
+  };
+
   const runAnimation = () => {
     const sequence = [
-      { stepId: "scan-start", delay: 0, logIndex: 0 },
-      { stepId: "bulk-detect", delay: 800, logIndex: 1 },
-      { stepId: "confidence-split", delay: 1600, logIndex: null },
-      { stepId: "known-sku", delay: 2400, logIndex: 2 },
-      { stepId: "ambiguous-item", delay: 2400, logIndex: 3 },
-      { stepId: "route-review", delay: 3200, logIndex: 4 },
-      { stepId: "verify", delay: 4000, logIndex: 5 },
-      { stepId: "inventory-log", delay: 4800, logIndex: 6 },
+      { stepId: "scan-start", delay: 0, logIndex: 0, route: null },
+      { stepId: "bulk-detect", delay: 800, logIndex: 1, route: { from: "frontdesk", to: "openclaw", confidence: 0.95 } },
+      { stepId: "confidence-split", delay: 1600, logIndex: null, route: { from: "openclaw", to: "zeroclaw", confidence: 0.85, type: "router" } },
+      { stepId: "known-sku", delay: 2400, logIndex: 2, route: { from: "zeroclaw", to: "ironclaw", confidence: 0.92, type: "auto" } },
+      { stepId: "ambiguous-item", delay: 2400, logIndex: 3, route: { from: "zeroclaw", to: "openclaw", confidence: 0.65, type: "exception" } },
+      { stepId: "route-review", delay: 3200, logIndex: 4, route: { from: "openclaw", to: "frontdesk", confidence: 0.88, type: "review" } },
+      { stepId: "verify", delay: 4000, logIndex: 5, route: null },
+      { stepId: "inventory-log", delay: 4800, logIndex: 6, route: { from: "frontdesk", to: "sherlobster", confidence: 0.95, type: "complete" } },
     ];
 
     setIsRunning(true);
@@ -128,7 +148,10 @@ export function InventoryWorkflowDemo({ onComplete }: InventoryWorkflowDemoProps
     stepIndexRef.current = 0;
     animationRefs.current = [];
 
-    sequence.forEach(({ stepId, delay, logIndex }) => {
+    // Emit initial route
+    emitRoute("frontdesk", "openclaw", 0.9, "starbucks_inventory");
+
+    sequence.forEach(({ stepId, delay, logIndex, route }) => {
       const timeoutId = setTimeout(() => {
         setWorkflow(prev => prev.map(step => ({
           ...step,
@@ -137,6 +160,11 @@ export function InventoryWorkflowDemo({ onComplete }: InventoryWorkflowDemoProps
 
         if (logIndex !== null) {
           addLogMessage(WORKFLOW_LOG_MESSAGES[logIndex]);
+        }
+
+        // Emit route for this step
+        if (route) {
+          emitRoute(route.from, route.to, route.confidence, route.type);
         }
 
         if (stepId === "known-sku") {
@@ -182,6 +210,21 @@ export function InventoryWorkflowDemo({ onComplete }: InventoryWorkflowDemoProps
       }
     };
   }, []);
+
+  // Listen for external trigger (e.g., from Starbucks Inventory Test button)
+  useEffect(() => {
+    const handleStartWorkflow = (event: CustomEvent) => {
+      if (event.detail?.type === 'starbucks' && !isRunning) {
+        console.log("[Starbucks Inventory] Received start event, running workflow");
+        handleStart();
+      }
+    };
+
+    window.addEventListener('start-inventory-workflow', handleStartWorkflow as EventListener);
+    return () => {
+      window.removeEventListener('start-inventory-workflow', handleStartWorkflow as EventListener);
+    };
+  }, [isRunning]);
 
   return (
     <div style={styles.container}>

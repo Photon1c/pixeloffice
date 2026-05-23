@@ -1644,14 +1644,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
         <div style={{ marginBottom: '16px' }}>
           <button 
-            id="agent2agent-test-btn"
-            style={{...styles.paramsToggle, background: '#26de81', color: '#000', fontWeight: 700}} 
+            id="starbucks-inventory-btn"
+            style={{...styles.paramsToggle, background: '#d35400', color: '#fff', fontWeight: 700, border: '2px solid #e67e22'}} 
             onClick={() => {
-              console.log("[Agent2Agent] Triggering test conversation from sidebar");
-              handleTestConversation();
+              console.log("[Starbucks Inventory] Starting Starbucks inventory test flow");
+              setShowInventoryWorkflow(true);
+              // Trigger the inventory workflow automatically
+              const event = new CustomEvent('start-inventory-workflow', { detail: { type: 'starbucks' } });
+              window.dispatchEvent(event);
             }}
           >
-            🤖 Test Agent Conversation
+            ☕ Starbucks Inventory Test
           </button>
         </div>
 
