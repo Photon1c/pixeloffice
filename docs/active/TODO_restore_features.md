@@ -40,8 +40,7 @@ npm run dev
 **Description**: tiny-router is a compact multi-head text classifier for routing decisions  
 
 **Current Integration**:
-- ✅ Inventory workflow emits routes to visualizer
-- ✅ Agent-to-agent routing visualization works
+- ✅ Cooler Talk, TEST SCRUM, Agent2Agent, and the Inventory Workflow demo emit routes to the router visualizer app at `~/tools/router-visualizer` (HTTP endpoint `http://localhost:5007/api/route`)
 - ❌ tiny-router classification not integrated in decision flow
 
 **Action Required**:

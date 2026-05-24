@@ -489,6 +489,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     nextPrompt: string;
     timestamp: number;
   }>>([]);
+
+  // Snapshot from /api/flow for lightweight frontend visualization
+  const [flowSnapshot, setFlowSnapshot] = useState<any | null>(null);
   
   const [tasks] = useState<Task[]>([
     { id: "1", title: "Review pull requests", description: "Check pending PRs from team", status: "in_progress", priority: "high", assigneeId: "ironclaw", createdAt: Date.now() - 86400000 },
@@ -578,6 +581,29 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
     return () => clearInterval(interval);
   }, [sleepMode, vacationMode, activeConversationZone]);
+
+  // Periodically fetch /api/flow for a small frontend flow inspector
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchFlow = async () => {
+      try {
+        const res = await fetch("/api/flow");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setFlowSnapshot(data);
+      } catch {
+        // Flow inspector is optional; ignore failures
+      }
+    };
+
+    fetchFlow();
+    const interval = setInterval(fetchFlow, 15000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
 
   // Entrance animation: stagger agents walking to desks
   useEffect(() => {
@@ -1604,6 +1630,19 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               </div>
               <div style={{ fontSize: '8px', color: '#606070', marginTop: '4px' }}>
                 {socialPotential.sessionCount} sessions, {socialPotential.participantCount} participants (60min)
+              </div>
+            </div>
+          )}
+
+          {/* Flow Snapshot - Lab Mode Only */}
+          {LAB_MODE && flowSnapshot && (
+            <div style={{ borderTop: "1px solid rgba(100, 200, 255, 0.2)", paddingTop: "8px", marginTop: "8px" }}>
+              <div style={{ fontSize: '10px', color: '#6495ed', marginBottom: '6px', fontWeight: 600 }}>🌐 Flow Snapshot</div>
+              <div style={{ fontSize: '9px', color: '#a0a0b0' }}>
+                <div>Agents: {flowSnapshot.office?.activeAgents ?? 0}</div>
+                <div>Movement: W {flowSnapshot.movement?.walkingAgents ?? 0} · S {flowSnapshot.movement?.sittingAgents ?? 0} · WN {flowSnapshot.movement?.wanderingAgents ?? 0}</div>
+                <div>Cooler: {flowSnapshot.office?.coolerActive ? 'active' : 'idle'} · SCRUM: {flowSnapshot.office?.scrumActive ? 'active' : 'idle'}</div>
+                <div style={{ marginTop: '4px' }}>Last update: {flowSnapshot.office?.updatedAt || flowSnapshot.timestamp}</div>
               </div>
             </div>
           )}

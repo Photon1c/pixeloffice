@@ -112,7 +112,7 @@ export function InventoryWorkflowDemo({ onComplete, onAnimateAgents }: Inventory
     setLogMessages(prev => [...prev, message].slice(-7));
   };
 
-  // Emit route to router visualizer
+  // Emit route to router visualizer (tiny-router app)
   const emitRoute = (from: string, to: string, confidence: number, taskType?: string) => {
     const payload = {
       from: from.toUpperCase(),
@@ -123,7 +123,7 @@ export function InventoryWorkflowDemo({ onComplete, onAnimateAgents }: Inventory
       route_type: taskType || "inventory"
     };
     
-    fetch('http://localhost:5006/api/route', {
+    fetch('http://localhost:5007/api/route', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
