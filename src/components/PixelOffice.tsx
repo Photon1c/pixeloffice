@@ -1322,6 +1322,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   return (
     <div style={{
       ...styles.container,
+      display: 'flex',
       flexDirection: isMobile ? "column" : "row"
     }}>
       {/* Mobile sidebar toggle */}
