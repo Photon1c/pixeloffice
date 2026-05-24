@@ -575,8 +575,8 @@ export default function TimeTasksPanel({ onClose }: TimeTasksPanelProps) {
           </div>
 
           <h4 style={styles.sectionTitle}>Sessions ({todaysLog.sessions?.length || 0})</h4>
-          {todaysLog.sessions?.map((session: Session) => (
-            <div key={session.id} style={styles.sessionItem}>
+          {todaysLog.sessions?.map((session: Session, idx: number) => (
+            <div key={`${session.id}-${idx}`} style={styles.sessionItem}>
               <span style={styles.sessionTime}>
                 {new Date(session.start_time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
               </span>
