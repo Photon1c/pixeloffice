@@ -90,24 +90,23 @@ export const logger = {
 };
 
 export function setupConsoleMonitor() {
-  console.log('%c🖥️ Pixel Office Console Monitor', 'color: #20c997; font-size: 16px; font-weight: bold;');
-  console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #495057;');
-  console.log('%c📊 Log Levels: DEBUG | INFO | WARN | ERROR | RENDER | AGENT | NETWORK', 'color: #6c757d; font-size: 11px;');
-  console.log('%c🔍 Enable Debug: localStorage.setItem("pixel_debug", "true")', 'color: #6c757d; font-size: 11px;');
-  console.log('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #495057;');
-  
+  const originalLog = console.log;
   const originalError = console.error;
+  const originalWarn = console.warn;
+  
+  originalLog('%c🖥️ Pixel Office Console Monitor', 'color: #20c997; font-size: 16px; font-weight: bold;');
+  originalLog('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #495057;');
+  originalLog('%c📊 Log Levels: DEBUG | INFO | WARN | ERROR | RENDER | AGENT | NETWORK', 'color: #6c757d; font-size: 11px;');
+  originalLog('%c🔍 Enable Debug: localStorage.setItem("pixel_debug", "true")', 'color: #6c757d; font-size: 11px;');
+  originalLog('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #495057;');
+  
   console.error = (...args: any[]) => {
     const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
-    // Log the actual error content for debugging
-    console.log('[ConsoleMonitor] Error captured:', args);
     originalError(`%c❌ [${timestamp}] ERROR:%c`, 'color: #dc3545; font-weight: bold;', '', ...args);
   };
   
-  const originalWarn = console.warn;
   console.warn = (...args: any[]) => {
     const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
-    console.log('[ConsoleMonitor] Warning captured:', args);
     originalWarn(`%c⚠️ [${timestamp}] WARN:%c`, 'color: #ffc107; font-weight: bold;', '', ...args);
   };
   
