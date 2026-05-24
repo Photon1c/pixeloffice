@@ -138,8 +138,10 @@ async function fetchFromWebSearch(): Promise<NewsTopic[]> {
   return [];
 }
 
-async function fetchFromGitHub(): Promise<NewsTopic[]> {
-  const repoInfo = extractRepoInfo({});
+async function fetchFromGitHub(repoOverride?: string): Promise<NewsTopic[]> {
+  const repoInfo = repoOverride 
+    ? { owner: repoOverride.split('/')[0], repo: repoOverride.split('/')[1] }
+    : extractRepoInfo({});
   
   if (repoInfo.owner === "unknown" || repoInfo.repo === "unknown") {
     console.log(`[NewsTopics] GitHub: No valid repo configured (SAFE_SCRUM_REPO)`);
@@ -282,7 +284,7 @@ function getFallbackTopics(): NewsTopic[] {
   return shuffled.slice(0, 5);
 }
 
-export async function fetchNewsTopics(source: string = "auto"): Promise<NewsTopic[]> {
+export async function fetchNewsTopics(source: string = "auto", repo?: string): Promise<NewsTopic[]> {
   const now = Date.now();
 
   if (cachedTopics.length > 0 && now - lastFetchTime < CACHE_DURATION_MS) {
@@ -290,7 +292,7 @@ export async function fetchNewsTopics(source: string = "auto"): Promise<NewsTopi
   }
 
   if (source === "github") {
-    const githubTopics = await fetchFromGitHub();
+    const githubTopics = await fetchFromGitHub(repo);
     if (githubTopics.length > 0) {
       cachedTopics = githubTopics;
       lastFetchTime = now;
@@ -316,7 +318,7 @@ export async function fetchNewsTopics(source: string = "auto"): Promise<NewsTopi
   }
 
   // auto: Try GitHub topics first
-  const githubTopics = await fetchFromGitHub();
+  const githubTopics = await fetchFromGitHub(repo);
   if (githubTopics.length > 0) {
     cachedTopics = githubTopics;
     lastFetchTime = now;

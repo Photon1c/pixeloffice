@@ -2549,7 +2549,8 @@ app.get("/api/cooler/topics/current", async (req, res) => {
 app.post("/api/cooler/topics/refresh", async (req, res) => {
   try {
     const source = (req.body?.source as string) || "auto";
-    const topics = await fetchNewsTopics(source);
+    const repo = req.body?.repo as string | undefined;
+    const topics = await fetchNewsTopics(source, repo);
     const currentTopic = topics.length > 0 ? topics[0] : null;
     res.json({ success: true, topic: currentTopic, topics });
   } catch (error: any) {

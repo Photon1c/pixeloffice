@@ -445,6 +445,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [stigmergyTraces, setStigmergyTraces] = useState<any[]>([]);
   const [socialPotential, setSocialPotential] = useState<{sessionCount: number; participantCount: number; intensity: number} | null>(null);
   const [currentTopic, setCurrentTopic] = useState<string>("");
+  const [newsApiSource, setNewsApiSource] = useState<"auto" | "news" | "github" | "fallback">("auto");
+  const [newsGithubRepo, setNewsGithubRepo] = useState<string>("photon1c/pixeloffice");
   const [speechBubbles, setSpeechBubbles] = useState<{speakerId: string; text: string; offset?: number; yOffset?: number; model?: string; expiresAt?: number}[]>([]);
   
   // Thought Burst / Loop Detection State
@@ -1481,7 +1483,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <h4 style={{ color: "#ff6432", margin: 0, fontSize: "12px" }}>🔥 Review Heat</h4>
             <button onClick={async () => {
-              const resp = await fetch("/api/cooler/topics/refresh", { method: 'POST' });
+              const resp = await fetch("/api/cooler/topics/refresh", { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  source: newsApiSource,
+                  repo: newsApiSource === 'github' ? newsGithubRepo : undefined
+                })
+              });
               const data = await resp.json();
               if (data.topic) {
                 const topicValue = typeof data.topic === 'object' ? data.topic.title : data.topic;
@@ -1489,6 +1498,31 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               }
             }} style={styles.iconBtn} title="Refresh news topic">↻</button>
           </div>
+          <div style={{ marginBottom: '8px' }}>
+            <label style={{ fontSize: '9px', color: '#ff6432', display: 'block', marginBottom: '3px' }}>Topic Source</label>
+            <select 
+              value={newsApiSource}
+              onChange={(e) => setNewsApiSource(e.target.value as any)}
+              style={{ width: '100%', padding: '4px 6px', background: '#1a1a2a', border: '1px solid #ff6432', borderRadius: '3px', color: '#feca57', fontSize: '10px' }}
+            >
+              <option value="auto">Auto (GitHub → News → Fallback)</option>
+              <option value="news">RSS/News Only</option>
+              <option value="github">GitHub Activity</option>
+              <option value="fallback">Fallback Topics</option>
+            </select>
+          </div>
+          {newsApiSource === 'github' && (
+            <div style={{ marginBottom: '8px' }}>
+              <label style={{ fontSize: '9px', color: '#ff6432', display: 'block', marginBottom: '3px' }}>GitHub Repo</label>
+              <input 
+                type="text"
+                value={newsGithubRepo}
+                onChange={(e) => setNewsGithubRepo(e.target.value)}
+                placeholder="owner/repo"
+                style={{ width: '100%', padding: '4px 6px', background: '#1a1a2a', border: '1px solid #ff6432', borderRadius: '3px', color: '#feca57', fontSize: '10px', boxSizing: 'border-box' }}
+              />
+            </div>
+          )}
           <div style={{ fontSize: '10px', color: '#feca57', marginBottom: '8px', fontStyle: 'italic' }}>Topic: {currentTopic || "Loading..."}</div>
           {stigmergyTraces.length > 0 && (
             <div style={{ borderTop: "1px solid rgba(255, 100, 50, 0.2)", paddingTop: "8px" }}>
