@@ -1,14 +1,14 @@
 {
-  "active": false,
-  "activatedAt": "2026-05-15T07:07:47.035Z",
-  "deactivatedAt": "2026-05-23T20:54:34.864Z",
+  "active": true,
+  "activatedAt": "2026-05-24T01:10:36.367Z",
+  "deactivatedAt": null,
   "stats": {
-    "coolerSessions": 749,
-    "scrumSessions": 300,
-    "scrumCandidatesApproved": 1,
-    "reportsGenerated": 51
+    "coolerSessions": 794,
+    "scrumSessions": 319,
+    "scrumCandidatesApproved": 3,
+    "reportsGenerated": 54
   },
-  "lastReportAt": "2026-05-23T20:54:34.866Z",
+  "lastReportAt": "2026-05-24T02:40:36.373Z",
   "intervals": {
     "cooler": null,
     "scrum": null,

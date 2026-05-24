@@ -1,9 +1,17 @@
 # Scrum Index
 
-_Auto-generated: 2026-05-23T20:52:22.422Z_
+_Auto-generated: 2026-05-24T03:13:46.791Z_
 
 | date | title | source_session | stage | summary |
 |---|---|---|---|---|
+| 2026-05-24 | [SCRUM (Planning): Latest commit: fix: Agent movement constraints and add /api/flow endpoin…](./2026-05-24T03-10-38-829Z_scrum-planning-scrumcand-1779592222649-88yo2y.md) |  |  |  |
+| 2026-05-24 | [SCRUM (Planning): Latest commit: fix: Agent movement constraints and add /api/flow endpoin…](./2026-05-24T02-22-36-637Z_scrum-planning-scrumcand-1779589212426-yi3ejg.md) |  |  |  |
+| 2026-05-24 | [SCRUM (Planning): Latest commit: fix: Agent movement constraints and add /api/flow endpoin…](./2026-05-24T02-22-36-391Z_scrum-planning-scrumcand-1779589232843-4jffcf.md) |  |  |  |
+| 2026-05-23 | [SCRUM (Planning): Sanitized Profile Packet Flow for Criminology](./2026-05-23T20-54-54-396Z_scrum-planning-scrumcand-1779259669467.md) |  |  |  |
+| 2026-05-23 | [SCRUM (Planning): Latest commit: feat: Add back StabilityMonitor with Reset Arena button (…](./2026-05-23T20-54-53-156Z_scrum-planning-scrumcand-1779315157004-gpxylj.md) |  |  |  |
+| 2026-05-23 | [SCRUM (Planning): Latest commit: feat: optimize for mobile and app mode (by Sherlock)](./2026-05-23T20-54-51-762Z_scrum-planning-scrumcand-1779511412446-s15tje.md) |  |  |  |
+| 2026-05-23 | [SCRUM (Planning): Latest commit: feat: optimize for mobile and app mode (by Sherlock)](./2026-05-23T20-54-50-296Z_scrum-planning-scrumcand-1779569249410-uaa31k.md) |  |  |  |
+| 2026-05-23 | [SCRUM (Planning): Latest commit: feat: optimize for mobile and app mode (by Sherlock)](./2026-05-23T20-54-48-649Z_scrum-planning-scrumcand-1779569542789-hvrotb.md) |  |  |  |
 | 2026-05-20 | [SCRUM (Planning): Pixel Office Follow-up](./2026-05-20T03-25-10-219Z_scrum-planning-scrumcand-1779175700136-g4ry06.md) |  |  |  |
 | 2026-05-20 | [SCRUM (Planning): Pixel Office Follow-up](./2026-05-20T03-25-09-215Z_scrum-planning-scrumcand-1779176899314-dnz5hs.md) |  |  |  |
 | 2026-05-20 | [SCRUM (Planning): Pixel Office Follow-up](./2026-05-20T03-25-07-525Z_scrum-planning-scrumcand-1779226806103-8ynl5x.md) |  |  |  |
@@ -28,4 +36,4 @@ _Auto-generated: 2026-05-23T20:52:22.422Z_
 | 2026-04-09 | [Test SCRUM: Test SCRUM from cooler session](./2026-04-09_scrum-scrum-1775776097379-9lcztk.md) | random | check | N/A |
 | 2026-04-09 | [Test SCRUM: Test SCRUM from cooler session](./2026-04-09_scrum-scrum-1775761038722-ydxixs.md) | random | check | N/A |
 
-Total: **23** scrum exports
+Total: **31** scrum exports

@@ -1,9 +1,75 @@
 # Cooler Index
 
-_Auto-generated: 2026-05-23T20:52:22.419Z_
+_Auto-generated: 2026-05-24T03:13:46.790Z_
 
 | date | title | session | participants | escalations |
 |---|---|---|---:|---:|
+| 2026-05-24 | [Cooler Talk - Latest commit: fix: Agent movement constraints and add /api/flow endpoint (by Sherlock)](./2026-05-24T03-10-19-084Z_cooler-ct-1779592208670.md) | ct-1779592208670 | 4 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779590376826.md) |  | 5 | 0 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779590226826.md) |  | 4 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779590151826.md) |  | 4 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779590076826.md) |  | 4 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779590001825.md) |  | 6 | 0 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779589851826.md) |  | 4 | 4 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779589776825.md) |  | 6 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779589626823.md) |  | 5 | 4 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779589551820.md) |  | 5 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779589476821.md) |  | 5 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779589401819.md) |  | 5 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779589251819.md) |  | 6 | 4 |
+| 2026-05-24 | [Cooler Talk - Latest commit: fix: Agent movement constraints and add /api/flow endpoint (by Sherlock)](./2026-05-24T02-20-31-925Z_cooler-ct-1779589176818.md) | ct-1779589176818 | 4 | 4 |
+| 2026-05-24 | [Cooler Talk - Latest commit: fix: Agent movement constraints and add /api/flow endpoint (by Sherlock)](./2026-05-24T02-20-09-754Z_cooler-ct-1779589176818.md) | ct-1779589176818 | 4 | 3 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779589176818.md) |  | 4 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779589101819.md) |  | 4 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779589026819.md) |  | 6 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588951819.md) |  | 5 | 3 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588876819.md) |  | 6 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588801818.md) |  | 4 | 0 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588726818.md) |  | 4 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588651819.md) |  | 5 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588576818.md) |  | 4 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588501818.md) |  | 5 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588426819.md) |  | 4 | 3 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588351818.md) |  | 5 | 3 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588276817.md) |  | 6 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588201816.md) |  | 4 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588127772.md) |  | 5 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779588051816.md) |  | 6 | 3 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779587976815.md) |  | 6 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779587826816.md) |  | 5 | 4 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779587751817.md) |  | 6 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779587676816.md) |  | 4 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779587601816.md) |  | 5 | 3 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779587451815.md) |  | 6 | 4 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779587376815.md) |  | 4 | 0 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779587226815.md) |  | 5 | 4 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779587151815.md) |  | 5 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779587076813.md) |  | 5 | 0 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779587001813.md) |  | 6 | 0 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779586851813.md) |  | 6 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779586776813.md) |  | 5 | 0 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779586701812.md) |  | 5 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779586626811.md) |  | 5 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779586551812.md) |  | 6 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779586476812.md) |  | 5 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779586401812.md) |  | 5 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779586327668.md) |  | 5 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779586251811.md) |  | 4 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779586176810.md) |  | 5 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779586026811.md) |  | 4 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779585951810.md) |  | 5 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779585876809.md) |  | 6 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779585801808.md) |  | 4 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779585651809.md) |  | 5 | 4 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779585576807.md) |  | 5 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779585501808.md) |  | 5 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779585426807.md) |  | 4 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779585351807.md) |  | 5 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779585276807.md) |  | 6 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779585201805.md) |  | 5 | 1 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779585126804.md) |  | 6 | 2 |
+| 2026-05-24 | [Auto Cooler Session](./2026-05-24_cooler-ct-1779581839283.md) |  | 6 | 4 |
+| 2026-05-24 | [Cooler Talk - Latest commit: fix: Agent movement constraints and add /api/flow endpoint (by Sherlock)](./2026-05-24T00-17-29-480Z_cooler-ct-1779581839283.md) | ct-1779581839283 | 4 | 0 |
 | 2026-05-23 | [Cooler Talk - Latest commit: feat: optimize for mobile and app mode (by Sherlock)](./2026-05-23T20-52-21-650Z_cooler-ct-1779511396197.md) | ct-1779511396197 | 4 | 1 |
 | 2026-05-23 | [Cooler Talk - Latest commit: feat: optimize for mobile and app mode (by Sherlock)](./2026-05-23T20-47-26-591Z_cooler-ct-1779511396197.md) | ct-1779511396197 | 4 | 1 |
 | 2026-05-23 | [Cooler Talk - Latest commit: feat: optimize for mobile and app mode (by Sherlock)](./2026-05-23T04-43-28-070Z_cooler-ct-1779511396197.md) | ct-1779511396197 | 4 | 1 |
@@ -1148,4 +1214,4 @@ _Auto-generated: 2026-05-23T20:52:22.419Z_
 | 2026-04-09 | [Cooler Talk - test](./2026-04-09_cooler-ct-1774844039779.md) | ct-1774844039779 | 8 | 0 |
 |  | [Cooler Talk - 2026-05-20T06-47-17-068Z_cooler-ct-1779259637062.md](./2026-05-20T06-47-17-068Z_cooler-ct-1779259637062.md) |  | 0 | 0 |
 
-Total: **1143** cooler sessions
+Total: **1209** cooler sessions
