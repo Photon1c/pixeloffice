@@ -184,11 +184,13 @@ export function AgentIssueMonitor({
   const [manualRepo, setManualRepo] = useState("");
   const [currentRepo, setCurrentRepo] = useState("");
   const dismissedRef = useRef<string[]>([]);
+  const issueIdsRef = useRef<Set<string>>(new Set()); // Track issue IDs to prevent duplicates
   const [conversationData, setConversationData] = useState<ConversationData | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   
   const clearAndDismiss = (id: string) => {
     dismissedRef.current.push(id);
+    issueIdsRef.current.delete(id); // Remove from tracking
     setIssues(prev => prev.filter(i => i.id !== id));
   };
   
@@ -375,13 +377,21 @@ export function AgentIssueMonitor({
         });
         const data = await res.json();
         if (data.issues) {
-          // Filter for new issues (excluding dismissed ones)
+          // Filter for new issues (excluding dismissed ones and already-tracked ones)
           const newIssues = (data.issues as Issue[]).filter(i => 
-            !issues.some(existing => existing.id === i.id) &&
-            !dismissedRef.current.includes(i.id)
+            !dismissedRef.current.includes(i.id) &&
+            !issueIdsRef.current.has(i.id)
           );
           if (newIssues.length > 0) {
-            setIssues(prev => [...newIssues, ...prev].slice(0, 10));
+            setIssues(prev => {
+              // Update tracking ref
+              newIssues.forEach(i => issueIdsRef.current.add(i.id));
+              // Add new issues and limit to 10
+              const updated = [...newIssues, ...prev].slice(0, 10);
+              // Keep ref in sync with actual state
+              issueIdsRef.current = new Set(updated.map(i => i.id));
+              return updated;
+            });
           }
         }
       } catch (e) {
@@ -550,15 +560,17 @@ export function AgentIssueMonitor({
           </button>
           <button 
             onClick={() => {
-              const current = issues.length;
-              const newIssue: typeof issues[0] = {
-                id: `issue-${Date.now()}`,
-                severity: 'medium',
-                topic: `Standup ${current + 1}: Sprint review and planning`,
-                agents: ['HermitClaw', 'IronClaw'],
-                timestamp: Date.now(),
-              };
-              setIssues([...issues, newIssue]);
+              setIssues(prev => {
+                const newIssue: typeof prev[0] = {
+                  id: `issue-${Date.now()}`,
+                  severity: 'medium',
+                  topic: `Standup ${prev.length + 1}: Sprint review and planning`,
+                  agents: ['HermitClaw', 'IronClaw'],
+                  timestamp: Date.now(),
+                };
+                issueIdsRef.current.add(newIssue.id);
+                return [...prev, newIssue];
+              });
             }}
             style={{
               padding: '4px 10px',
@@ -753,6 +765,7 @@ export function AgentIssueMonitor({
             <button 
               onClick={() => {
                 issues.forEach(i => dismissedRef.current.push(i.id));
+                issueIdsRef.current.clear(); // Clear tracking ref
                 setIssues([]);
               }}
               style={{
