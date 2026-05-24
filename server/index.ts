@@ -2383,7 +2383,11 @@ async function runAutoCoolerSession(): Promise<void> {
     const numParticipants = 4 + Math.floor(Math.random() * 3);
     const selectedParticipants = selectWeightedParticipants(ALL_PARTICIPANTS, numParticipants);
     
-    const result = await runRoomTurn("kitchen", {
+    // Use unique location to prevent session file reuse
+    // Auto-cooler sessions are ephemeral, don't need persistent state
+    const location = `kitchen-auto-${Date.now()}`;
+    
+    const result = await runRoomTurn(location, {
       topic,
       participants: selectedParticipants,
       userMessage: "",
