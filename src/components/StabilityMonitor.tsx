@@ -727,7 +727,7 @@ export function AgentIssueMonitor({
                 Active Issues ({issues.length})
               </div>
               {issues.map((issue, idx) => (
-                <div key={`${issue.id}-${idx}`} style={{
+                <div key={idx} style={{
                   marginBottom: '8px',
                   padding: '8px 10px',
                   background: `${getSeverityColor(issue.severity)}20`,

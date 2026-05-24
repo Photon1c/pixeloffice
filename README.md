@@ -25,6 +25,11 @@ The [live app](https://stigmergic-pixel-office.netlify.app/) is now available.
   - Cooler→SCRUM scoring for relevance (tags + action phrases)
   - Qualifying conversations promote into `scrum_runs` + `tasks` via Supabase
 
+- **Agent Issue Monitor & Topic Sources**
+  - **AgentIssueMonitor** panel watches cooler sessions for risky topics (security, outages, bottlenecks)
+  - Topic source dropdown lets you switch between `auto`, `news`, and `github` topics
+  - GitHub-backed topics are powered by `/api/cooler/topics/current?source=github` and `/api/cooler/topics/refresh`
+
 - **Stigmergic Fields**
   - **Review Heat**: orange pulsing aura in the kitchen when cooler talk centers on PR backlog / review bottlenecks
   - **Task Shadows**: blue fading footprints at desks where agents have unfinished work
@@ -45,6 +50,11 @@ The [live app](https://stigmergic-pixel-office.netlify.app/) is now available.
   - Cooler sessions are scored for relevance (tags + action phrases)
   - Qualifying conversations are promoted into `scrum_runs` + `tasks` via the Supabase backend
   - Dev CLI: `scripts/promote_cooler_to_scrum.ts` for manual promotion/testing
+
+- **Flow State Endpoint (for visualizers)**
+  - Frontend periodically POSTs a lightweight snapshot to `/api/flow/state` (agent counts, movement, flags, moods)
+  - Backend exposes `/api/flow` with the latest office snapshot for dashboards and route visualizers
+  - Includes per-agent emotional valence as emoji (derived from `agent.mood`)
 
 - **Chat & Agent Action Cards**
   - Restored **AgentActionCard** with:

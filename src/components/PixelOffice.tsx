@@ -541,6 +541,44 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const configRef = useRef(dashboardConfig);
   configRef.current = dashboardConfig;
 
+  // Push lightweight office snapshot to the backend for /api/flow visualizer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const agentsSnapshot = agentsRef.current;
+      const walking = agentsSnapshot.filter(a => a.mode === "walking").length;
+      const sitting = agentsSnapshot.filter(a => a.mode === "sitting").length;
+      const wandering = agentsSnapshot.filter(a => a.mode === "idle-wander").length;
+      const stuck = 0; // No explicit "stuck" mode yet
+
+      // Aggregate moods as emojis per agent id
+      const moods: Record<string, string> = {};
+      for (const agent of agentsSnapshot) {
+        moods[agent.id] = getMoodEmoji(agent.mood);
+      }
+
+      fetch("/api/flow/state", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          agentCount: agentsSnapshot.length,
+          walking,
+          sitting,
+          wandering,
+          stuck,
+          coolerActive: activeConversationZone === "kitchen",
+          scrumActive: activeConversationZone === "conference",
+          sleepMode,
+          vacationMode,
+          moods,
+        }),
+      }).catch(() => {
+        // Flow visualizer is optional; ignore failures
+      });
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [sleepMode, vacationMode, activeConversationZone]);
+
   // Entrance animation: stagger agents walking to desks
   useEffect(() => {
     if (!entranceActive) return;

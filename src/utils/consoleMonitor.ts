@@ -100,8 +100,30 @@ export function setupConsoleMonitor() {
   originalLog('%c🔍 Enable Debug: localStorage.setItem("pixel_debug", "true")', 'color: #6c757d; font-size: 11px;');
   originalLog('%c━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', 'color: #495057;');
   
+  // Track duplicate-key warnings so we don't spam the console with the
+  // same React warning on every render. We still surface the first
+  // occurrence for visibility.
+  const seenDuplicateKeyWarnings = new Set<string>();
+
   console.error = (...args: any[]) => {
     const timestamp = new Date().toISOString().split('T')[1].slice(0, -1);
+
+    try {
+      const first = args[0];
+      if (typeof first === "string" && first.includes("Encountered two children with the same key")) {
+        // Normalise out dev-server timestamp query params like ?t=123456
+        // so the same warning doesn't appear unique on every reload.
+        const normalized = first.replace(/\?t=\d+/g, "?t=");
+        const signature = normalized;
+        if (seenDuplicateKeyWarnings.has(signature)) {
+          return; // suppress repeated duplicate-key warnings
+        }
+        seenDuplicateKeyWarnings.add(signature);
+      }
+    } catch {
+      // If anything goes wrong, fall back to normal logging below
+    }
+
     originalError(`%c❌ [${timestamp}] ERROR:%c`, 'color: #dc3545; font-weight: bold;', '', ...args);
   };
   

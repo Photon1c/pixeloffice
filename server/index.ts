@@ -4822,22 +4822,73 @@ app.get("/api/workflow/health", (req, res) => {
 // Flow State Endpoint - Visual App Mapping
 // ============================================================================
 
+// Lightweight snapshot of client-side office state, pushed from PixelOffice
+type OfficeSnapshot = {
+  agentCount: number;
+  walking: number;
+  sitting: number;
+  wandering: number;
+  stuck: number;
+  coolerActive: boolean;
+  scrumActive: boolean;
+  sleepMode: boolean;
+  vacationMode: boolean;
+  // Aggregate emotional valence: emoji by agent id
+  moods: Record<string, string>;
+  updatedAt: string | null;
+};
+
+let latestOfficeSnapshot: OfficeSnapshot = {
+  agentCount: 0,
+  walking: 0,
+  sitting: 0,
+  wandering: 0,
+  stuck: 0,
+  coolerActive: false,
+  scrumActive: false,
+  sleepMode: false,
+  vacationMode: false,
+  moods: {},
+  updatedAt: null,
+};
+
+/**
+ * POST /api/flow/state
+ * PixelOffice periodically posts a small summary of the current office state.
+ * This keeps the server read-only for external tools while still exposing
+ * useful state for the flow visualizer.
+ */
+app.post("/api/flow/state", (req, res) => {
+  try {
+    const body = req.body || {};
+    latestOfficeSnapshot = {
+      ...latestOfficeSnapshot,
+      ...body,
+      updatedAt: new Date().toISOString(),
+    };
+    res.json({ ok: true });
+  } catch (error) {
+    console.error("[Flow] State update error:", error);
+    res.status(500).json({ ok: false, error: "Failed to update flow state" });
+  }
+});
+
 /**
  * GET /api/flow
  * Returns current application state for visualization
- * Used to understand coherent flow and debug movement issues
  */
 app.get("/api/flow", (req, res) => {
   try {
     res.json({
       timestamp: new Date().toISOString(),
       office: {
-        activeAgents: 0, // Would need globalAgentStates reference
-        conversationZones: [], // Would need activeConversationZones reference
-        coolerActive: false, // Would need coolerSessionActive reference
-        scrumActive: false, // Would need scrumSessionActive reference
-        sleepMode: false, // Would need sleepModeEnabled reference
-        vacationMode: false // Would need vacationModeEnabled reference
+        activeAgents: latestOfficeSnapshot.agentCount,
+        conversationZones: [], // Could be extended with explicit zone sync
+        coolerActive: latestOfficeSnapshot.coolerActive,
+        scrumActive: latestOfficeSnapshot.scrumActive,
+        sleepMode: latestOfficeSnapshot.sleepMode,
+        vacationMode: latestOfficeSnapshot.vacationMode,
+        updatedAt: latestOfficeSnapshot.updatedAt,
       },
       workflows: {
         activeTasks: workflowTasks?.size || 0,
@@ -4845,23 +4896,24 @@ app.get("/api/flow", (req, res) => {
           id,
           type: task.workflowType,
           status: task.status,
-          currentAgent: task.currentAgent
-        }))
+          currentAgent: task.currentAgent,
+        })),
       },
       movement: {
-        walkingAgents: 0,
-        sittingAgents: 0,
-        wanderingAgents: 0,
-        stuckAgents: 0
+        walkingAgents: latestOfficeSnapshot.walking,
+        sittingAgents: latestOfficeSnapshot.sitting,
+        wanderingAgents: latestOfficeSnapshot.wandering,
+        stuckAgents: latestOfficeSnapshot.stuck,
       },
       features: {
         coolerTalk: true,
         testScrum: true,
         agent2agent: true,
         inventoryWorkflow: true,
-        chatOverlay: true
+        chatOverlay: true,
       },
-      note: "Full agent state tracking requires frontend-backend state sync"
+      moods: latestOfficeSnapshot.moods,
+      note: "Office state is pushed from the frontend via /api/flow/state",
     });
   } catch (error) {
     console.error("[Flow] Error:", error);
