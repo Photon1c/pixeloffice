@@ -518,7 +518,7 @@ export function TSAHealthPanel({
       {agentActivities && agentActivities.length > 0 && (
         <div style={{ borderTop: "1px solid #495057", paddingTop: "6px", marginTop: "6px" }}>
           <div style={{ fontSize: "9px", color: "#6c757d", marginBottom: "4px" }}>Agent Activity</div>
-          {agentActivities.map((a) => {
+          {agentActivities.map((a, idx) => {
             const activityColors: Record<string, string> = {
               thinking: "#feca57",
               speaking: "#20c997",
@@ -532,7 +532,7 @@ export function TSAHealthPanel({
               idle: "○ idle",
             };
             return (
-              <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "2px", fontSize: "9px" }}>
+              <div key={`${a.id}-${idx}`} style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "2px", fontSize: "9px" }}>
                 <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: activityColors[a.activity], flexShrink: 0 }} />
                 <span style={{ color: "#bbb", minWidth: "60px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</span>
                 <span style={{ color: activityColors[a.activity], fontSize: "8px" }}>{activityLabels[a.activity]}</span>
