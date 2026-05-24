@@ -1580,7 +1580,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           {stigmergyTraces.length > 0 && (
             <div style={{ borderTop: "1px solid rgba(255, 100, 50, 0.2)", paddingTop: "8px" }}>
               {stigmergyTraces.slice(0, 10).map((t, i) => (
-                <div key={`${t.type}-${t.roomId}-${t.agentId || i}`} style={{ fontSize: "10px", color: "#e8e8f0", marginBottom: "4px" }}>
+                <div key={t.id || `${t.type}-${t.roomId}-${t.agentId || i}-${i}`} style={{ fontSize: "10px", color: "#e8e8f0", marginBottom: "4px" }}>
                   <span style={{color: '#ff6432'}}>{t.intensity.toFixed(2)}</span> {t.type.replace(/_/g, ' ')} {t.roomId && `(${t.roomId})`} {t.agentId && `>@${t.agentId}`}
                 </div>
               ))}

@@ -67,27 +67,57 @@ npm run dev
 
 ---
 
-## 3. /flow Endpoint ❌ MISSING
+## 3. /flow Endpoint ⚠️ PARTIAL
 
-**Status**: Not implemented  
+**Status**: Backend snapshot implemented, frontend visualizer pending  
 **Purpose**: Visualize app state and user journey  
 
-**Required Implementation**:
+**Current Implementation**:
 ```typescript
-// Server endpoint: GET /api/flow
-// Returns:
+// Server endpoints
+// 1) POST /api/flow/state  - frontend pushes a lightweight snapshot
+// 2) GET  /api/flow        - returns latest office snapshot
+
+// Example response shape from GET /api/flow
 {
-  "currentTime": "2026-05-23T...",
-  "activeFeatures": [],
-  "agentStates": [],
-  "conversationZones": [],
-  "workflowTasks": [],
-  "systemHealth": {}
+  timestamp: string,
+  office: {
+    activeAgents: number,
+    conversationZones: string[],
+    coolerActive: boolean,
+    scrumActive: boolean,
+    sleepMode: boolean,
+    vacationMode: boolean,
+    updatedAt: string | null,
+  },
+  movement: {
+    walkingAgents: number,
+    sittingAgents: number,
+    wanderingAgents: number,
+    stuckAgents: number,
+  },
+  workflows: {
+    activeTasks: number,
+    tasks: Array<{
+      id: string,
+      type: string,
+      status: string,
+      currentAgent: string,
+    }>,
+  },
+  moods: Record<string, string>, // agentId -> emoji mood
+  features: {
+    coolerTalk: boolean,
+    testScrum: boolean,
+    agent2agent: boolean,
+    inventoryWorkflow: boolean,
+    chatOverlay: boolean,
+  },
 }
 ```
 
 **Action Required**:
-- [ ] Add `/api/flow` endpoint to server/index.ts
+- [x] Add `/api/flow` endpoint to `server/index.ts` (plus `/api/flow/state` publisher)
 - [ ] Create flow visualization component in frontend
 - [ ] Document flow state machine
 
