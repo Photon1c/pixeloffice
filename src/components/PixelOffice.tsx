@@ -255,9 +255,44 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             }
           ];
         });
+        
+        // Emit route to router visualizer for each conversation turn
+        fetch('http://localhost:5007/api/route', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            from: visitor.id.toUpperCase().slice(0, 8),
+            to: host.id.toUpperCase().slice(0, 8),
+            confidence: 0.92,
+            model: "local",
+            task_id: `agent2agent-${Date.now()}-${i}`,
+            route_type: "agent_conversation",
+            turn: i + 1,
+            speaker: turn.speaker
+          })
+        }).catch(err => console.log('[Router] Agent2Agent route emit failed:', err.message));
       }, turn.delay);
       testTimeoutsRef.current.push(timeoutId);
     });
+    
+    // Emit session completion to router visualizer
+    const completionTimeout = setTimeout(() => {
+      fetch('http://localhost:5007/api/route', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          from: "CONVERSATION",
+          to: "ARCHIVE",
+          confidence: 0.95,
+          model: "local",
+          task_id: `agent2agent-complete-${Date.now()}`,
+          route_type: "conversation_complete",
+          participants: [visitor.name, host.name],
+          turns: conversationScript.length
+        })
+      }).catch(err => console.log('[Router] Agent2Agent complete emit failed:', err.message));
+    }, 12500);
+    testTimeoutsRef.current.push(completionTimeout);
     
     // Return visitor after conversation
     const returnTimeout = setTimeout(() => {
@@ -1664,12 +1699,11 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             setIsCoolerTalkRunning(true);
             setActiveConversationZone("kitchen");
             
-            // Kitchen conversation positions - agents form a semi-circle with 50px spacing
             const kitchenPositions = [
-              { x: 980, y: 80 },
               { x: 1030, y: 80 },
               { x: 1080, y: 80 },
               { x: 1130, y: 80 },
+              { x: 1055, y: 130 },
             ];
             const participatingAgents = agents.slice(0, 4);
             
@@ -1686,8 +1720,26 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               return agent;
             });
             
-            // DO NOT call setAgents() - it triggers re-render which resets renderAgentsRef!
+            // DO NOT call setAgents() - it triggers re-render which resets movement!
             // Render loop owns all movement.
+            
+            // Emit routes to router visualizer for each participant
+            participatingAgents.forEach((agent, idx) => {
+              fetch('http://localhost:5007/api/route', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  from: "FRONTDESK",
+                  to: "KITCHEN",
+                  confidence: 0.95,
+                  model: "local",
+                  task_id: `cooler-${Date.now()}-${idx}`,
+                  route_type: "cooler_session",
+                  participant: agent.name,
+                  topic: currentTopic
+                })
+              }).catch(err => console.log('[Router] Cooler route emit failed:', err.message));
+            });
             
             // Simulate conversation with stacked bubbles (50px vertical spacing)
             const conversationLines = [
@@ -1729,24 +1781,48 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             }).then(r => r.json()).then(data => {
               console.log("[CoolerTalk] Response:", data);
               console.log("[CoolerTalk] Topic sent:", currentTopic);
+              
+              // Emit session results to router visualizer
+              if (data && data.summary) {
+                fetch('http://localhost:5007/api/route', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    from: "KITCHEN",
+                    to: "ARCHIVE",
+                    confidence: 0.92,
+                    model: "local",
+                    task_id: `cooler-result-${Date.now()}`,
+                    route_type: "cooler_complete",
+                    summary: data.summary?.slice(0, 100) || "Session archived"
+                  })
+                }).catch(err => console.log('[Router] Cooler result emit failed:', err.message));
+              }
             }).catch(err => {
               console.error("[CoolerTalk] Error:", err);
             }).finally(() => {
+              // Agents hang out in kitchen for 15 seconds before returning (realistic cooler talk duration)
               setTimeout(() => {
                 setIsCoolerTalkRunning(false);
                 setActiveConversationZone(null);
                 // CRITICAL: Update renderAgentsRef.current directly for visual movement
                 // Must use "walking" mode so agents actually move back to desks
-                renderAgentsRef.current = renderAgentsRef.current.map(agent => ({
-                  ...agent,
-                  targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,
-                  targetY: CHAIR_POSITIONS[agent.deskIndex]?.y || agent.y,
-                  mode: "walking"
-                }));
+                renderAgentsRef.current = renderAgentsRef.current.map(agent => {
+                  const participantIdx = participatingAgents.findIndex(a => a.id === agent.id);
+                  if (participantIdx >= 0) {
+                    return {
+                      ...agent,
+                      targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,
+                      targetY: CHAIR_POSITIONS[agent.deskIndex]?.y || agent.y,
+                      mode: "walking"
+                    };
+                  }
+                  return agent;
+                });
                 // DO NOT call setAgents() - triggers re-render that resets movement!
                 // Clear bubbles
                 setSpeechBubbles([]);
-              }, 8000);
+              }, 15000); // 15 second hangout time
             });
           }}>Cooler Talk</button>
           {!currentTopic && <div style={{ fontSize: '10px', color: '#ff6b6b', marginTop: '4px' }}>Loading topic...</div>}
@@ -1802,15 +1878,25 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               }
               return agent;
             });
+            // DO NOT call setAgents() - triggers re-render that resets movement!
             
-            // Also update React state for consistency
-            setAgents(prev => prev.map((agent, idx) => {
-              if (confAgents.find(a => a.id === agent.id)) {
-                const pos = getConferencePosition(idx);
-                return { ...agent, targetX: pos.x, targetY: pos.y, mode: "walking", dir: pos.x > agent.x ? "right" : "left" };
-              }
-              return agent;
-            }));
+            // Emit routes to router visualizer for SCRUM session start
+            confAgents.forEach((agent, idx) => {
+              fetch('http://localhost:5007/api/route', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  from: "DESK",
+                  to: "CONFERENCE",
+                  confidence: 0.98,
+                  model: "local",
+                  task_id: `scrum-${Date.now()}-${idx}`,
+                  route_type: "scrum_session",
+                  participant: agent.name,
+                  role: idx === 0 ? "scrum_master" : "team_member"
+                })
+              }).catch(err => console.log('[Router] SCRUM route emit failed:', err.message));
+            });
             
             try {
               // Test a random pending scrum - no repo/task required
@@ -1835,19 +1921,29 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                   }
                   return agent;
                 });
-                // Also update React state
-                setAgents(prev => prev.map(agent => {
-                  const assignment = assignmentMap.get(agent.id);
-                  if (assignment) {
-                    return { ...agent, targetX: assignment.targetX, targetY: assignment.targetY, mode: "standing" as const };
-                  }
-                  return agent;
-                }));
+                // DO NOT call setAgents() - triggers re-render that resets movement!
+                
+                // Emit SCRUM results to router visualizer
+                fetch('http://localhost:5007/api/route', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    from: "CONFERENCE",
+                    to: "SCRUM_BOARD",
+                    confidence: 0.95,
+                    model: "local",
+                    task_id: `scrum-result-${Date.now()}`,
+                    route_type: "scrum_complete",
+                    assignments: scrumData.assignments?.length || 0,
+                    summary: scrumData.summary?.slice(0, 100) || "SCRUM complete"
+                  })
+                }).catch(err => console.log('[Router] SCRUM result emit failed:', err.message));
               }
             } catch (err) {
               console.error('[TEST SCRUM] Error:', err);
             }
             
+            // SCRUM meeting lasts 20-25 seconds (realistic standup duration)
             setTimeout(() => {
               setIsScrumRunning(false);
               setActiveConversationZone(null);
@@ -1859,14 +1955,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                 targetY: CHAIR_POSITIONS[agent.deskIndex]?.y || agent.y,
                 mode: "walking"
               }));
-              // Also update React state
-              setAgents(prev => prev.map(agent => ({
-                ...agent,
-                targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,
-                targetY: CHAIR_POSITIONS[agent.deskIndex]?.y || agent.y,
-                mode: "walking"
-              })));
-            }, 8000);
+              // DO NOT call setAgents() - triggers re-render that resets movement!
+            }, 20000); // 20 second SCRUM duration
           }}>TEST SCRUM</button>
         </div>
 
