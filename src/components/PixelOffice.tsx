@@ -448,6 +448,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [newsApiSource, setNewsApiSource] = useState<"auto" | "news" | "github" | "fallback">("auto");
   const [newsGithubRepo, setNewsGithubRepo] = useState<string>("photon1c/pixeloffice");
   const [speechBubbles, setSpeechBubbles] = useState<{speakerId: string; text: string; offset?: number; yOffset?: number; model?: string; expiresAt?: number}[]>([]);
+  const [leftPanelCollapsed, setLeftPanelCollapsed] = useState<boolean>(false);
+  const [rightPanelCollapsed, setRightPanelCollapsed] = useState<boolean>(false);
   
   // Thought Burst / Loop Detection State
   const [thoughtBurstConfig] = useState({
@@ -1370,13 +1372,37 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         </button>
       )}
       
+      {/* Left panel collapse toggle */}
+      <button
+        onClick={() => setLeftPanelCollapsed(!leftPanelCollapsed)}
+        style={{
+          position: 'absolute',
+          left: leftPanelCollapsed ? '40px' : '260px',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          zIndex: 100,
+          background: '#1a2a2a',
+          border: '1px solid #2a3548',
+          color: '#4ecdc4',
+          padding: '8px 6px',
+          borderRadius: '6px',
+          fontSize: '12px',
+          cursor: 'pointer',
+          transition: 'left 0.3s ease',
+        }}
+      >
+        {leftPanelCollapsed ? '▶' : '◀'}
+      </button>
+      
       <div style={{
         ...styles.sidebar, 
         width: sidebarWidth,
         ...(isMobile && styles.sidebarMobile),
-        ...(isMobile && !showMobileSidebar && styles.sidebarHidden)
+        ...(isMobile && !showMobileSidebar && styles.sidebarHidden),
+        ...(leftPanelCollapsed && { width: '40px', overflow: 'hidden' })
       }}>
         {isMobile && <div style={{ height: '50px' }} />} {/* Spacer for toggle button */}
+        <div style={{ display: leftPanelCollapsed ? 'none' : 'block' }}>
         <OfficeClock embedded onHourChange={(hour) => {
           setCurrentHour(hour);
           setAgents(prev => applyScheduleToAgents(prev, hour));
@@ -2094,6 +2120,28 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               />
             )}
         </div>
+        </div>
+        {/* Right panel collapse toggle */}
+        <button
+          onClick={() => setRightPanelCollapsed(!rightPanelCollapsed)}
+          style={{
+            position: 'absolute',
+            right: rightPanelCollapsed ? '260px' : '0px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            zIndex: 100,
+            background: '#1a2a2a',
+            border: '1px solid #2a3548',
+            color: '#4ecdc4',
+            padding: '8px 6px',
+            borderRadius: '6px',
+            fontSize: '12px',
+            cursor: 'pointer',
+            transition: 'right 0.3s ease',
+          }}
+        >
+          {rightPanelCollapsed ? '◀' : '▶'}
+        </button>
         {!isMobile || (isMobile && showRightPanel) ? (
         <div style={{ 
           width: isMobile ? '100%' : '260px', 
@@ -2106,7 +2154,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           overflowY: 'auto', 
           flexShrink: 0, 
           gap: '8px',
-          ...(isMobile && { position: 'absolute', right: 0, top: 0, bottom: 0, zIndex: 50, width: '100%', maxWidth: '320px' })
+          ...(isMobile && { position: 'absolute', right: 0, top: 0, bottom: 0, zIndex: 50, width: '100%', maxWidth: '320px' }),
+          ...(rightPanelCollapsed && { width: '0px', padding: '0px', overflow: 'hidden' })
         }}>
           {isMobile && <div style={{ height: '50px' }} />} {/* Spacer for toggle button */}
           <div style={{ background: '#0f1520', borderRadius: '6px', padding: '8px', border: '1px solid #1b2333', marginBottom: '8px' }}>
