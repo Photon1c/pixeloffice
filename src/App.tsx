@@ -1,10 +1,11 @@
 import { useState } from "react";
 import PixelOffice from "./components/PixelOffice";
+import BudgetingDashboard from "./components/BudgetingDashboard";
 import GenealogyLab from "./components/GenealogyLab";
 import AdminAssistant from "./components/AdminAssistant";
 import StockForecasts from "./components/StockForecasts";
 
-type ViewType = "main" | "genealogy" | "admin" | "stocks";
+type ViewType = "main" | "genealogy" | "admin" | "stocks" | "budgeting";
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewType>("main");
@@ -20,6 +21,10 @@ function App() {
   if (currentView === "stocks") {
     return <StockForecasts />;
   }
+
+   if (currentView === "budgeting") {
+     return <BudgetingDashboard />;
+   }
 
   return (
     <PixelOffice

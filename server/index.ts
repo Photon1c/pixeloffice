@@ -4873,6 +4873,75 @@ app.post("/api/flow/state", (req, res) => {
   }
 });
 
+// Budgeting Endpoint - Uses .env for sensitive figures
+// ============================================================================
+
+/**
+ * GET /api/budgeting
+ * Returns a sanitized view of income/expense configuration for the
+ * budgeting dashboard. Raw figures live in .env as BUDGET_* vars so
+ * they are never committed to the repo.
+ *
+ * Supported env vars (all optional, numbers):
+ * - BUDGET_INCOME_SALARY
+ * - BUDGET_INCOME_OTHER
+ * - BUDGET_EXPENSE_HOUSING
+ * - BUDGET_EXPENSE_UTILITIES
+ * - BUDGET_EXPENSE_SUBSCRIPTIONS
+ * - BUDGET_EXPENSE_GROCERIES
+ * - BUDGET_TARGET_SAVINGS_RATE (0-1)
+ */
+app.get("/api/budgeting", (req, res) => {
+  const parseAmount = (name: string, fallback: number = 0): number => {
+    const raw = process.env[name];
+    if (!raw) return fallback;
+    const num = parseFloat(raw);
+    return Number.isFinite(num) ? num : fallback;
+  };
+
+  const salary = parseAmount("BUDGET_INCOME_SALARY", 0);
+  const otherIncome = parseAmount("BUDGET_INCOME_OTHER", 0);
+  const housing = parseAmount("BUDGET_EXPENSE_HOUSING", 0);
+  const utilities = parseAmount("BUDGET_EXPENSE_UTILITIES", 0);
+  const subscriptions = parseAmount("BUDGET_EXPENSE_SUBSCRIPTIONS", 0);
+  const groceries = parseAmount("BUDGET_EXPENSE_GROCERIES", 0);
+  const targetSavingsRate = parseAmount("BUDGET_TARGET_SAVINGS_RATE", 0.2);
+
+  const incomes = [
+    { id: "salary", label: "Salary", amount: salary },
+    { id: "other", label: "Other Income", amount: otherIncome },
+  ].filter(i => i.amount > 0);
+
+  const expenses = [
+    { id: "housing", label: "Housing", amount: housing },
+    { id: "utilities", label: "Utilities", amount: utilities },
+    { id: "subscriptions", label: "Subscriptions", amount: subscriptions },
+    { id: "groceries", label: "Groceries", amount: groceries },
+  ].filter(e => e.amount > 0);
+
+  const totalIncome = incomes.reduce((sum, i) => sum + i.amount, 0);
+  const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const net = totalIncome - totalExpenses;
+  const actualSavingsRate = totalIncome > 0 ? Math.max(0, net) / totalIncome : 0;
+
+  res.json({
+    incomes,
+    expenses,
+    summary: {
+      totalIncome,
+      totalExpenses,
+      net,
+      targetSavingsRate,
+      actualSavingsRate,
+      meetsTarget: actualSavingsRate + 1e-6 >= targetSavingsRate,
+    },
+    meta: {
+      currency: "USD", // purely presentational; adjust via frontend if needed
+      period: "monthly",
+    },
+  });
+});
+
 /**
  * GET /api/flow
  * Returns current application state for visualization
