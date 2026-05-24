@@ -2374,7 +2374,10 @@ async function runAutoCoolerSession(): Promise<void> {
   
   try {
     await fetchNewsTopics();
-    const topic = getTopicForConversation();
+    const baseTopic = getTopicForConversation();
+    // Add timestamp to topic to force new session creation each time
+    // This prevents session ID reuse and duplicate React keys
+    const topic = `${baseTopic} [${new Date().toLocaleTimeString()}]`;
     
     // Select 4-6 participants with shadow-biased weights
     const numParticipants = 4 + Math.floor(Math.random() * 3);
@@ -2387,7 +2390,7 @@ async function runAutoCoolerSession(): Promise<void> {
       generateFn
     });
     
-    console.log(`[AutoCooler] Session complete. ${result.participantCount} participants, topic: "${topic}"`);
+    console.log(`[AutoCooler] Session complete. ${result.participantCount} participants, topic: "${baseTopic}"`);
     
     // Save session transcript to docs/cooler
     const coolerDocPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler");
