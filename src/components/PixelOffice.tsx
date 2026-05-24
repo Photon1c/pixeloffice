@@ -203,6 +203,18 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     
     console.log("[TestConversation]", visitor.name, "visiting", host.name);
     
+    // 8-turn conversation script
+    const conversationScript = [
+      { speaker: visitor.name, text: "Hey, got a minute to chat about the project?", delay: 1500 },
+      { speaker: host.name, text: "Sure! What's on your mind?", delay: 3000 },
+      { speaker: visitor.name, text: "I've been thinking about our architecture. Are we happy with the current setup?", delay: 4500 },
+      { speaker: host.name, text: "Good question. I think it's working well, but we could optimize the data flow.", delay: 6000 },
+      { speaker: visitor.name, text: "Exactly! Maybe we should document some improvements?", delay: 7500 },
+      { speaker: host.name, text: "Great idea. Let's bring it up in the next standup.", delay: 9000 },
+      { speaker: visitor.name, text: "Perfect, thanks for the chat!", delay: 10500 },
+      { speaker: host.name, text: "Anytime! That's what teammates are for.", delay: 12000 }
+    ];
+    
     // Set host to standing (waiting for visitor)
     // Set visitor to walking (moving to host)
     renderAgentsRef.current = renderAgentsRef.current.map(a => {
@@ -1010,6 +1022,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   // Updates renderAgentsRef directly to avoid React re-renders
   useEffect(() => {
     if (!sleepMode || activeWalkUpChats.size === 0) return;
+    // Don't advance walk-up chats if test conversation is running (prevent conflicts)
+    if (isTestRunning) return;
     const advanceInterval = setInterval(() => {
       setActiveWalkUpChats(prev => {
         const next = new Map(prev);
