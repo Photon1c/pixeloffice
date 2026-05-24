@@ -808,21 +808,35 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
   // Fetch conversation sessions for convo viewer
   useEffect(() => {
-    if (!showConvoViewer) return;
+    if (!showConvoViewer) {
+      setConvoSessions([]); // Clear sessions when viewer closed
+      return;
+    }
     
+    let isMounted = true;
     const fetchSessions = async () => {
       try {
         const resp = await fetch(`/api/cooler/sessions/db?type=${convoViewerType}`);
         const data = await resp.json();
-        setConvoSessions(data.sessions || []);
+        if (isMounted) {
+          // Deduplicate by session_id to prevent React key conflicts
+          const sessions = data.sessions || [];
+          const uniqueSessions = sessions.filter((s: any, idx: number, arr: any[]) => 
+            arr.findIndex(s2 => s2.session_id === s.session_id) === idx
+          );
+          setConvoSessions(uniqueSessions.slice(0, 50)); // Hard limit
+        }
       } catch (err) {
         console.warn("Failed to fetch convo sessions", err);
       }
     };
     
     fetchSessions();
-    const interval = setInterval(fetchSessions, 15000);
-    return () => clearInterval(interval);
+    const interval = setInterval(fetchSessions, 30000); // Reduce polling to 30s
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [showConvoViewer, convoViewerType]);
 
   // STIGMERGY: Detect Task Shadows (abandoned work)

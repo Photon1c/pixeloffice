@@ -893,8 +893,14 @@ app.get("/api/cooler/sessions/list", async (req, res) => {
 app.get("/api/cooler/sessions/db", async (req, res) => {
   try {
     const sessionType = req.query.type as "cooler" | "scrum" | undefined;
-    const sessions = await getCoolerSessions(20, sessionType);
-    res.json({ sessions });
+    const sessions = await getCoolerSessions(50, sessionType); // Increased limit with dedup
+    
+    // Deduplicate sessions by session_id to prevent React key conflicts
+    const uniqueSessions = sessions.filter((s: any, idx: number, arr: any[]) => 
+      arr.findIndex(s2 => s2.session_id === s.session_id) === idx
+    );
+    
+    res.json({ sessions: uniqueSessions.slice(0, 50) });
   } catch (error) {
     console.error("Error fetching DB sessions:", error);
     res.status(500).json({ error: "Failed to fetch sessions from database" });
@@ -915,6 +921,38 @@ app.get("/api/cooler/sessions/db/:sessionId", async (req, res) => {
   } catch (error) {
     console.error("Error fetching session:", error);
     res.status(500).json({ error: "Failed to fetch session" });
+  }
+});
+
+// Cleanup old sessions (keep last N days)
+app.post("/api/cooler/sessions/cleanup", async (req, res) => {
+  try {
+    const { daysToKeep = 30, sessionType } = req.body;
+    const cutoffDate = new Date();
+    cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+    
+    const pool = await getPool();
+    const dbType = getConfig().db.type;
+    
+    let query = "DELETE FROM cooler_sessions WHERE created_at < ?";
+    const params: any[] = [cutoffDate];
+    
+    if (sessionType) {
+      query = "DELETE FROM cooler_sessions WHERE session_type = ? AND created_at < ?";
+      params.unshift(sessionType);
+    }
+    
+    if (dbType === "postgres") {
+      query = query.replace(/\?/g, (_, i) => `$${i + 1}`);
+      const result = await pool.query(query, params);
+      res.json({ deleted: result.rowCount || 0, cutoffDate });
+    } else {
+      const [result] = await (pool as any).query(query, params);
+      res.json({ deleted: result.affectedRows || 0, cutoffDate });
+    }
+  } catch (error) {
+    console.error("Error cleaning up sessions:", error);
+    res.status(500).json({ error: "Failed to cleanup sessions" });
   }
 });
 
