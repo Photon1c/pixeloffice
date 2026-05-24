@@ -939,6 +939,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   // Updates renderAgentsRef directly to avoid React re-renders
   // Now triggers MORE frequently to enable natural agent interactions
   useEffect(() => {
+    if (isTestRunning) return; // Don't start walk-up chats during test
+    
     const intervalMs = sleepMode ? 5000 : 12000; // More frequent: 5s/12s (was 8s/25s)
     const convInterval = setInterval(() => {
       const currentAgents = renderAgentsRef.current;
@@ -1909,7 +1911,42 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         {showTimeTasks && <TimeTasksPanel onClose={() => setShowTimeTasks(false)} />}
         {showScrum && <ScrumPanel />}
         {showChat && <ChatOverlay currentTopic={currentTopic} onClose={() => setShowChat(false)} />}
-        {showInventoryWorkflow && <InventoryWorkflowDemo />}
+        {showInventoryWorkflow && <InventoryWorkflowDemo 
+          onComplete={() => console.log("[Inventory] Workflow complete")}
+          onAnimateAgents={(step, positions) => {
+            console.log("[Inventory] Animate agents for step:", step, positions);
+            // Update agent positions for inventory workflow
+            renderAgentsRef.current = renderAgentsRef.current.map(agent => {
+              const pos = positions.find(p => p.id === agent.id);
+              if (pos) {
+                return {
+                  ...agent,
+                  targetX: pos.x,
+                  targetY: pos.y,
+                  mode: "walking" as const,
+                  dir: pos.x > agent.x ? "right" : "left",
+                  status: "working" as const
+                };
+              }
+              return agent;
+            });
+            // Also update React state
+            setAgents(prev => prev.map(agent => {
+              const pos = positions.find(p => p.id === agent.id);
+              if (pos) {
+                return {
+                  ...agent,
+                  targetX: pos.x,
+                  targetY: pos.y,
+                  mode: "walking" as const,
+                  dir: pos.x > agent.x ? "right" : "left",
+                  status: "working" as const
+                };
+              }
+              return agent;
+            }));
+          }}
+        />}
       </div>
 
       <div style={styles.mainContent}>

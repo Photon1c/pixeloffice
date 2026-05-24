@@ -1,9 +1,12 @@
 # Cooler Index
 
-_Auto-generated: 2026-05-20T22:12:38.415Z_
+_Auto-generated: 2026-05-23T20:52:22.419Z_
 
 | date | title | session | participants | escalations |
 |---|---|---|---:|---:|
+| 2026-05-23 | [Cooler Talk - Latest commit: feat: optimize for mobile and app mode (by Sherlock)](./2026-05-23T20-52-21-650Z_cooler-ct-1779511396197.md) | ct-1779511396197 | 4 | 1 |
+| 2026-05-23 | [Cooler Talk - Latest commit: feat: optimize for mobile and app mode (by Sherlock)](./2026-05-23T20-47-26-591Z_cooler-ct-1779511396197.md) | ct-1779511396197 | 4 | 1 |
+| 2026-05-23 | [Cooler Talk - Latest commit: feat: optimize for mobile and app mode (by Sherlock)](./2026-05-23T04-43-28-070Z_cooler-ct-1779511396197.md) | ct-1779511396197 | 4 | 1 |
 | 2026-05-20 | [Cooler Talk - Latest commit: feat: Add back StabilityMonitor with Reset Arena button (by Sherlock)](./2026-05-20T22-12-37-602Z_cooler-ct-1779307394159.md) | ct-1779307394159 | 4 | 1 |
 | 2026-05-20 | [Cooler Talk - Latest commit: feat: Add back StabilityMonitor with Reset Arena button (by Sherlock)](./2026-05-20T22-12-34-920Z_cooler-ct-1779307394159.md) | ct-1779307394159 | 4 | 2 |
 | 2026-05-20 | [Cooler Talk - Latest commit: feat: Add back StabilityMonitor with Reset Arena button (by Sherlock)](./2026-05-20T20-03-34-815Z_cooler-ct-1779307394159.md) | ct-1779307394159 | 6 | 1 |
@@ -1145,4 +1148,4 @@ _Auto-generated: 2026-05-20T22:12:38.415Z_
 | 2026-04-09 | [Cooler Talk - test](./2026-04-09_cooler-ct-1774844039779.md) | ct-1774844039779 | 8 | 0 |
 |  | [Cooler Talk - 2026-05-20T06-47-17-068Z_cooler-ct-1779259637062.md](./2026-05-20T06-47-17-068Z_cooler-ct-1779259637062.md) |  | 0 | 0 |
 
-Total: **1140** cooler sessions
+Total: **1143** cooler sessions

@@ -9,6 +9,7 @@ export interface InventoryWorkflowStep {
 
 export interface InventoryWorkflowDemoProps {
   onComplete?: () => void;
+  onAnimateAgents?: (step: string, agentPositions: {id: string; x: number; y: number; mode: string}[]) => void;
 }
 
 const INITIAL_WORKFLOW: InventoryWorkflowStep[] = [
@@ -72,7 +73,7 @@ const WORKFLOW_LOG_MESSAGES = [
   "Inventory state updated."
 ];
 
-export function InventoryWorkflowDemo({ onComplete }: InventoryWorkflowDemoProps) {
+export function InventoryWorkflowDemo({ onComplete, onAnimateAgents }: InventoryWorkflowDemoProps) {
   const [workflow, setWorkflow] = useState<InventoryWorkflowStep[]>(INITIAL_WORKFLOW);
   const [logMessages, setLogMessages] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
@@ -133,14 +134,14 @@ export function InventoryWorkflowDemo({ onComplete }: InventoryWorkflowDemoProps
 
   const runAnimation = () => {
     const sequence = [
-      { stepId: "scan-start", delay: 0, logIndex: 0, route: null },
-      { stepId: "bulk-detect", delay: 800, logIndex: 1, route: { from: "frontdesk", to: "openclaw", confidence: 0.95 } },
-      { stepId: "confidence-split", delay: 1600, logIndex: null, route: { from: "openclaw", to: "zeroclaw", confidence: 0.85, type: "router" } },
-      { stepId: "known-sku", delay: 2400, logIndex: 2, route: { from: "zeroclaw", to: "ironclaw", confidence: 0.92, type: "auto" } },
-      { stepId: "ambiguous-item", delay: 2400, logIndex: 3, route: { from: "zeroclaw", to: "openclaw", confidence: 0.65, type: "exception" } },
-      { stepId: "route-review", delay: 3200, logIndex: 4, route: { from: "openclaw", to: "frontdesk", confidence: 0.88, type: "review" } },
-      { stepId: "verify", delay: 4000, logIndex: 5, route: null },
-      { stepId: "inventory-log", delay: 4800, logIndex: 6, route: { from: "frontdesk", to: "sherlobster", confidence: 0.95, type: "complete" } },
+      { stepId: "scan-start", delay: 0, logIndex: 0, route: null, agentAction: null },
+      { stepId: "bulk-detect", delay: 800, logIndex: 1, route: { from: "frontdesk", to: "openclaw", confidence: 0.95 }, agentAction: { agent: "openclaw", x: 200, y: 300, mode: "walking", task: "scanning" } },
+      { stepId: "confidence-split", delay: 1600, logIndex: null, route: { from: "openclaw", to: "zeroclaw", confidence: 0.85, type: "router" }, agentAction: { agent: "zeroclaw", x: 400, y: 300, mode: "walking", task: "routing" } },
+      { stepId: "known-sku", delay: 2400, logIndex: 2, route: { from: "zeroclaw", to: "ironclaw", confidence: 0.92, type: "auto" }, agentAction: { agent: "ironclaw", x: 600, y: 300, mode: "walking", task: "cataloging" } },
+      { stepId: "ambiguous-item", delay: 2400, logIndex: 3, route: { from: "zeroclaw", to: "openclaw", confidence: 0.65, type: "exception" }, agentAction: { agent: "openclaw", x: 200, y: 400, mode: "walking", task: "exception" } },
+      { stepId: "route-review", delay: 3200, logIndex: 4, route: { from: "openclaw", to: "frontdesk", confidence: 0.88, type: "review" }, agentAction: { agent: "frontdesk", x: 100, y: 300, mode: "walking", task: "reviewing" } },
+      { stepId: "verify", delay: 4000, logIndex: 5, route: null, agentAction: { agent: "sherlobster", x: 500, y: 500, mode: "walking", task: "verifying" } },
+      { stepId: "inventory-log", delay: 4800, logIndex: 6, route: { from: "frontdesk", to: "sherlobster", confidence: 0.95, type: "complete" }, agentAction: null },
     ];
 
     setIsRunning(true);
@@ -151,7 +152,7 @@ export function InventoryWorkflowDemo({ onComplete }: InventoryWorkflowDemoProps
     // Emit initial route
     emitRoute("frontdesk", "openclaw", 0.9, "starbucks_inventory");
 
-    sequence.forEach(({ stepId, delay, logIndex, route }) => {
+    sequence.forEach(({ stepId, delay, logIndex, route, agentAction }) => {
       const timeoutId = setTimeout(() => {
         setWorkflow(prev => prev.map(step => ({
           ...step,
@@ -165,6 +166,16 @@ export function InventoryWorkflowDemo({ onComplete }: InventoryWorkflowDemoProps
         // Emit route for this step
         if (route) {
           emitRoute(route.from, route.to, route.confidence, route.type);
+        }
+
+        // Animate agents for this step
+        if (agentAction && onAnimateAgents) {
+          onAnimateAgents(stepId, [{
+            id: agentAction.agent,
+            x: agentAction.x,
+            y: agentAction.y,
+            mode: agentAction.mode
+          }]);
         }
 
         if (stepId === "known-sku") {

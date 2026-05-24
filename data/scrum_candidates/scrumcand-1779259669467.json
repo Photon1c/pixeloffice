@@ -1,8 +1,8 @@
 {
   "id": "scrumcand-1779259669467",
-  "status": "pending",
+  "status": "approved",
   "createdAt": "2026-05-20T06-47-49-450Z",
-  "updatedAt": "2026-05-20T06-47-49-450Z",
+  "updatedAt": "2026-05-23T20:54:54.396Z",
   "source": {
     "location": "kitchen",
     "coolerSessionId": "ct-1779259637062",
@@ -62,5 +62,6 @@
         "description": "Automated tests to verify no PII leaks in sanitized exports"
       }
     ]
-  }
+  },
+  "approvedAt": "2026-05-23T20:54:54.396Z"
 }
