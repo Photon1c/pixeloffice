@@ -893,14 +893,24 @@ app.get("/api/cooler/sessions/list", async (req, res) => {
 app.get("/api/cooler/sessions/db", async (req, res) => {
   try {
     const sessionType = req.query.type as "cooler" | "scrum" | undefined;
-    const sessions = await getCoolerSessions(50, sessionType); // Increased limit with dedup
+    const sessions = await getCoolerSessions(100, sessionType); // Get more to deduplicate
     
-    // Deduplicate sessions by session_id to prevent React key conflicts
-    const uniqueSessions = sessions.filter((s: any, idx: number, arr: any[]) => 
-      arr.findIndex(s2 => s2.session_id === s.session_id) === idx
-    );
+    // Deduplicate by session_id AND filter out auto-cooler ephemeral sessions
+    // Auto-cooler sessions have location starting with "kitchen-auto-"
+    const uniqueSessions = sessions
+      .filter((s: any) => {
+        // Filter out auto-cooler ephemeral sessions (location contains timestamp)
+        const isAutoCooler = s.location && s.location.includes('kitchen-auto-');
+        // Keep sessions from last 7 days only
+        const isRecent = new Date(s.created_at) > new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        return !isAutoCooler && isRecent;
+      })
+      .filter((s: any, idx: number, arr: any[]) => 
+        arr.findIndex(s2 => s2.session_id === s.session_id) === idx
+      )
+      .slice(0, 50); // Hard limit
     
-    res.json({ sessions: uniqueSessions.slice(0, 50) });
+    res.json({ sessions: uniqueSessions });
   } catch (error) {
     console.error("Error fetching DB sessions:", error);
     res.status(500).json({ error: "Failed to fetch sessions from database" });
