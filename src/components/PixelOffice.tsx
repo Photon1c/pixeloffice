@@ -527,6 +527,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [showQuickActions, setShowQuickActions] = useState<boolean>(false);
   const [showThoughtBursts, setShowThoughtBursts] = useState<boolean>(LAB_MODE);
   const [showInventoryWorkflow, setShowInventoryWorkflow] = useState<boolean>(false);
+  const [obsMode, setObsMode] = useState<boolean>(false); // OBS browser 2x scaling
   const [activeWalkUpChats, setActiveWalkUpChats] = useState<Map<string, WalkUpChatSession>>(new Map());
   const agentsRef = useRef(agents);
   agentsRef.current = agents;
@@ -1229,7 +1230,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       ctx.save();
       const scaleX = canvas.width / CANVAS_WIDTH;
       const scaleY = canvas.height / CANVAS_HEIGHT;
-      const scale = Math.min(scaleX, scaleY);
+      const baseScale = Math.min(scaleX, scaleY);
+      const scale = obsMode ? baseScale * 2 : baseScale; // OBS mode: 2x zoom
       ctx.scale(scale, scale);
 
       drawFloor(ctx);
