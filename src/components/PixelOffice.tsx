@@ -228,18 +228,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       const deskPos = CHAIR_POSITIONS[a.deskIndex];
       return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "sitting", status: "idle" as const };
     });
-    
-    // Also update React state for consistency
-    setAgents(prev => prev.map(a => {
-      if (a.id === host.id) {
-        return { ...a, targetX: hostTargetX, targetY: hostTargetY, mode: "standing", dir: "right", status: "idle" as const };
-      }
-      if (a.id === visitor.id) {
-        return { ...a, targetX: visitorTargetX, targetY: visitorTargetY, mode: "walking", dir: visitorTargetX > a.x ? "right" : "left", status: "idle" as const };
-      }
-      const deskPos = CHAIR_POSITIONS[a.deskIndex];
-      return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "sitting", status: "idle" as const };
-    }));
+    // DO NOT call setAgents() - triggers re-render that resets movement!
     
     // Clear any existing test bubbles first
     setSpeechBubbles([]);
@@ -280,15 +269,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         }
         return a;
       });
-      
-      // Also update React state for consistency
-      setAgents(prev => prev.map(a => {
-        if (a.id === visitor.id || a.id === host.id) {
-          const deskPos = CHAIR_POSITIONS[a.deskIndex];
-          return { ...a, targetX: deskPos.x, targetY: deskPos.y, mode: "walking", dir: deskPos.x > a.x ? "right" : "left" };
-        }
-        return a;
-      }));
+      // DO NOT call setAgents() - triggers re-render that resets movement!
       
       // Clear test agent tracking
       testAgentIdsRef.current = null;
@@ -515,7 +496,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const agentsRef = useRef(agents);
   agentsRef.current = agents;
   const renderAgentsRef = useRef(agents);
-  renderAgentsRef.current = agents;
+  // CRITICAL: Do NOT sync renderAgentsRef to agents state!
+  // Render loop owns movement - syncing resets animation progress on every re-render
   const sleepModeRef = useRef(sleepMode);
   sleepModeRef.current = sleepMode;
   const configRef = useRef(dashboardConfig);
@@ -1704,15 +1686,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               return agent;
             });
             
-            // Also update React state for consistency
-            setAgents(prev => prev.map((agent) => {
-              const participantIdx = participatingAgents.findIndex(a => a.id === agent.id);
-              if (participantIdx >= 0) {
-                const pos = kitchenPositions[participantIdx];
-                return { ...agent, targetX: pos.x, targetY: pos.y, mode: "walking", dir: pos.x > agent.x ? "right" : "left" };
-              }
-              return agent;
-            }));
+            // DO NOT call setAgents() - it triggers re-render which resets renderAgentsRef!
+            // Render loop owns all movement.
             
             // Simulate conversation with stacked bubbles (50px vertical spacing)
             const conversationLines = [
@@ -1768,13 +1743,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                   targetY: CHAIR_POSITIONS[agent.deskIndex]?.y || agent.y,
                   mode: "walking"
                 }));
-                // Also update React state for consistency
-                setAgents(prev => prev.map(agent => ({
-                  ...agent,
-                  targetX: CHAIR_POSITIONS[agent.deskIndex]?.x || agent.x,
-                  targetY: CHAIR_POSITIONS[agent.deskIndex]?.y || agent.y,
-                  mode: "walking"
-                })));
+                // DO NOT call setAgents() - triggers re-render that resets movement!
                 // Clear bubbles
                 setSpeechBubbles([]);
               }, 8000);
@@ -1930,21 +1899,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               }
               return agent;
             });
-            // Also update React state
-            setAgents(prev => prev.map(agent => {
-              const pos = positions.find(p => p.id === agent.id);
-              if (pos) {
-                return {
-                  ...agent,
-                  targetX: pos.x,
-                  targetY: pos.y,
-                  mode: "walking" as const,
-                  dir: pos.x > agent.x ? "right" : "left",
-                  status: "working" as const
-                };
-              }
-              return agent;
-            }));
+            // DO NOT call setAgents() - triggers re-render that resets movement!
           }}
         />}
       </div>
