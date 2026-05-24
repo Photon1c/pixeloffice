@@ -351,7 +351,7 @@ export function getTopicForConversation(): string {
   return topic;
 }
 
-export async function getTopicsForSession(source: string = "auto"): Promise<string[]> {
-  const topics = await fetchNewsTopics(source);
+export async function getTopicsForSession(source: string = "auto", repo?: string): Promise<string[]> {
+  const topics = await fetchNewsTopics(source, repo);
   return topics.map(t => t.title);
 }
