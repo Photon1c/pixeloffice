@@ -294,10 +294,33 @@ async function getCoolerSessions(limit = 20, sessionType?: "scrum" | "cooler") {
 // Initialize flywheel system on startup
 const initializeFlywheel = async () => {
   try {
-    ensureCoolerSessionsTable();
-  } catch (err) {
-    ensureResidueDir();
+    await initializeResidueSystem();
+    await ensureTables();
+    
+    // Cleanup old cooler sessions on startup (keep last 7 days)
+    try {
+      const pool = await getPool();
+      const dbType = getConfig().db.type;
+      const cutoffDate = new Date();
+      cutoffDate.setDate(cutoffDate.getDate() - 7);
+      
+      let query = "DELETE FROM cooler_sessions WHERE created_at < ?";
+      const params = [cutoffDate];
+      
+      if (dbType === "postgres") {
+        query = query.replace("?", (i) => `$${i}`);
+        const result = await pool.query(query, params);
+        console.log(`[Startup] Cleaned ${result.rowCount || 0} old cooler sessions from database`);
+      } else {
+        const [result] = await (pool as any).query(query, params);
+        console.log(`[Startup] Cleaned ${result.affectedRows || 0} old cooler sessions from database`);
+      }
+    } catch (err) {
+      console.warn("[Startup] Failed to cleanup old sessions:", err);
+    }
+    
     console.log("[Flywheel] System initialized");
+  } catch (err) {
     console.error("[Flywheel] Initialization error:", err);
   }
 };
