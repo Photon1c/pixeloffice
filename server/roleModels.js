@@ -332,11 +332,12 @@ function callChatModelForRole(role_1, messages_1) {
                 case 0:
                     config = getRoleModelConfig(role);
                     agentName = exports.roleToAgentMap[role] || role;
+                    var effectiveModel = options.model || config.modelName;
                     promptContent = messages.map(function (m) { return m.content; }).join("\n");
                     if (!(config.provider === "ollama")) return [3 /*break*/, 10];
                     url = "".concat(config.endpoint, "/api/chat");
                     payload = {
-                        model: config.modelName,
+                        model: effectiveModel,
                         messages: messages,
                         stream: false,
                         options: {
@@ -358,13 +359,13 @@ function callChatModelForRole(role_1, messages_1) {
                     response = _q.sent();
                     latencyMs = Date.now() - startTime;
                     if (!response.ok) {
-                        console.error("[Office-Chat] Role=".concat(config.role, ", Model=").concat(config.modelName, ", Latency=").concat(latencyMs, "ms, Success=False, Error=").concat(response.statusText));
+                        console.error("[Office-Chat] Role=".concat(config.role, ", Model=").concat(effectiveModel, ", Latency=").concat(latencyMs, "ms, Success=False, Error=").concat(response.statusText));
                         throw new Error("Ollama chat call failed: ".concat(response.statusText));
                     }
                     return [4 /*yield*/, response.json()];
                 case 2:
                     result = _q.sent();
-                    console.log("[Office-Chat] Role=".concat(config.role, ", Model=").concat(config.modelName, ", Latency=").concat(latencyMs, "ms, Success=True"));
+                    console.log("[Office-Chat] Role=".concat(config.role, ", Model=").concat(effectiveModel, ", Latency=").concat(latencyMs, "ms, Success=True"));
                     toolCalls = ((_g = result.message) === null || _g === void 0 ? void 0 : _g.tool_calls) || [];
                     finalResponse = (_h = result.message) === null || _h === void 0 ? void 0 : _h.content;
                     toolResults = [];
@@ -398,7 +399,7 @@ function callChatModelForRole(role_1, messages_1) {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
-                            model: config.modelName,
+                            model: effectiveModel,
                             messages: messages,
                             stream: false,
                             options: payload.options
@@ -419,7 +420,7 @@ function callChatModelForRole(role_1, messages_1) {
                             success: true,
                             role: config.role,
                             agent: agentName,
-                            model: config.modelName,
+                            model: effectiveModel,
                             provider: config.provider,
                             response: finalResponse,
                             raw_response: result,

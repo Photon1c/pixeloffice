@@ -10,8 +10,7 @@
     "use_case": "quick_transitions"
   },
   "executive": {
-    "fallback": true,
-    "model_name": "gemma-3-1b-it",
+    "model_name": "gemma4:e4b",
     "provider": "ollama",
     "use_case": "reasoning_delegation"
   },
@@ -21,7 +20,7 @@
     "use_case": "reasoning_delegation"
   },
   "fallback": {
-    "model_name": "qwen:0.5b",
+    "model_name": "gemma3:270m",
     "provider": "ollama",
     "use_case": "fallback_agent"
   },
@@ -51,17 +50,17 @@
     "use_case": "quick_transitions"
   },
   "primary": {
-    "model_name": "gemma3:270m",
+    "model_name": "gemma-3-1b-it",
     "provider": "ollama",
     "use_case": "primary_agent"
   },
   "specialist": {
-    "model_name": "gemma-3-1b-it",
+    "model_name": "qwen3.5:4b",
     "provider": "ollama",
-    "use_case": "quick_transitions"
+    "use_case": "reasoning"
   },
   "thought_loop": {
-    "model_name": "qwen:0.5b",
+    "model_name": "gemma3:270m",
     "provider": "ollama",
     "use_case": "quick_transitions"
   },

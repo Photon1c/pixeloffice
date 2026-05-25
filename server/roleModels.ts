@@ -280,13 +280,16 @@ async function executeTool(toolCall: { name: string; arguments: any }): Promise<
 export async function callChatModelForRole(role: RoleId, messages: any[], options: any = {}): Promise<any> {
   const config = getRoleModelConfig(role);
   const agentName = roleToAgentMap[role] || role;
+
+  // Use explicit model override from options if provided, otherwise fall back to role mapping
+  const effectiveModel = options.model || config.modelName;
   
   const promptContent = messages.map(m => m.content).join("\n");
   
   if (config.provider === "ollama") {
     const url = `${config.endpoint}/api/chat`;
     const payload = {
-      model: config.modelName,
+      model: effectiveModel,
       messages: messages,
       stream: false,
       options: {
@@ -309,12 +312,12 @@ export async function callChatModelForRole(role: RoleId, messages: any[], option
     const latencyMs = Date.now() - startTime;
 
     if (!response.ok) {
-      console.error(`[Office-Chat] Role=${config.role}, Model=${config.modelName}, Latency=${latencyMs}ms, Success=False, Error=${response.statusText}`);
+      console.error(`[Office-Chat] Role=${config.role}, Model=${effectiveModel}, Latency=${latencyMs}ms, Success=False, Error=${response.statusText}`);
       throw new Error(`Ollama chat call failed: ${response.statusText}`);
     }
 
     const result = await response.json();
-    console.log(`[Office-Chat] Role=${config.role}, Model=${config.modelName}, Latency=${latencyMs}ms, Success=True`);
+    console.log(`[Office-Chat] Role=${config.role}, Model=${effectiveModel}, Latency=${latencyMs}ms, Success=True`);
     
     // Check for tool calls in the response
     const toolCalls = result.message?.tool_calls || [];
@@ -346,7 +349,7 @@ export async function callChatModelForRole(role: RoleId, messages: any[], option
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: config.modelName,
+          model: effectiveModel,
           messages: messages,
           stream: false,
           options: payload.options
@@ -366,7 +369,7 @@ export async function callChatModelForRole(role: RoleId, messages: any[], option
       success: true,
       role: config.role,
       agent: agentName,
-      model: config.modelName,
+      model: effectiveModel,
       provider: config.provider,
       response: finalResponse,
       raw_response: result,

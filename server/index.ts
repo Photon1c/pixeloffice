@@ -3271,7 +3271,7 @@ app.post("/api/agent-chat", async (req, res) => {
         { role: "user", content: message }
       ];
       
-      const result = await callChatModelForRole(mappedRole, messages, { tools: true });
+      const result = await callChatModelForRole(mappedRole, messages, { tools: true, model: selectedModel });
       const reply = result.response || "I couldn't generate a response.";
       
       // Track LLM request
