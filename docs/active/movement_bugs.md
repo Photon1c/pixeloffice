@@ -29,11 +29,13 @@ if (agent.mode !== "walking" && agent.mode !== "idle-wander" && agent.mode !== "
 - ❌ Cooler Talk animation cleanup
 - ❌ TEST SCRUM animation cleanup  
 - ❌ Agent2Agent test conversation return
-- ❌ General agent wandering logic
+- ✅ General agent wandering logic (reduced to 5% wander-on-arrival, 3% schedule override)
 
 **Fix Applied:**
 - Cleanup code must use `mode: "walking"` (not "sitting") to enable movement back to desks
 - Natural snap-to-sitting happens when distance < 4px in updateAgentPosition
+- Wander rates reduced: `handleWanderLogic` 40% → 5%, `applyScheduleToAgents` 10% → 3%
+  (`src/utils/agentLogic.ts:433`, `src/utils/agentLogic.ts:823`)
 
 ---
 

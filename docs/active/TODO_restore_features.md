@@ -142,7 +142,7 @@ npm run dev
 **Action Required**:
 - [ ] Add movement debugging overlay
 - [ ] Log agent mode changes
-- [ ] Check if wander logic conflicts with animation targets
+- [x] Wander logic reduced: `handleWanderLogic` 40% → 5%, schedule override 10% → 3%
 - [ ] Verify sleep mode isn't preventing movement
 
 ---
@@ -168,7 +168,7 @@ npm run dev
 
 ## Priority Order
 
-1. **HIGH**: Fix agent movement constraints (blocks all animation features)
+1. ✅ **FIXED**: Agent movement constraints — wander rates reduced to prevent excess roaming
 2. **HIGH**: Add /flow endpoint for debugging
 3. **MEDIUM**: Restore Starbucks inventory test
 4. **MEDIUM**: Integrate tiny-router

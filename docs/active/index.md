@@ -22,6 +22,7 @@ This index tracks the implementation status of core features and recent upgrades
 - [x] **Social Potential** - Metric tracking recent cooler activity and participant density ✅
 - [x] **Social Activity Meter** - HUD indicator for office social energy (Lab Mode) ✅
 - [x] **Shadow-Biased Selection** - Backend weights biasing cooler sessions toward agents with shadows ✅
+- [x] **Task Shadow Dedup** - Server dedup keys on agentId (not roomId) to prevent duplicate traces ✅
 - [x] **Flywheel System** - Python MVP for residue capture, analysis, and promotion (moved to complete) ✅
 
 ## 🔵 Interactive Features
@@ -45,6 +46,7 @@ This index tracks the implementation status of core features and recent upgrades
 - [x] **"Delegate to Office" Command** - Chat-based delegation detection → SCRUM creation ✅
 - [x] **Office Status Panel** - Lab Mode panel showing task shadows & social activity ✅
 - [x] **Sleep Mode** - Reduces agent movement & thought bubbles for rest periods ✅
+- [x] **Vacation Mode Autopilot** - Periodically auto-triggers agent2agent, cooler, and scrum sessions ✅
 - [x] **GitHub Workflow Visualization** - 4-step pipeline animation on FrontDesk card ✅
 - [x] **Updated Local Models** - z-ai/glm4.7 for NVIDIA integration ✅
 
