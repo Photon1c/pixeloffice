@@ -132,18 +132,20 @@ function depositTrace(trace) {
     var decayConfig = DEFAULTS[trace.type] || { decayMs: DEFAULT_DECAY_MS };
     var decay = decayConfig.decayMs;
     var expires = new Date(now.getTime() + (((_a = trace.metadata) === null || _a === void 0 ? void 0 : _a.ttl) || decay));
-    // Deduplication: don't deposit if same type+agent+room exists within cooldown period
-    if (trace.agentId && trace.roomId) {
+    // Deduplication: don't deposit if same type+agent exists within cooldown period
+    // For task_shadows, key on agentId only (not roomId) to prevent duplicates
+    // when agent moves between zones.
+    if (trace.agentId) {
         var active_1 = getActiveTraces();
         var recentDuplicate = active_1.find(function (t) {
             return t.type === trace.type &&
                 t.agentId === trace.agentId &&
-                t.roomId === trace.roomId &&
+                (trace.type === "task_shadow" || t.roomId === trace.roomId) &&
                 new Date(t.created_at).getTime() > now.getTime() - 5 * 60 * 1000;
         } // 5 min cooldown
         );
         if (recentDuplicate) {
-            console.log("[Stigmergy] Skipping duplicate deposit: ".concat(trace.type, " for ").concat(trace.agentId, " in ").concat(trace.roomId));
+            console.log("[Stigmergy] Skipping duplicate deposit: ".concat(trace.type, " for ").concat(trace.agentId));
             return { success: true, skipped: true, reason: "Duplicate within cooldown period", trace: recentDuplicate };
         }
     }

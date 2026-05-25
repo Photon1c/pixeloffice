@@ -156,6 +156,8 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   // Multi-turn test conversation (5+ turns) with save functionality
   const testTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const [isTestRunning, setIsTestRunning] = useState(false);
+  const isTestRunningRef = useRef(false);
+  useEffect(() => { isTestRunningRef.current = isTestRunning; }, [isTestRunning]);
   const testAgentIdsRef = useRef<{visitor: string; host: string} | null>(null);
   
   const handleTestConversation = () => {
@@ -1190,6 +1192,49 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     }, 4000);
     return () => clearInterval(advanceInterval);
   }, [sleepMode, activeWalkUpChats.size]);
+
+  // Vacation Mode Autopilot: periodically trigger agent2agent, cooler, and scrum sessions
+  useEffect(() => {
+    if (!vacationMode) return;
+
+    let tickCount = 0;
+    // Add jitter to first tick so sessions don't all fire at once on engage
+    const initialDelay = 5000 + Math.random() * 15000;
+
+    const scheduleNext = () => {
+      // Check if any session is running via ref (test) and DOM button states (cooler/scrum)
+      const isAnyRunning = isTestRunningRef.current ||
+        document.getElementById("coolertalk-btn")?.getAttribute("disabled") === "" ||
+        document.getElementById("scrum-btn")?.getAttribute("disabled") === "";
+
+      if (isAnyRunning) {
+        // Wait longer when a session is in progress
+        setTimeout(scheduleNext, 15000);
+        return;
+      }
+
+      tickCount++;
+      // Agent2Agent: every ~90s
+      if (tickCount % 3 === 0) {
+        handleTestConversation();
+      }
+      // Cooler session: every ~180s
+      if (tickCount % 6 === 0) {
+        document.getElementById("coolertalk-btn")?.click();
+      }
+      // Scrum: every ~450s (~7.5 min)
+      if (tickCount % 15 === 0) {
+        document.getElementById("scrum-btn")?.click();
+      }
+
+      const nextDelay = 30000 + Math.random() * 5000;
+      setTimeout(scheduleNext, nextDelay);
+    };
+
+    const initialTimer = setTimeout(scheduleNext, initialDelay);
+    return () => clearTimeout(initialTimer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vacationMode]);
 
   // Thought Burst Loop Detection (per thought_speech_stigmergy.md Part C)
   useEffect(() => {

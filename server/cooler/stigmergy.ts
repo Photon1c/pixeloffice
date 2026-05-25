@@ -166,13 +166,15 @@ export function depositTrace(trace: Partial<StigmergyTrace>): DepositResult {
   const decay = decayConfig.decayMs;
   const expires = new Date(now.getTime() + (trace.metadata?.ttl || decay));
 
-  // Deduplication: don't deposit if same type+agent+room exists within cooldown period
-  if (trace.agentId && trace.roomId) {
+  // Deduplication: don't deposit if same type+agent exists within cooldown period
+  // For task_shadows, key on agentId only (not roomId) to prevent duplicates
+  // when agent moves between zones.
+  if (trace.agentId) {
     const active = getActiveTraces();
     const recentDuplicate = active.find(t => 
       t.type === trace.type && 
-      t.agentId === trace.agentId && 
-      t.roomId === trace.roomId &&
+      t.agentId === trace.agentId &&
+      (trace.type === "task_shadow" || t.roomId === trace.roomId) &&
       new Date(t.created_at).getTime() > now.getTime() - 5 * 60 * 1000 // 5 min cooldown
     );
     if (recentDuplicate) {
