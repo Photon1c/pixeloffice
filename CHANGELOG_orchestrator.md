@@ -1,5 +1,25 @@
 # Orchestrator & Routing Stack – Session Changelog
 
+## 2026-05-24 – Flow, Router Visualizer, Budgeting
+
+- **Router Visualizer Integration**
+  - Cooler Talk, TEST SCRUM, Agent2Agent, and the Inventory Workflow demo now emit routes to the router visualizer app at `~/tools/router-visualizer` (`http://localhost:5007/api/route`).
+  - Cooler sessions are limited to small randomized groups (kitchen only), SCRUMs use randomized conference groups, and Agent2Agent uses a two-agent walk-up pattern.
+
+- **Flow Snapshot & /api/flow**
+  - Backend exposes `/api/flow/state` (frontend push) and `/api/flow` (visualizer pull) for office state snapshots (agents, movement, flags, moods).
+  - PixelOffice pushes a lightweight snapshot every few seconds; a lab-only Flow Snapshot card surfaces this in the UI.
+
+- **Topic Source & Agent2Agent Sync**
+  - Topic source dropdown in the Review Heat panel controls cooler topics (`auto/news/github/fallback`).
+  - AgentIssueMonitor (Agent2Agent panel) has its own topic source selector; an optional sync toggle lets Agent2Agent topics drive Cooler sessions.
+
+- **Budgeting API & Dashboard**
+  - `/api/budgeting` added on the server, reading only `.env`-backed `BUDGET_*` vars (no sensitive figures in git).
+  - New `BudgetingDashboard` React view (lab-only) with two left panels and a 70% right canvas for budget summary, income/expense breakdowns, and ratios.
+
+---
+
 **Date:** 2026-03-24
 
 ## 1. Hermes (former “White Rabbit”)

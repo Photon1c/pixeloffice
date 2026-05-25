@@ -817,9 +817,10 @@ export function applyScheduleToAgents(
       return agent;
     }
 
-    // 30% chance to let agent wander freely instead of following schedule
-    // This enables natural movement and conversations around the office
-    if (Math.random() < 0.3) {
+    // Small chance to let agent wander freely instead of following schedule.
+    // Keep this relatively low so agents mostly stay near their desks and
+    // only occasionally explore the wider office for conversations.
+    if (Math.random() < 0.1) {
       const wanderPoint = WANDER_POINTS[Math.floor(Math.random() * WANDER_POINTS.length)];
       return {
         ...agent,

@@ -447,6 +447,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [currentTopic, setCurrentTopic] = useState<string>("");
   const [newsApiSource, setNewsApiSource] = useState<"auto" | "news" | "github" | "fallback">("auto");
   const [newsGithubRepo, setNewsGithubRepo] = useState<string>("photon1c/pixeloffice");
+  const [syncAgentTopics, setSyncAgentTopics] = useState<boolean>(true);
   const [speechBubbles, setSpeechBubbles] = useState<{speakerId: string; text: string; offset?: number; yOffset?: number; model?: string; expiresAt?: number}[]>([]);
   
   // Thought Burst / Loop Detection State
@@ -581,6 +582,23 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
     return () => clearInterval(interval);
   }, [sleepMode, vacationMode, activeConversationZone]);
+
+  // Optional sync: allow AgentIssueMonitor to push its topic/source into
+  // the main cooler topic state when enabled.
+  useEffect(() => {
+    (window as any).updateCoolerTopicFromAgent2Agent = (payload: { topic: string; source: string }) => {
+      if (!syncAgentTopics) return;
+      if (!payload || !payload.topic) return;
+      setCurrentTopic(payload.topic);
+      if (payload.source === "auto" || payload.source === "news" || payload.source === "github" || payload.source === "fallback") {
+        setNewsApiSource(payload.source as any);
+      }
+    };
+
+    return () => {
+      (window as any).updateCoolerTopicFromAgent2Agent = undefined;
+    };
+  }, [syncAgentTopics]);
 
   // Periodically fetch /api/flow for a small frontend flow inspector
   useEffect(() => {
@@ -1558,7 +1576,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         </div>
         
         {/* STIGMERGY PANEL */}
-        <div style={{ background: "rgba(255, 100, 50, 0.1)", border: "1px solid #ff6432", borderRadius: "4px", padding: "10px", marginBottom: "16px", maxHeight: "300px", overflowY: "auto", scrollbarWidth: "thin", scrollbarColor: "#3a3a5a transparent" }}>
+        <div style={{ background: "rgba(255, 100, 50, 0.1)", border: "1px solid #ff6432", borderRadius: "4px", padding: "10px", marginBottom: "16px", scrollbarWidth: "thin", scrollbarColor: "#3a3a5a transparent" }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <h4 style={{ color: "#ff6432", margin: 0, fontSize: "12px" }}>🔥 Review Heat</h4>
             <button onClick={async () => {
@@ -1589,6 +1607,15 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               <option value="github">GitHub Activity</option>
               <option value="fallback">Fallback Topics</option>
             </select>
+            <div style={{ marginTop: '4px', fontSize: '9px', color: '#feca57', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <input
+                type="checkbox"
+                checked={syncAgentTopics}
+                onChange={e => setSyncAgentTopics(e.target.checked)}
+                style={{ margin: 0 }}
+              />
+              <span>Sync Agent2Agent topics to Cooler sessions</span>
+            </div>
           </div>
           {newsApiSource === 'github' && (
             <div style={{ marginBottom: '8px' }}>
@@ -1833,7 +1860,10 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               { x: 1130, y: 80 },
               { x: 1055, y: 130 },
             ];
-            const participatingAgents = agents.slice(0, 4);
+            // Select a small group (up to 3) for this cooler session.
+            const allAgents = agentsRef.current;
+            const shuffled = [...allAgents].sort(() => Math.random() - 0.5);
+            const participatingAgents = shuffled.slice(0, Math.min(3, shuffled.length));
             
             // Clear previous bubbles
             setSpeechBubbles([]);
@@ -1871,17 +1901,18 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             
             // Simulate conversation with stacked bubbles (50px vertical spacing)
             const conversationLines = [
-              { agentIdx: 0, text: `So about "${currentTopic.slice(0, 50)}..."`, delay: 1000 },
-              { agentIdx: 1, text: "Interesting point! What do you think?", delay: 2500 },
-              { agentIdx: 2, text: "I think we should investigate further.", delay: 4000 },
-              { agentIdx: 0, text: "Agreed. Let's bring this to SCRUM.", delay: 5500 },
-              { agentIdx: 3, text: "Good idea! I'll prepare the analysis.", delay: 7000 },
+              { text: `So about "${currentTopic.slice(0, 50)}..."`, delay: 1000 },
+              { text: "Interesting point! What do you think?", delay: 2500 },
+              { text: "I think we should investigate further.", delay: 4000 },
+              { text: "Agreed. Let's bring this to SCRUM.", delay: 5500 },
             ];
             
             conversationLines.forEach((line, i) => {
               const timeoutId = setTimeout(() => {
-                const agentId = participatingAgents[line.agentIdx].id;
-                const bubbleStackIndex = i % 4;
+                if (participatingAgents.length === 0) return;
+                const speaker = participatingAgents[i % participatingAgents.length];
+                const agentId = speaker.id;
+                const bubbleStackIndex = i % Math.min(4, participatingAgents.length);
                 const verticalSpacing = 50;
                 const yOffset = -20 - (bubbleStackIndex * verticalSpacing);
                 
@@ -1998,7 +2029,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             setActiveConversationZone("conference");
             
             // CRITICAL: Update renderAgentsRef.current directly for visual movement
-            const confAgents = agentsRef.current.slice(0, 8);
+            // Pick a randomized group for SCRUM so not all agents always
+            // participate and they still mostly hang around their desks.
+            const allAgents = agentsRef.current;
+            const maxScrumAgents = Math.min(8, allAgents.length);
+            const shuffled = [...allAgents].sort(() => Math.random() - 0.5);
+            const confAgents = shuffled.slice(0, maxScrumAgents);
             renderAgentsRef.current = renderAgentsRef.current.map((agent, idx) => {
               if (confAgents.find(a => a.id === agent.id)) {
                 const pos = getConferencePosition(idx);

@@ -228,6 +228,10 @@ export function AgentIssueMonitor({
           const topicValue = typeof data.topic === 'object' ? data.topic.title : data.topic;
           setCurrentTopic(topicValue);
           setTopicSource(data.topic?.source || data.topic?.category || 'news');
+          (window as any).updateCoolerTopicFromAgent2Agent?.({
+            topic: topicValue,
+            source: selectedTopicSource,
+          });
         }
       } catch (err) {
         console.warn('[AgentIssueMonitor] Failed to fetch topic:', err);
@@ -239,7 +243,7 @@ export function AgentIssueMonitor({
     return () => clearInterval(interval);
   }, [visible, selectedTopicSource]);
 
-  const fetchRepos = async () => {
+    const fetchRepos = async () => {
     try {
       const res = await fetch('/api/github/repos');
       const data = await res.json();
