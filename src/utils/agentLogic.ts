@@ -430,8 +430,8 @@ export function handleWanderLogic(agent: Agent): Agent {
   const distance = Math.sqrt(dx * dx + dy * dy);
 
   if (distance < 10) {
-    // 40% chance to pick a new wander point, 60% chance to stay put (more natural)
-    if (Math.random() > 0.6) {
+    // 5% chance to pick a new wander point — agents should stay put unless called into workflow
+    if (Math.random() > 0.95) {
       const newPoint = WANDER_POINTS[Math.floor(Math.random() * WANDER_POINTS.length)];
       return { ...agent, targetX: newPoint.x, targetY: newPoint.y, mode: "idle-wander" as const };
     }
@@ -818,9 +818,8 @@ export function applyScheduleToAgents(
     }
 
     // Small chance to let agent wander freely instead of following schedule.
-    // Keep this relatively low so agents mostly stay near their desks and
-    // only occasionally explore the wider office for conversations.
-    if (Math.random() < 0.1) {
+    // Keep this very low so agents mostly stay near their desks.
+    if (Math.random() < 0.03) {
       const wanderPoint = WANDER_POINTS[Math.floor(Math.random() * WANDER_POINTS.length)];
       return {
         ...agent,

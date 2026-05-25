@@ -1599,7 +1599,22 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             <label style={{ fontSize: '9px', color: '#ff6432', display: 'block', marginBottom: '3px' }}>Topic Source</label>
             <select 
               value={newsApiSource}
-              onChange={(e) => setNewsApiSource(e.target.value as any)}
+              onChange={async (e) => {
+                setNewsApiSource(e.target.value as any);
+                const resp = await fetch("/api/cooler/topics/refresh", { 
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ 
+                    source: e.target.value,
+                    repo: e.target.value === 'github' ? newsGithubRepo : undefined
+                  })
+                });
+                const data = await resp.json();
+                if (data.topic) {
+                  const topicValue = typeof data.topic === 'object' ? data.topic.title : data.topic;
+                  setCurrentTopic(topicValue);
+                }
+              }}
               style={{ width: '100%', padding: '4px 6px', background: '#1a1a2a', border: '1px solid #ff6432', borderRadius: '3px', color: '#feca57', fontSize: '10px' }}
             >
               <option value="auto">Auto (GitHub → News → Fallback)</option>
