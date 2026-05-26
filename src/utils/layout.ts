@@ -169,6 +169,29 @@ export const WANDER_POINTS = [
   { x: 960, y: 514 },    // Between archives and lounge
 ];
 
+export const DESK_WANDER_INDICES: Record<number, number[]> = {
+  0: [5, 10, 15, 19],   // FrontDesk → lobby, gym, adjacent hallways
+  1: [6, 7, 16, 20],    // OpenClaw → openOffice, center hallways
+  2: [13, 14, 21, 22],  // IronClaw → dataNodes, archives edge, south hallways
+  3: [9, 14, 22],       // HermitClaw → archives, lounge, south hallway
+  4: [0, 15],           // LeslieClaw → executive suite, north hallway
+  5: [1, 16],           // Sherlock → sherlock office, north hallway
+  6: [2, 12, 17],       // ZeroClaw → zeroclaw sandbox, missionCtrl edge, north hallway
+  7: [11, 10, 20],      // Sherlobster → strategy room, gym, south hallway
+  8: [8, 3, 17, 18],    // Hercule → warRoom, conference edge, north hallways
+};
+
+export function getWanderPointsForDesk(deskIndex: number): typeof WANDER_POINTS {
+  const indices = DESK_WANDER_INDICES[deskIndex];
+  if (!indices || indices.length === 0) return WANDER_POINTS;
+  // 80% chance to pick from zone-appropriate points, 20% any point (keeps it lively)
+  if (Math.random() < 0.8) {
+    const zonePoints = indices.map(i => WANDER_POINTS[i]).filter(Boolean);
+    if (zonePoints.length > 0) return zonePoints;
+  }
+  return WANDER_POINTS;
+}
+
 export const ZONE_CONFIG: Record<string, { mood: string; intensity: "high" | "medium" | "low"; color: string }> = {
   lobby: { mood: "welcoming", intensity: "medium", color: "#1a2230" },
   kitchen: { mood: "casual", intensity: "low", color: "#1a1a22" },

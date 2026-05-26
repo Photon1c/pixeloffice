@@ -1,5 +1,5 @@
 import { Agent, AgentStatus, AgentMood, Task, TaskStatus, ConversationContext } from "../types";
-import { CHAIR_POSITIONS, WANDER_POINTS, ZONE_CONFIG, ROOMS, CANVAS_WIDTH, CANVAS_HEIGHT, STATUS_BAR_HEIGHT } from "./layout";
+import { CHAIR_POSITIONS, WANDER_POINTS, ZONE_CONFIG, ROOMS, CANVAS_WIDTH, CANVAS_HEIGHT, STATUS_BAR_HEIGHT, getWanderPointsForDesk } from "./layout";
 import { getPeriodForHour } from "./schedule";
 import { AGENT_PERSONALITIES, CHAT_TOPICS_POOL, ChatIntensity, ChatEscalationState } from "./agentPersonalities";
 export type { ChatEscalationState, ChatIntensity };
@@ -266,7 +266,7 @@ export const INITIAL_AGENTS: Agent[] = [
     targetY: CHAIR_POSITIONS[4].y,
     dir: "right",
     frame: 0,
-    mode: "idle-wander",
+    mode: "sitting",
     deskIndex: 4,
   },
   {
@@ -282,7 +282,7 @@ export const INITIAL_AGENTS: Agent[] = [
     targetY: CHAIR_POSITIONS[5].y,
     dir: "left",
     frame: 0,
-    mode: "idle-wander",
+    mode: "sitting",
     deskIndex: 5,
   },
   {
@@ -298,7 +298,7 @@ export const INITIAL_AGENTS: Agent[] = [
     targetY: CHAIR_POSITIONS[6].y,
     dir: "left",
     frame: 0,
-    mode: "idle-wander",
+    mode: "sitting",
     deskIndex: 6,
   },
   {
@@ -401,8 +401,8 @@ export function updateAgentStatus(
       mode: "walking",
     };
   } else {
-    const randomPoint =
-      WANDER_POINTS[Math.floor(Math.random() * WANDER_POINTS.length)];
+    const points = getWanderPointsForDesk(agent.deskIndex);
+    const randomPoint = points[Math.floor(Math.random() * points.length)];
     return {
       ...agent,
       status: newStatus,
@@ -432,7 +432,8 @@ export function handleWanderLogic(agent: Agent): Agent {
   if (distance < 10) {
     // 5% chance to pick a new wander point — agents should stay put unless called into workflow
     if (Math.random() > 0.95) {
-      const newPoint = WANDER_POINTS[Math.floor(Math.random() * WANDER_POINTS.length)];
+      const points = getWanderPointsForDesk(agent.deskIndex);
+      const newPoint = points[Math.floor(Math.random() * points.length)];
       return { ...agent, targetX: newPoint.x, targetY: newPoint.y, mode: "idle-wander" as const };
     }
   }
@@ -820,7 +821,8 @@ export function applyScheduleToAgents(
     // Small chance to let agent wander freely instead of following schedule.
     // Keep this very low so agents mostly stay near their desks.
     if (Math.random() < 0.03) {
-      const wanderPoint = WANDER_POINTS[Math.floor(Math.random() * WANDER_POINTS.length)];
+      const points = getWanderPointsForDesk(agent.deskIndex);
+      const wanderPoint = points[Math.floor(Math.random() * points.length)];
       return {
         ...agent,
         status: "idle" as const,

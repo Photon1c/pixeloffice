@@ -11,6 +11,7 @@ import TimeTasksPanel from "./TimeTasksPanel";
 import ScrumPanel from "./ScrumPanel";
 import OfficeClock from "./OfficeClock";
 import YouTubePlayer from "./YouTubePlayer";
+import CalendarPanel from "./CalendarPanel";
 import InventoryWorkflowDemo from "./InventoryWorkflowDemo";
 import { getPeriodForHour } from "../utils/schedule";
 import {
@@ -529,6 +530,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [sleepMode, setSleepMode] = useState<boolean>(true);
   const [vacationMode, setVacationMode] = useState<boolean>(false);
   const [vacationStatus, setVacationStatus] = useState<string>('');
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [showAgent2Agent, setShowAgent2Agent] = useState<boolean>(true);
   const [showYouTube, setShowYouTube] = useState<boolean>(false);
   const [showReviewHeat, setShowReviewHeat] = useState<boolean>(true);
@@ -859,16 +861,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   // Update Desk Stigmergy based on agent state
   useEffect(() => {
     const FINISHED_STATUSES = ["done", "archived", "approved", "ready_for_delivery", "dropped"];
+    const pendingUpdates: { deskId: string; updates: Record<string, number> }[] = [];
     
     agents.forEach(agent => {
       const deskId = `desk-${agent.deskIndex}`;
-      let updates: Record<string, number> = {};
+      let taskShadow: number | undefined;
       
       // Check agent loop state
       const loopState = agentLoopStates[agent.id];
       if (loopState) {
-        if (loopState.state === "looping") updates.loopHeat = 0.8;
-        else if (loopState.state === "stalled") updates.loopHeat = 0.4;
+        if (loopState.state === "looping") taskShadow = 0.8;
+        else if (loopState.state === "stalled") taskShadow = 0.4;
       }
       
       // Check if agent has unfinished tasks (task shadow)
@@ -877,18 +880,28 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       const isIdleWithTasks = agent.status === "idle" && unfinishedTasks.length > 0;
       
       if (isIdleWithTasks) {
-        updates.taskShadow = Math.min(0.6 + (unfinishedTasks.length * 0.1), 1);
+        taskShadow = Math.min(0.6 + (unfinishedTasks.length * 0.1), 1);
       }
       
-      if (Object.keys(updates).length > 0) {
+      // Compare with current desk stigmergy to avoid unnecessary updates
+      const current = deskStigmergy[deskId];
+      const currentTaskShadow = current?.taskShadow || 0;
+      const newTaskShadow = taskShadow !== undefined ? taskShadow : 0;
+      if (Math.abs(currentTaskShadow - newTaskShadow) > 0.05) {
+        pendingUpdates.push({ deskId, updates: { taskShadow: newTaskShadow } });
+      }
+    });
+    
+    if (pendingUpdates.length > 0) {
+      pendingUpdates.forEach(({ deskId, updates }) => {
         fetch(`/api/stigmergy/desk/${deskId}/update`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(updates)
         }).catch(() => {});
-      }
-    });
-  }, [agents, agentLoopStates, tasks]);
+      });
+    }
+  }, [agents, agentLoopStates, tasks, deskStigmergy]);
 
   // Fetch conversation sessions for convo viewer
   useEffect(() => {
@@ -923,19 +936,22 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     };
   }, [showConvoViewer, convoViewerType]);
 
+  // Track recent deposit timestamps per agent to prevent duplicates
+  const lastShadowDepositRef = useRef<Record<string, number>>({});
+
   // STIGMERGY: Detect Task Shadows (abandoned work)
   useEffect(() => {
     const now = Date.now();
+    const SHADOW_COOLDOWN = 5 * 60 * 1000;
+    let changed = false;
+    
     agents.forEach(agent => {
       const hasTask = tasks.some(t => t.assigneeId === agent.id && t.status !== "done");
       if (agent.status === "idle" && hasTask) {
-        // Only deposit one shadow per agent per 5 minutes to avoid duplicates
-        const recentShadow = stigmergyTraces.find(t => 
-          t.type === "task_shadow" && 
-          t.agentId === agent.id &&
-          (now - new Date(t.created_at).getTime()) < 5 * 60 * 1000
-        );
-        if (!recentShadow) {
+        const lastDeposit = lastShadowDepositRef.current[agent.id] || 0;
+        if (now - lastDeposit >= SHADOW_COOLDOWN) {
+          lastShadowDepositRef.current[agent.id] = now;
+          changed = true;
           fetch("/api/stigmergy/deposit", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -947,9 +963,15 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             })
           }).catch(() => {});
         }
+      } else if (!hasTask) {
+        // Clear deposit tracking when agent has no unfinished tasks
+        if (lastShadowDepositRef.current[agent.id]) {
+          delete lastShadowDepositRef.current[agent.id];
+          changed = true;
+        }
       }
     });
-  }, [agents, tasks, stigmergyTraces]);
+  }, [agents, tasks]);
 
    useEffect(() => {
      if (dashboardConfig.liveMode) {
@@ -1445,6 +1467,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   if (showGenealogyLab) return <GenealogyLab onNavigate={() => setShowGenealogyLab(false)} />;
   if (showAdminAssistant) return <AdminAssistant onNavigate={() => setShowAdminAssistant(false)} />;
   if (showStockForecasts) return <StockForecasts />;
+  if (showCalendar) return <CalendarPanel onClose={() => setShowCalendar(false)} />;
   if (showConvoViewer) {
     return (
       <ConvoViewer 
@@ -1743,9 +1766,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
                 if (shadowTraces.length === 0) {
                   return <div style={{ fontSize: '9px', color: '#505060' }}>All clear</div>;
                 }
+                // Deduplicate by agentId+roomId to prevent duplicate entries
+                const seen = new Set<string>();
+                const uniqueShadows = shadowTraces.filter(t => {
+                  const key = `${t.agentId || 'unknown'}|${t.roomId || ''}|${t.type}`;
+                  if (seen.has(key)) return false;
+                  seen.add(key);
+                  return true;
+                });
                 // Group by agent and calculate average intensity
                 const byAgent: Record<string, { count: number; totalIntensity: number; roomId: string }> = {};
-                shadowTraces.forEach(t => {
+                uniqueShadows.forEach(t => {
                   const aid = t.agentId || 'unknown';
                   if (!byAgent[aid]) byAgent[aid] = { count: 0, totalIntensity: 0, roomId: t.roomId || '' };
                   byAgent[aid].count++;
@@ -2320,6 +2351,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             <AgentIssueMonitor visible={true} embedded onTestConversation={handleTestConversation} />
           </div>
           <div style={{ borderTop: '1px solid #1b2333', paddingTop: '8px' }}>
+            <button
+              onClick={() => setShowCalendar(true)}
+              style={{
+                width: '100%', padding: '8px', background: '#1a2a2a',
+                border: '1px solid #2a3548', borderRadius: '6px',
+                color: '#4ecdc4', cursor: 'pointer', fontSize: '12px',
+                fontWeight: 600, marginBottom: '8px',
+              }}
+            >
+              📅 Calendar
+            </button>
             <YouTubePlayer />
           </div>
         </div>
