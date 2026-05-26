@@ -39,3 +39,6 @@ Thumbs.db
 # Auto-generated SCRUM reports
 SCRUM_REPORTS/
 
+# Local symlink not available in CI
+public/hermitclaw_workspace
+
