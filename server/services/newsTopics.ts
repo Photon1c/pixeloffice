@@ -42,6 +42,29 @@ const FALLBACK_TOPICS: NewsTopic[] = [
   { title: "Home robots becoming more affordable and mainstream in everyday household tasks", category: "tech", source: "trending" },
 ];
 
+const OFFICE_TOPICS: NewsTopic[] = [
+  { title: "Redesigning the open office layout - should we add more collaboration zones or quiet focus pods?", category: "office", source: "office" },
+  { title: "New ergonomic furniture options for the team - standing desks, balance chairs, or treadmill workstations?", category: "office", source: "office" },
+  { title: "Office plant wall installation - improving air quality and aesthetics in the workspace", category: "office", source: "office" },
+  { title: "Let's talk about the kitchen redesign - new espresso machine, snack bar, or a full renovation?", category: "office", source: "office" },
+  { title: "Conference room AV upgrade - what display and camera setup would improve our standups?", category: "office", source: "office" },
+  { title: "Interior design theme poll: cyberpunk minimalist, cozy library, or plant-filled greenhouse?", category: "office", source: "office" },
+  { title: "Quiet room proposal - creating a noise-free zone for deep work near the archives section", category: "office", source: "office" },
+  { title: "Wall mural ideas for the lobby - should we showcase our product roadmap or team achievements?", category: "office", source: "office" },
+  { title: "Lighting upgrade discussion - warm ambient vs bright task lighting for the open office area", category: "office", source: "office" },
+  { title: "Reorganizing the data nodes section for better cable management and server access", category: "office", source: "office" },
+  { title: "Adding a nap pod or relaxation corner - where should it go and what should it include?", category: "office", source: "office" },
+  { title: "Whiteboard wall expansion - turning the hallway into an ideas corridor for spontaneous brainstorming", category: "office", source: "office" },
+  { title: "New color scheme for the executive suite - modern slate, warm earth tones, or classic navy?", category: "office", source: "office" },
+  { title: "Acoustic panel installation to reduce echo in the war room during intense planning sessions", category: "office", source: "office" },
+  { title: "Bringing the gym area to life - should we add a ping pong table, climbing wall, or yoga mats?", category: "office", source: "office" },
+  { title: "Digital signage for mission control - real-time dashboards or rotating team achievements?", category: "office", source: "office" },
+  { title: "Redesigning the archives with better shelving, reading nooks, and a digitization station", category: "office", source: "office" },
+  { title: "Should we convert the unused corner into a podcast/recording booth for team updates?", category: "office", source: "office" },
+  { title: "Smart blinds for the windows - automated light control to reduce glare on monitors", category: "office", source: "office" },
+  { title: "The great desk rearrangement - team clusters by project or by function for better synergy?", category: "office", source: "office" },
+];
+
 const RSS_FEEDS = [
   { url: "https://feeds.bbci.co.uk/news/technology/rss.xml", name: "BBC Tech" },
   { url: "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml", name: "NY Times Tech" },
@@ -284,6 +307,11 @@ function getFallbackTopics(): NewsTopic[] {
   return shuffled.slice(0, 5);
 }
 
+function fetchOfficeTopics(): NewsTopic[] {
+  const shuffled = [...OFFICE_TOPICS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, 8);
+}
+
 export async function fetchNewsTopics(source: string = "auto", repo?: string): Promise<NewsTopic[]> {
   const now = Date.now();
 
@@ -314,6 +342,13 @@ export async function fetchNewsTopics(source: string = "auto", repo?: string): P
     }
     cachedTopics = getFallbackTopics();
     lastFetchTime = now;
+    return cachedTopics;
+  }
+
+  if (source === "office") {
+    cachedTopics = fetchOfficeTopics();
+    lastFetchTime = now;
+    console.log(`[NewsTopics] Using ${cachedTopics.length} office topics`);
     return cachedTopics;
   }
 

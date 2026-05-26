@@ -448,7 +448,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [stigmergyTraces, setStigmergyTraces] = useState<any[]>([]);
   const [socialPotential, setSocialPotential] = useState<{sessionCount: number; participantCount: number; intensity: number} | null>(null);
   const [currentTopic, setCurrentTopic] = useState<string>("");
-  const [newsApiSource, setNewsApiSource] = useState<"auto" | "news" | "github" | "fallback">("auto");
+  const [newsApiSource, setNewsApiSource] = useState<"auto" | "news" | "github" | "office" | "fallback">("auto");
   const [newsGithubRepo, setNewsGithubRepo] = useState<string>("photon1c/pixeloffice");
   const [syncAgentTopics, setSyncAgentTopics] = useState<boolean>(true);
   const [speechBubbles, setSpeechBubbles] = useState<{speakerId: string; text: string; offset?: number; yOffset?: number; model?: string; expiresAt?: number}[]>([]);
@@ -594,7 +594,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       if (!syncAgentTopics) return;
       if (!payload || !payload.topic) return;
       setCurrentTopic(payload.topic);
-      if (payload.source === "auto" || payload.source === "news" || payload.source === "github" || payload.source === "fallback") {
+      if (payload.source === "auto" || payload.source === "news" || payload.source === "github" || payload.source === "office" || payload.source === "fallback") {
         setNewsApiSource(payload.source as any);
       }
     };
@@ -1686,6 +1686,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               style={{ width: '100%', padding: '4px 6px', background: '#1a1a2a', border: '1px solid #ff6432', borderRadius: '3px', color: '#feca57', fontSize: '10px' }}
             >
               <option value="auto">Auto (GitHub → News → Fallback)</option>
+              <option value="office">Office Topics</option>
               <option value="news">RSS/News Only</option>
               <option value="github">GitHub Activity</option>
               <option value="fallback">Fallback Topics</option>
