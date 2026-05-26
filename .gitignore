@@ -36,3 +36,6 @@ Thumbs.db
 
 /docs/complete
 
+# Auto-generated SCRUM reports
+SCRUM_REPORTS/
+
