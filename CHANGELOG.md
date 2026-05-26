@@ -1,6 +1,6 @@
 # Changelog
 
-## 2026-05-26 — Scrum auto-advance, pipeline polish
+## 2026-05-26 — Topic diversity, auto-cooler candidate generation
 
 - **Scrum Auto-Advance Toggle** (ScrumPanel.tsx)
   - Checkbox in SCRUM panel header, persisted to localStorage
@@ -17,6 +17,13 @@
   - Processes pending candidates from frontend cooler sessions automatically
   - Preserves existing `AUTO_SCRUM_ENABLED` test-scrum trigger
 
+- **Server-Side Auto-Run Scheduler** (server/index.ts)
+  - Background interval (default 3min, 45s in night mode) calls `/api/scrum/auto-run`
+  - Auto-starts 5s after server boot — no panel or toggle required
+  - Respects night mode (4x faster when sleep mode is active)
+  - Start/stop/status endpoints at `/api/scrum/auto-run/start|stop|status`
+  - Configurable via `AUTO_RUN_INTERVAL_MS` env var
+
 - **Wander Zone Constraints**
   - Agents restricted to desk-appropriate zones during wander/idle
   - Desk wander indices + `getWanderPointsForDesk()` helper
@@ -26,6 +33,17 @@
 
 - **Office Topics Source**
   - 20 office redesign topics, `fetchOfficeTopics()` function, dropdown option
+
+- **Topic Diversity for SCRUM Candidates** (server/services/newsTopics.ts)
+  - `fetchNewsTopics("auto")` now fetches from GitHub AND news sources in parallel, merging results for topic diversity
+  - Recent topic tracking prevents repeating the same topic within 8 consecutive picks
+  - No more all-candidates-being-about-the-latest-git-commit
+
+- **Auto-Cooler → SCRUM Candidate Pipeline** (server/index.ts)
+  - Auto-cooler sessions now generate SCRUM candidates via `maybeCreateScrumCandidate()`
+  - Candidates trigger auto-approval + pipeline (2s delay) for fully autonomous scrumming
+  - Previously: auto-cooler only auto-approved frontend-generated candidates
+  - Now: each auto-cooler session can produce its own candidate
 
 ## 2026-05-24 — Flow, Router Visualizer, Budgeting
 

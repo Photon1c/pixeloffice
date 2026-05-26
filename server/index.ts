@@ -2431,6 +2431,7 @@ const AUTO_COOLER_INTERVAL_MS = parseInt(process.env.AUTO_COOLER_INTERVAL_MS || 
 const AUTO_SCRUM_INTERVAL_MS = parseInt(process.env.AUTO_SCRUM_INTERVAL_MS || "") || 10 * 60 * 1000; // 10 minutes default
 const AUTO_SCRUM_ENABLED = process.env.AUTO_SCRUM_ENABLED === "true";
 const NIGHT_MODE_MULTIPLIER = parseFloat(process.env.NIGHT_MODE_MULTIPLIER || "") || 0.25; // 4x faster at night
+const AUTO_RUN_INTERVAL_MS = parseInt(process.env.AUTO_RUN_INTERVAL_MS || "") || 3 * 60 * 1000; // 3 minutes default
 let nightModeActive = true;
 
 function getActiveInterval(baseMs: number): number {
@@ -2443,6 +2444,55 @@ app.post("/api/office/night-mode", async (req, res) => {
   nightModeActive = active === true;
   console.log(`[Office] Night mode ${nightModeActive ? 'ACTIVATED' : 'deactivated'}. Intervals: ${getActiveInterval(AUTO_COOLER_INTERVAL_MS)/1000}s (cooler), ${getActiveInterval(AUTO_SCRUM_INTERVAL_MS)/1000}s (scrum)`);
   res.json({ ok: true, nightMode: nightModeActive });
+});
+
+// Auto-Run Scheduler — background processor for scrum candidates + session advancement
+let autoRunInterval: NodeJS.Timeout | null = null;
+
+async function runAutoRun() {
+  try {
+    const res = await fetch('http://127.0.0.1:4173/api/scrum/auto-run', { method: 'POST' });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.approved > 0 || data.advanced > 0) {
+        console.log(`[AutoRun] ${data.approved} candidates approved, ${data.advanced} stage advances`);
+      }
+      if (data.errors?.length > 0) {
+        console.warn(`[AutoRun] ${data.errors.length} errors:`, data.errors.slice(0, 3).join("; "));
+      }
+    }
+  } catch {
+    // Server not ready yet — will retry on next interval
+  }
+}
+
+app.post("/api/scrum/auto-run/start", async (req, res) => {
+  if (autoRunInterval) {
+    return res.json({ ok: true, message: "Auto-run already running" });
+  }
+  const intervalMs = getActiveInterval(AUTO_RUN_INTERVAL_MS);
+  await runAutoRun();
+  autoRunInterval = setInterval(runAutoRun, intervalMs);
+  console.log(`[AutoRun] Started. Interval: ${intervalMs/1000}s`);
+  res.json({ ok: true, intervalMs });
+});
+
+app.post("/api/scrum/auto-run/stop", (req, res) => {
+  if (autoRunInterval) {
+    clearInterval(autoRunInterval);
+    autoRunInterval = null;
+    console.log("[AutoRun] Stopped");
+    res.json({ ok: true, message: "Auto-run stopped" });
+  } else {
+    res.json({ ok: true, message: "Auto-run was not running" });
+  }
+});
+
+app.get("/api/scrum/auto-run/status", (req, res) => {
+  res.json({
+    active: autoRunInterval !== null,
+    intervalMs: getActiveInterval(AUTO_RUN_INTERVAL_MS),
+  });
 });
 
 // Ghost Executive Vacation Mode - full autopilot
@@ -2512,6 +2562,7 @@ async function runAutoCoolerSession(): Promise<void> {
     const sessionId = result.session?.id || `auto-${Date.now()}`;
     const filename = `${dateStr}_cooler-${sessionId}.md`;
     const timestamp = new Date().toISOString();
+    const coolerPath = path.join(coolerDocPath, filename);
     
     const exportData = exportRoomSession("kitchen");
     if (exportData && exportData.markdown) {
@@ -2527,7 +2578,6 @@ ${exportData.markdown}
 ---
 *Generated from Pixel Office Auto Cooler*
 `;
-      const coolerPath = path.join(coolerDocPath, filename);
       fs.writeFileSync(coolerPath, frontmatter, "utf-8");
       console.log(`[AutoCooler] Saved markdown to ${coolerPath}`);
     } else {
@@ -2548,9 +2598,28 @@ participants: "${selectedParticipants.join(', ')}"
 ---
 *Generated from Pixel Office Auto Cooler*
 `;
-      const coolerPath = path.join(coolerDocPath, filename);
       fs.writeFileSync(coolerPath, logEntry, "utf-8");
       console.log(`[AutoCooler] Saved markdown to ${coolerPath}`);
+    }
+
+    // Generate a SCRUM candidate from the auto-cooler session
+    try {
+      if (result.session) {
+        const cand = await maybeCreateScrumCandidate({
+          session: result.session,
+          location,
+          coolerMarkdownPath: coolerPath,
+          kbServerUrl: KB_SERVER_URL,
+          threshold: 25,
+        });
+        if (cand) {
+          console.log(`[AutoCooler→SCRUM] Candidate created: ${cand.id} (${cand.score}) "${cand.proposed.scrumTitle}"`);
+        } else {
+          console.log(`[AutoCooler→SCRUM] No candidate (below threshold or not actionable)`);
+        }
+      }
+    } catch (candErr) {
+      console.warn("[AutoCooler→SCRUM] Candidate creation failed:", candErr);
     }
 
     // Deposit conversation residue as stigmergy traces and log
@@ -4187,6 +4256,14 @@ app.listen(Number(PORT), "127.0.0.1", () => {
   console.log(`Pixel Office Live server running on http://localhost:${PORT}`);
   console.log(`Chat endpoint: http://localhost:${PORT}/api/chat`);
   console.log(`DB Tables: http://localhost:${PORT}/api/db/tables`);
+
+  // Auto-start background auto-run scheduler after server is ready
+  setTimeout(() => {
+    const intervalMs = getActiveInterval(AUTO_RUN_INTERVAL_MS);
+    runAutoRun().catch(() => {});
+    autoRunInterval = setInterval(runAutoRun, intervalMs);
+    console.log(`[AutoRun] Auto-started. Interval: ${intervalMs/1000}s (night mode: ${nightModeActive})`);
+  }, 5000);
 });
 
 async function callRoleDailyPlan(tasks: any[], maxMinutes: number = 450, minSlot: number = 6, maxSlot: number = 18) {

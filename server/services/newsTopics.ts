@@ -14,6 +14,10 @@ interface NewsTopic {
   source: string;
 }
 
+// Track recently used topics to avoid repetition
+const recentTopics: string[] = [];
+const MAX_RECENT_TOPICS = 8;
+
 // Import GitHub functions for repo-based topics
 import { 
   fetchRecentCommits, 
@@ -352,19 +356,19 @@ export async function fetchNewsTopics(source: string = "auto", repo?: string): P
     return cachedTopics;
   }
 
-  // auto: Try GitHub topics first
-  const githubTopics = await fetchFromGitHub(repo);
-  if (githubTopics.length > 0) {
-    cachedTopics = githubTopics;
-    lastFetchTime = now;
-    console.log(`[NewsTopics] Using ${githubTopics.length} GitHub topics`);
-    return cachedTopics;
-  }
+  // auto: Fetch from multiple sources in parallel for topic diversity
+  const [githubTopics, newsTopics] = await Promise.all([
+    fetchFromGitHub(repo).catch(() => [] as NewsTopic[]),
+    fetchFromNewsSources().catch(() => [] as NewsTopic[]),
+  ]);
 
-  const newsTopics = await fetchFromNewsSources();
-  if (newsTopics.length > 0) {
-    cachedTopics = newsTopics;
+  const allTopics: NewsTopic[] = [...githubTopics, ...newsTopics];
+
+  if (allTopics.length > 0) {
+    const shuffled = allTopics.sort(() => Math.random() - 0.5);
+    cachedTopics = shuffled;
     lastFetchTime = now;
+    console.log(`[NewsTopics] Cached ${shuffled.length} diverse topics (git=${githubTopics.length}, news=${newsTopics.length})`);
     return cachedTopics;
   }
 
@@ -376,7 +380,13 @@ export async function fetchNewsTopics(source: string = "auto", repo?: string): P
 
 export function getRandomTopic(): string {
   const topics = cachedTopics.length > 0 ? cachedTopics : FALLBACK_TOPICS;
-  const topic = topics[Math.floor(Math.random() * topics.length)];
+  const available = topics.filter(t => !recentTopics.includes(t.title));
+  const pool = available.length > 0 ? available : topics;
+  const topic = pool[Math.floor(Math.random() * pool.length)];
+
+  recentTopics.push(topic.title);
+  if (recentTopics.length > MAX_RECENT_TOPICS) recentTopics.shift();
+
   return topic.title;
 }
 
