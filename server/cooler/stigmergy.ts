@@ -24,10 +24,10 @@ export interface StigmergyTrace {
   metadata?: Record<string, any>;
 }
 
-const TRACES_FILE = "/home/sherlockhums/apps/pixelworld/pixel_office/data/stigmergy_traces.json";
+const TRACES_FILE = path.resolve(process.cwd(), "data/stigmergy_traces.json");
 
 export function calculateSocialPotential(): SocialPotentialResult {
-  const sessionsDir = "/home/sherlockhums/apps/pixelworld/pixel_office/data/cooler_sessions";
+  const sessionsDir = path.resolve(process.cwd(), "data/cooler_sessions");
   const windowMs = 60 * 60 * 1000;
   const now = Date.now();
   const windowStart = new Date(now - windowMs).toISOString();

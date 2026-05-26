@@ -59,7 +59,7 @@ app.get("/api/ollama/models", async (_req, res) => {
 });
 // Serve handoff JSON file
 app.get("/handoff/opencode-local-agents.json", (_req, res) => {
-    const handoffPath = "/home/sherlockhums/apps/pixelworld/.handoff/opencode-local-agents.json";
+    const handoffPath = "path.resolve(process.cwd(), "../.handoff")/opencode-local-agents.json";
     const publicPath = path.join(__dirname, "../public/handoff/opencode-local-agents.json");
     let data = null;
     if (fs.existsSync(handoffPath)) {
@@ -583,11 +583,11 @@ ${md}
                 const safeStamp = timestamp.replace(/[:.]/g, "-");
                 const filename = `${safeStamp}_cooler-${sessionId}.md`;
                 // Save to docs/cooler folder
-                const coolerDocPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler");
-                const opencodeDocPath = path.resolve("/home/sherlockhums/.openclaw/workspace-main/docs/opencode");
-                const hermitclawDocPath = path.resolve("/home/sherlockhums/.openclaw/hermitclaw_workspace/notes");
-                const hermitclawResearchPath = path.resolve("/home/sherlockhums/.openclaw/hermitclaw_workspace/research");
-                const hermitclawProjectsPath = path.resolve("/home/sherlockhums/.openclaw/hermitclaw_workspace/projects");
+                const coolerDocPath = path.resolve("process.cwd()/docs/cooler");
+                const opencodeDocPath = path.resolve("path.resolve(process.cwd(), "..", ".openclaw")/workspace-main/docs/opencode");
+                const hermitclawDocPath = path.resolve("path.resolve(process.cwd(), "..", ".openclaw")/hermitclaw_workspace/notes");
+                const hermitclawResearchPath = path.resolve("path.resolve(process.cwd(), "..", ".openclaw")/hermitclaw_workspace/research");
+                const hermitclawProjectsPath = path.resolve("path.resolve(process.cwd(), "..", ".openclaw")/hermitclaw_workspace/projects");
                 // Ensure directories exist
                 [opencodeDocPath, coolerDocPath].forEach(dir => {
                     if (!fs.existsSync(dir))
@@ -628,7 +628,7 @@ ${md}
                 updateIndexFile(opencodeDocPath, filename, result.session.topic || `Cooler Talk - ${location}`);
                 // Rebuild Pixel Office doc indexes (table-based, avoids endless bullet growth)
                 try {
-                    const { coolerCount, scrumCount } = await rebuildDocIndexes("/home/sherlockhums/apps/pixelworld/pixel_office");
+                    const { coolerCount, scrumCount } = await rebuildDocIndexes("process.cwd()");
                     console.log(`[Index] Rebuilt Pixel Office indexes (cooler=${coolerCount}, scrum=${scrumCount})`);
                 }
                 catch (idxErr) {
@@ -818,7 +818,7 @@ app.post("/api/scrum/test", async (req, res) => {
         const { session, stageResult } = await advanceScrumSession(currentScrumSession);
         currentScrumSession = session;
         // Save conversation transcript to docs/scrum
-        const scrumDocPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/scrum");
+        const scrumDocPath = path.resolve("process.cwd()/docs/scrum");
         if (!fs.existsSync(scrumDocPath))
             fs.mkdirSync(scrumDocPath, { recursive: true });
         const dateStr = new Date().toISOString().split('T')[0];
@@ -853,7 +853,7 @@ source_session: "${coolerSessionId || 'random'}"
             console.error(`[Test SCRUM] Failed to save to ${scrumPath}:`, err.message);
         }
         // Also save to opencode docs
-        const opencodeDocPath = path.resolve("/home/sherlockhums/.openclaw/workspace-main/docs/opencode");
+        const opencodeDocPath = path.resolve("path.resolve(process.cwd(), "..", ".openclaw")/workspace-main/docs/opencode");
         if (!fs.existsSync(opencodeDocPath)) {
             try {
                 fs.mkdirSync(opencodeDocPath, { recursive: true });
@@ -872,7 +872,7 @@ source_session: "${coolerSessionId || 'random'}"
         }
         // Rebuild Pixel Office doc indexes (so docs/scrum/index.md stays current)
         try {
-            const { coolerCount, scrumCount } = await rebuildDocIndexes("/home/sherlockhums/apps/pixelworld/pixel_office");
+            const { coolerCount, scrumCount } = await rebuildDocIndexes("process.cwd()");
             console.log(`[Index] Rebuilt Pixel Office indexes (cooler=${coolerCount}, scrum=${scrumCount})`);
         }
         catch (idxErr) {
@@ -1936,7 +1936,7 @@ async function runAutoCoolerSession() {
         });
         console.log(`[AutoCooler] Session complete. ${result.participantCount} participants, topic: "${topic}"`);
         // Save session transcript to docs/cooler
-        const coolerDocPath = path.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler");
+        const coolerDocPath = path.resolve("process.cwd()/docs/cooler");
         if (!fs.existsSync(coolerDocPath))
             fs.mkdirSync(coolerDocPath, { recursive: true });
         const dateStr = new Date().toISOString().split('T')[0];
@@ -3337,7 +3337,7 @@ app.get("/api/coolertalk/dialogue", async (req, res) => {
 });
 // AgentLightning Architecture
 app.get("/api/agentlightning/architecture", (req, res) => {
-    const archPath = "/home/sherlockhums/.openclaw/workspace-main/AGENTLIGHTNING_ROLE_ARCHITECTURE.yaml";
+    const archPath = "path.resolve(process.cwd(), "..", ".openclaw")/workspace-main/AGENTLIGHTNING_ROLE_ARCHITECTURE.yaml";
     try {
         const yamlContent = fs.readFileSync(archPath, "utf8");
         res.json({ yaml: yamlContent });
@@ -3949,7 +3949,7 @@ app.get("/api/workflow/health", (req, res) => {
 // OpenCode Audit Integration
 // ============================================================================
 import { spawn } from "child_process";
-const OPENCODE_AUDIT_BIN = process.env.OPENCOD_AUDIT_BIN || "/home/sherlockhums/tools/opencode_audit/opencode_audit.py";
+const OPENCODE_AUDIT_BIN = process.env.OPENCOD_AUDIT_BIN || "path.resolve(process.cwd(), "..", "tools", "opencode_audit")/opencode_audit.py";
 const AUDIT_DATA_DIR = path.resolve(process.cwd(), "data/audits");
 const PROMPT_CARDS_DIR = path.resolve(process.cwd(), "data/prompt_cards");
 function ensureDir(dir) {

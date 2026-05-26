@@ -15,7 +15,7 @@ from enum import Enum
 
 # Residue storage file
 RESIDUES_FILE = (
-    "/home/sherlockhums/apps/pixelworld/pixel_office/data/office_residues.json"
+    "os.getcwd()/data/office_residues.json"
 )
 
 # Decay times for different residue types (in seconds)

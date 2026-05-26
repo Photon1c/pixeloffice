@@ -30,10 +30,10 @@ const CONFIG = {
   SCHEDULE_INTERVAL_MS: 15 * 60 * 1000,  // 15 min
   RANDOM_INTERVAL_MS: 5 * 60 * 1000,       // 5 min random bursts
   KERNEL_INTERVAL_MS: 30 * 60 * 1000,      // 30 min for kernel cycles
-  REPORT_FILE: '/home/sherlockhums/apps/pixelworld/pixel_office/data/orchestrator_report.json',
-  LOG_FILE: '/home/sherlockhums/apps/pixelworld/pixel_office/data/orchestrator.log',
-  PID_FILE: '/home/sherlockhums/apps/pixelworld/pixel_office/data/orchestrator.pid',
-  KERNEL_REPORT_FILE: '/home/sherlockhums/apps/pixelworld/pixel_office/data/kernel_report.json',
+  REPORT_FILE: 'process.cwd()/data/orchestrator_report.json',
+  LOG_FILE: 'process.cwd()/data/orchestrator.log',
+  PID_FILE: 'process.cwd()/data/orchestrator.pid',
+  KERNEL_REPORT_FILE: 'process.cwd()/data/kernel_report.json',
 };
 
 const AGENT_ROLES = ['clerk', 'specialist', 'custodian', 'thought_loop'];

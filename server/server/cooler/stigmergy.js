@@ -1,8 +1,8 @@
 import * as fs from "fs";
 import * as path from "path";
-const TRACES_FILE = "/home/sherlockhums/apps/pixelworld/pixel_office/data/stigmergy_traces.json";
+const TRACES_FILE = "process.cwd()/data/stigmergy_traces.json";
 export function calculateSocialPotential() {
-    const sessionsDir = "/home/sherlockhums/apps/pixelworld/pixel_office/data/cooler_sessions";
+    const sessionsDir = "process.cwd()/data/cooler_sessions";
     const windowMs = 60 * 60 * 1000;
     const now = Date.now();
     const windowStart = new Date(now - windowMs).toISOString();

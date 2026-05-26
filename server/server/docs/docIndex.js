@@ -42,6 +42,18 @@ function participantsCount(participants) {
 function mdEscapePipe(s) {
     return s.replaceAll("|", "\\|");
 }
+function guessDateFromFilename(file) {
+    const m = file.match(/^(\d{4}-\d{2}-\d{2})/);
+    return m ? m[1] : "";
+}
+function extractFirstHeading(body) {
+    for (const line of body.split("\n")) {
+        const t = line.trim();
+        if (t.startsWith("# "))
+            return t.slice(2).trim();
+    }
+    return "";
+}
 async function listMarkdownFiles(dir) {
     const entries = await fs.readdir(dir, { withFileTypes: true });
     return entries
@@ -96,6 +108,50 @@ async function buildScrumIndex(projectRoot) {
     items.sort((a, b) => safeDateKey(b.date) - safeDateKey(a.date));
     return items;
 }
+async function buildReportsIndex(projectRoot) {
+    const reportsDir = path.join(projectRoot, "docs", "reports");
+    try {
+        await fs.access(reportsDir);
+    }
+    catch {
+        return [];
+    }
+    const files = await listMarkdownFiles(reportsDir);
+    const items = [];
+    for (const file of files) {
+        const md = await fs.readFile(path.join(reportsDir, file), "utf8");
+        const { fm, body } = parseFrontmatter(md);
+        const heading = extractFirstHeading(body);
+        const title = fm.title || heading || file;
+        const date = fm.date || guessDateFromFilename(file);
+        items.push({ file, title, date });
+    }
+    items.sort((a, b) => safeDateKey(b.date) - safeDateKey(a.date));
+    return items;
+}
+async function buildScrumReportsIndex(projectRoot) {
+    const reportsDir = path.join(projectRoot, "SCRUM_REPORTS");
+    try {
+        await fs.access(reportsDir);
+    }
+    catch {
+        return [];
+    }
+    const files = await listMarkdownFiles(reportsDir);
+    const items = [];
+    for (const file of files) {
+        const md = await fs.readFile(path.join(reportsDir, file), "utf8");
+        const { fm, body } = parseFrontmatter(md);
+        const title = fm.title || extractFirstHeading(body) || file;
+        const date = fm.date || guessDateFromFilename(file);
+        const sourceSession = fm.source_session || "";
+        const stage = (body.match(/\*\*Stage:\*\*\s*(.*)/)?.[1] || "").trim();
+        const summary = (body.match(/\*\*Summary:\*\*\s*(.*)/)?.[1] || "").trim();
+        items.push({ file, title, date, sourceSession, stage, summary });
+    }
+    items.sort((a, b) => safeDateKey(b.date) - safeDateKey(a.date));
+    return items;
+}
 async function writeCoolerIndex(projectRoot, cooler) {
     const outPath = path.join(projectRoot, "docs", "cooler", "index.md");
     const now = new Date().toISOString();
@@ -138,8 +194,65 @@ async function writeScrumIndex(projectRoot, scrum) {
     lines.push("");
     await fs.writeFile(outPath, lines.join("\n"), "utf8");
 }
+async function writeReportsIndex(projectRoot, reports) {
+    const outPath = path.join(projectRoot, "docs", "reports", "index.md");
+    const now = new Date().toISOString();
+    const lines = [];
+    lines.push("# Reports Index");
+    lines.push("");
+    lines.push(`_Auto-generated: ${now}_`);
+    lines.push("");
+    lines.push("| date | title | file |");
+    lines.push("|---|---|---|");
+    for (const item of reports) {
+        const date = item.date ? item.date.slice(0, 10) : "";
+        const title = mdEscapePipe(item.title);
+        const link = `./${item.file}`;
+        lines.push(`| ${date} | [${title}](${link}) | ${mdEscapePipe(item.file)} |`);
+    }
+    lines.push("");
+    lines.push(`Total: **${reports.length}** report exports`);
+    lines.push("");
+    await fs.writeFile(outPath, lines.join("\n"), "utf8");
+}
+async function writeScrumReportsIndex(projectRoot, reports) {
+    const outPath = path.join(projectRoot, "SCRUM_REPORTS", "index.md");
+    const now = new Date().toISOString();
+    const lines = [];
+    lines.push("# Scrum Index");
+    lines.push("");
+    lines.push(`_Auto-generated: ${now}_`);
+    lines.push("");
+    lines.push("| date | title | source_session | stage | summary |");
+    lines.push("|---|---|---|---|---|");
+    for (const item of reports) {
+        const date = item.date ? item.date.slice(0, 10) : "";
+        const title = mdEscapePipe(item.title);
+        const link = `./${item.file}`;
+        lines.push(`| ${date} | [${title}](${link}) | ${mdEscapePipe(item.sourceSession || "")} | ${mdEscapePipe(item.stage || "")} | ${mdEscapePipe(item.summary || "")} |`);
+    }
+    lines.push("");
+    lines.push(`Total: **${reports.length}** scrum exports`);
+    lines.push("");
+    await fs.writeFile(outPath, lines.join("\n"), "utf8");
+}
 export async function rebuildDocIndexes(projectRoot) {
-    const [cooler, scrum] = await Promise.all([buildCoolerIndex(projectRoot), buildScrumIndex(projectRoot)]);
-    await Promise.all([writeCoolerIndex(projectRoot, cooler), writeScrumIndex(projectRoot, scrum)]);
-    return { coolerCount: cooler.length, scrumCount: scrum.length };
+    const [cooler, scrum, reports, scrumReports] = await Promise.all([
+        buildCoolerIndex(projectRoot),
+        buildScrumIndex(projectRoot),
+        buildReportsIndex(projectRoot),
+        buildScrumReportsIndex(projectRoot),
+    ]);
+    await Promise.all([
+        writeCoolerIndex(projectRoot, cooler),
+        writeScrumIndex(projectRoot, scrum),
+        writeReportsIndex(projectRoot, reports),
+        writeScrumReportsIndex(projectRoot, scrumReports),
+    ]);
+    return {
+        coolerCount: cooler.length,
+        scrumCount: scrum.length,
+        reportsCount: reports.length,
+        scrumReportsCount: scrumReports.length,
+    };
 }

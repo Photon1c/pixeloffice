@@ -132,7 +132,7 @@ app.get("/api/ollama/models", function (_req, res) { return __awaiter(void 0, vo
 }); });
 // Serve handoff JSON file
 app.get("/handoff/opencode-local-agents.json", function (_req, res) {
-    var handoffPath = "/home/sherlockhums/apps/pixelworld/.handoff/opencode-local-agents.json";
+    var handoffPath = "path.resolve(process.cwd(), "../.handoff")/opencode-local-agents.json";
     var publicPath = path_1.default.join(__dirname, "../public/handoff/opencode-local-agents.json");
     var data = null;
     if (fs_1.default.existsSync(handoffPath)) {
@@ -723,8 +723,8 @@ app.post("/api/rooms/:location/cooler/run-turn", function (req, res) { return __
                         dateStr = new Date().toISOString().split('T')[0];
                         sessionId = result.session.id;
                         filename = "".concat(dateStr, "_cooler-").concat(sessionId, ".md");
-                        coolerDocPath = path_1.default.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler");
-                        opencodeDocPath = path_1.default.resolve("/home/sherlockhums/.openclaw/workspace-main/docs/opencode");
+                        coolerDocPath = path_1.default.resolve("process.cwd()/docs/cooler");
+                        opencodeDocPath = path_1.default.resolve("path.resolve(process.cwd(), "..", ".openclaw")/workspace-main/docs/opencode");
                         // Ensure directories exist
                         [opencodeDocPath, coolerDocPath].forEach(function (dir) {
                             if (!fs_1.default.existsSync(dir))
@@ -905,7 +905,7 @@ app.post("/api/scrum/test", function (req, res) { return __awaiter(void 0, void 
             case 1:
                 _a = _b.sent(), session = _a.session, stageResult = _a.stageResult;
                 currentScrumSession = session;
-                scrumDocPath = path_1.default.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/scrum");
+                scrumDocPath = path_1.default.resolve("process.cwd()/docs/scrum");
                 if (!fs_1.default.existsSync(scrumDocPath))
                     fs_1.default.mkdirSync(scrumDocPath, { recursive: true });
                 dateStr = new Date().toISOString().split('T')[0];
@@ -921,7 +921,7 @@ app.post("/api/scrum/test", function (req, res) { return __awaiter(void 0, void 
                 catch (err) {
                     console.error("[Test SCRUM] Failed to save to ".concat(scrumPath, ":"), err.message);
                 }
-                opencodeDocPath = path_1.default.resolve("/home/sherlockhums/.openclaw/workspace-main/docs/opencode");
+                opencodeDocPath = path_1.default.resolve("path.resolve(process.cwd(), "..", ".openclaw")/workspace-main/docs/opencode");
                 if (!fs_1.default.existsSync(opencodeDocPath)) {
                     try {
                         fs_1.default.mkdirSync(opencodeDocPath, { recursive: true });
@@ -2141,7 +2141,7 @@ function runAutoCoolerSession() {
                 case 3:
                     result = _b.sent();
                     console.log("[AutoCooler] Session complete. ".concat(result.participantCount, " participants, topic: \"").concat(topic, "\""));
-                    coolerDocPath = path_1.default.resolve("/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler");
+                    coolerDocPath = path_1.default.resolve("process.cwd()/docs/cooler");
                     if (!fs_1.default.existsSync(coolerDocPath))
                         fs_1.default.mkdirSync(coolerDocPath, { recursive: true });
                     dateStr = new Date().toISOString().split('T')[0];
@@ -3988,7 +3988,7 @@ app.get("/api/coolertalk/dialogue", function (req, res) { return __awaiter(void 
 }); });
 // AgentLightning Architecture
 app.get("/api/agentlightning/architecture", function (req, res) {
-    var archPath = "/home/sherlockhums/.openclaw/workspace-main/AGENTLIGHTNING_ROLE_ARCHITECTURE.yaml";
+    var archPath = "path.resolve(process.cwd(), "..", ".openclaw")/workspace-main/AGENTLIGHTNING_ROLE_ARCHITECTURE.yaml";
     try {
         var yamlContent = fs_1.default.readFileSync(archPath, "utf8");
         res.json({ yaml: yamlContent });
@@ -4759,7 +4759,7 @@ app.get("/api/workflow/health", function (req, res) {
 // OpenCode Audit Integration
 // ============================================================================
 var child_process_1 = require("child_process");
-var OPENCODE_AUDIT_BIN = process.env.OPENCOD_AUDIT_BIN || "/home/sherlockhums/tools/opencode_audit/opencode_audit.py";
+var OPENCODE_AUDIT_BIN = process.env.OPENCOD_AUDIT_BIN || "path.resolve(process.cwd(), "..", "tools", "opencode_audit")/opencode_audit.py";
 var AUDIT_DATA_DIR = path_1.default.resolve(process.cwd(), "data/audits");
 var PROMPT_CARDS_DIR = path_1.default.resolve(process.cwd(), "data/prompt_cards");
 function ensureDir(dir) {

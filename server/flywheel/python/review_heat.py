@@ -18,7 +18,7 @@ from residue_logger import get_active_residues, RESIDUES_FILE, ResidueType
 
 # Review heat storage file
 REVIEW_HEAT_FILE = (
-    "/home/sherlockhums/apps/pixelworld/pixel_office/data/review_heat.json"
+    "os.getcwd()/data/review_heat.json"
 )
 
 # Decay time for review heat (10 minutes for prototype)

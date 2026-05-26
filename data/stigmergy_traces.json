@@ -1,20 +1,80 @@
 [
   {
-    "id": "trace-1779613174328-680",
-    "type": "task_shadow",
-    "intensity": 0.6,
-    "agentId": "ironclaw",
-    "roomId": "dataNodes",
-    "created_at": "2026-05-24T08:59:34.328Z",
-    "expires_at": "2026-05-24T09:09:34.328Z"
+    "id": "trace-1779783334988-89",
+    "type": "review_heat",
+    "intensity": 0.6000000000000001,
+    "topic": "Latest commit: chore: Delete legacy session cache files (by Sherlock)",
+    "roomId": "kitchen",
+    "created_at": "2026-05-26T08:15:34.988Z",
+    "expires_at": "2026-05-26T08:30:34.988Z",
+    "metadata": {
+      "source_session_id": "ct-1779671126927"
+    }
   },
   {
-    "id": "trace-1779613486941-808",
+    "id": "trace-1779783520939-322",
+    "type": "review_heat",
+    "intensity": 0.2,
+    "topic": "Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)",
+    "roomId": "kitchen",
+    "created_at": "2026-05-26T08:18:40.939Z",
+    "expires_at": "2026-05-26T08:33:40.939Z",
+    "metadata": {
+      "source_session_id": "ct-1779783510936"
+    }
+  },
+  {
+    "id": "trace-1779783618709-742",
     "type": "task_shadow",
     "intensity": 0.6,
     "agentId": "ironclaw",
     "roomId": "dataNodes",
-    "created_at": "2026-05-24T09:04:46.941Z",
-    "expires_at": "2026-05-24T09:14:46.941Z"
+    "created_at": "2026-05-26T08:20:18.709Z",
+    "expires_at": "2026-05-26T08:30:18.709Z"
+  },
+  {
+    "id": "trace-1779783715805-587",
+    "type": "review_heat",
+    "intensity": 0.4,
+    "topic": "Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)",
+    "roomId": "kitchen",
+    "created_at": "2026-05-26T08:21:55.805Z",
+    "expires_at": "2026-05-26T08:36:55.805Z",
+    "metadata": {
+      "source_session_id": "ct-1779783510936"
+    }
+  },
+  {
+    "id": "trace-1779783912574-401",
+    "type": "review_heat",
+    "intensity": 0.4,
+    "topic": "Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)",
+    "roomId": "kitchen",
+    "created_at": "2026-05-26T08:25:12.574Z",
+    "expires_at": "2026-05-26T08:40:12.574Z",
+    "metadata": {
+      "source_session_id": "ct-1779783510936"
+    }
+  },
+  {
+    "id": "trace-1779783928022-668",
+    "type": "task_shadow",
+    "intensity": 0.6,
+    "agentId": "ironclaw",
+    "roomId": "dataNodes",
+    "created_at": "2026-05-26T08:25:28.021Z",
+    "expires_at": "2026-05-26T08:35:28.021Z"
+  },
+  {
+    "id": "trace-1779784105190-894",
+    "type": "review_heat",
+    "intensity": 0.4,
+    "topic": "Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)",
+    "roomId": "kitchen",
+    "created_at": "2026-05-26T08:28:25.190Z",
+    "expires_at": "2026-05-26T08:43:25.190Z",
+    "metadata": {
+      "source_session_id": "ct-1779783510936"
+    }
   }
 ]

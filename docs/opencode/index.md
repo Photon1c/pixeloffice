@@ -5,7 +5,7 @@ This index tracks the implementation status of various OpenCode-related features
 ## 📋 Specifications & Proposals
 
 ### Agent Workspace Editor
-- [x] **Agent Workspace Editor** - GUI for agent proposals and reviews (now in `/active/`)
+- [x] **Agent Workspace Editor** - GUI for agent proposals and reviews (now in `/complete/`)
   - Status: Implemented as ObjectEditor.tsx + enhanced for agent self-editing capabilities
 
 ### Reliability Workflows
@@ -99,4 +99,4 @@ This index tracks the implementation status of various OpenCode-related features
 - Check individual documents in `/complete/` and `/design/` directories for details
 - Some features may be intentionally deferred or designed for future phases
 
-*Last Updated: April 22, 2026*
+*Last Updated: May 25, 2026*

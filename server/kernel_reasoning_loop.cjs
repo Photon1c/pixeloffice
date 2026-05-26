@@ -10,7 +10,7 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 
-const DATA_DIR = '/home/sherlockhums/apps/pixelworld/pixel_office/data';
+const DATA_DIR = 'process.cwd()/data';
 const MEMORY_FILE = path.join(DATA_DIR, 'kernel_memory.json');
 
 const CONFIG = {

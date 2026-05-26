@@ -8,9 +8,9 @@ exports.depositTrace = depositTrace;
 exports.getTracesForRoom = getTracesForRoom;
 var fs = require("fs");
 var path = require("path");
-var TRACES_FILE = "/home/sherlockhums/apps/pixelworld/pixel_office/data/stigmergy_traces.json";
+var TRACES_FILE = "process.cwd()/data/stigmergy_traces.json";
 function calculateSocialPotential() {
-    var sessionsDir = "/home/sherlockhums/apps/pixelworld/pixel_office/data/cooler_sessions";
+    var sessionsDir = "process.cwd()/data/cooler_sessions";
     var windowMs = 60 * 60 * 1000;
     var now = Date.now();
     var windowStart = new Date(now - windowMs).toISOString();

@@ -22,6 +22,21 @@ type ScrumEntry = {
   summary: string;
 };
 
+type ReportEntry = {
+  file: string;
+  title: string;
+  date: string;
+};
+
+type ScrumReportEntry = {
+  file: string;
+  title: string;
+  date: string;
+  sourceSession: string;
+  stage: string;
+  summary: string;
+};
+
 function stripQuotes(s: string): string {
   const t = s.trim();
   if ((t.startsWith('"') && t.endsWith('"')) || (t.startsWith("'") && t.endsWith("'"))) {
@@ -68,6 +83,19 @@ function participantsCount(participants: string): number {
 
 function mdEscapePipe(s: string): string {
   return s.replaceAll("|", "\\|");
+}
+
+function guessDateFromFilename(file: string): string {
+  const m = file.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m ? m[1] : "";
+}
+
+function extractFirstHeading(body: string): string {
+  for (const line of body.split("\n")) {
+    const t = line.trim();
+    if (t.startsWith("# ")) return t.slice(2).trim();
+  }
+  return "";
 }
 
 async function listMarkdownFiles(dir: string): Promise<string[]> {
@@ -135,6 +163,58 @@ async function buildScrumIndex(projectRoot: string): Promise<ScrumEntry[]> {
   return items;
 }
 
+async function buildReportsIndex(projectRoot: string): Promise<ReportEntry[]> {
+  const reportsDir = path.join(projectRoot, "docs", "reports");
+  try {
+    await fs.access(reportsDir);
+  } catch {
+    return [];
+  }
+
+  const files = await listMarkdownFiles(reportsDir);
+  const items: ReportEntry[] = [];
+
+  for (const file of files) {
+    const md = await fs.readFile(path.join(reportsDir, file), "utf8");
+    const { fm, body } = parseFrontmatter(md);
+    const heading = extractFirstHeading(body);
+    const title = fm.title || heading || file;
+    const date = fm.date || guessDateFromFilename(file);
+    items.push({ file, title, date });
+  }
+
+  items.sort((a, b) => safeDateKey(b.date) - safeDateKey(a.date));
+  return items;
+}
+
+async function buildScrumReportsIndex(projectRoot: string): Promise<ScrumReportEntry[]> {
+  const reportsDir = path.join(projectRoot, "SCRUM_REPORTS");
+  try {
+    await fs.access(reportsDir);
+  } catch {
+    return [];
+  }
+
+  const files = await listMarkdownFiles(reportsDir);
+  const items: ScrumReportEntry[] = [];
+
+  for (const file of files) {
+    const md = await fs.readFile(path.join(reportsDir, file), "utf8");
+    const { fm, body } = parseFrontmatter(md);
+
+    const title = fm.title || extractFirstHeading(body) || file;
+    const date = fm.date || guessDateFromFilename(file);
+    const sourceSession = fm.source_session || "";
+    const stage = (body.match(/\*\*Stage:\*\*\s*(.*)/)?.[1] || "").trim();
+    const summary = (body.match(/\*\*Summary:\*\*\s*(.*)/)?.[1] || "").trim();
+
+    items.push({ file, title, date, sourceSession, stage, summary });
+  }
+
+  items.sort((a, b) => safeDateKey(b.date) - safeDateKey(a.date));
+  return items;
+}
+
 async function writeCoolerIndex(projectRoot: string, cooler: CoolerEntry[]) {
   const outPath = path.join(projectRoot, "docs", "cooler", "index.md");
   const now = new Date().toISOString();
@@ -191,8 +271,84 @@ async function writeScrumIndex(projectRoot: string, scrum: ScrumEntry[]) {
   await fs.writeFile(outPath, lines.join("\n"), "utf8");
 }
 
-export async function rebuildDocIndexes(projectRoot: string): Promise<{ coolerCount: number; scrumCount: number }> {
-  const [cooler, scrum] = await Promise.all([buildCoolerIndex(projectRoot), buildScrumIndex(projectRoot)]);
-  await Promise.all([writeCoolerIndex(projectRoot, cooler), writeScrumIndex(projectRoot, scrum)]);
-  return { coolerCount: cooler.length, scrumCount: scrum.length };
+async function writeReportsIndex(projectRoot: string, reports: ReportEntry[]) {
+  const outPath = path.join(projectRoot, "docs", "reports", "index.md");
+  const now = new Date().toISOString();
+
+  const lines: string[] = [];
+  lines.push("# Reports Index");
+  lines.push("");
+  lines.push(`_Auto-generated: ${now}_`);
+  lines.push("");
+  lines.push("| date | title | file |");
+  lines.push("|---|---|---|");
+
+  for (const item of reports) {
+    const date = item.date ? item.date.slice(0, 10) : "";
+    const title = mdEscapePipe(item.title);
+    const link = `./${item.file}`;
+    lines.push(`| ${date} | [${title}](${link}) | ${mdEscapePipe(item.file)} |`);
+  }
+
+  lines.push("");
+  lines.push(`Total: **${reports.length}** report exports`);
+  lines.push("");
+
+  await fs.writeFile(outPath, lines.join("\n"), "utf8");
+}
+
+async function writeScrumReportsIndex(projectRoot: string, reports: ScrumReportEntry[]) {
+  const outPath = path.join(projectRoot, "SCRUM_REPORTS", "index.md");
+  const now = new Date().toISOString();
+
+  const lines: string[] = [];
+  lines.push("# Scrum Index");
+  lines.push("");
+  lines.push(`_Auto-generated: ${now}_`);
+  lines.push("");
+  lines.push("| date | title | source_session | stage | summary |");
+  lines.push("|---|---|---|---|---|");
+
+  for (const item of reports) {
+    const date = item.date ? item.date.slice(0, 10) : "";
+    const title = mdEscapePipe(item.title);
+    const link = `./${item.file}`;
+    lines.push(
+      `| ${date} | [${title}](${link}) | ${mdEscapePipe(item.sourceSession || "")} | ${mdEscapePipe(item.stage || "")} | ${mdEscapePipe(item.summary || "")} |`
+    );
+  }
+
+  lines.push("");
+  lines.push(`Total: **${reports.length}** scrum exports`);
+  lines.push("");
+
+  await fs.writeFile(outPath, lines.join("\n"), "utf8");
+}
+
+export async function rebuildDocIndexes(projectRoot: string): Promise<{
+  coolerCount: number;
+  scrumCount: number;
+  reportsCount: number;
+  scrumReportsCount: number;
+}> {
+  const [cooler, scrum, reports, scrumReports] = await Promise.all([
+    buildCoolerIndex(projectRoot),
+    buildScrumIndex(projectRoot),
+    buildReportsIndex(projectRoot),
+    buildScrumReportsIndex(projectRoot),
+  ]);
+
+  await Promise.all([
+    writeCoolerIndex(projectRoot, cooler),
+    writeScrumIndex(projectRoot, scrum),
+    writeReportsIndex(projectRoot, reports),
+    writeScrumReportsIndex(projectRoot, scrumReports),
+  ]);
+
+  return {
+    coolerCount: cooler.length,
+    scrumCount: scrum.length,
+    reportsCount: reports.length,
+    scrumReportsCount: scrumReports.length,
+  };
 }

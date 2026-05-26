@@ -318,7 +318,7 @@ Rules:
 
 // Serve handoff JSON file
 app.get("/handoff/opencode-local-agents.json", (req, res) => {
-  const handoffPath = "/home/sherlockhums/apps/pixelworld/.handoff/opencode-local-agents.json";
+  const handoffPath = path.resolve(process.cwd(), ".handoff/opencode-local-agents.json");
   if (fs.existsSync(handoffPath)) {
     const data = fs.readFileSync(handoffPath, "utf-8");
     res.setHeader("Content-Type", "application/json");
