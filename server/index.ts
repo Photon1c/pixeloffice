@@ -1892,6 +1892,81 @@ app.post("/api/scrum/candidates/:id/reject", (req, res) => {
   res.json(result);
 });
 
+app.post("/api/scrum/auto-run", async (req, res) => {
+  try {
+    const results: { approved: number; advanced: number; errors: string[] } = {
+      approved: 0, advanced: 0, errors: []
+    };
+
+    const pending = listScrumCandidates("pending");
+    for (const c of pending) {
+      try {
+        const approveResult = approveScrumCandidate(c.id);
+        if (!approveResult.ok) {
+          results.errors.push(`Approve failed for ${c.id}: ${approveResult.error}`);
+          continue;
+        }
+
+        const candidate = approveResult.candidate!;
+        const topic = candidate.proposed.scrumTitle;
+        const participants = ["clerk", "specialist", "executive", "archivist"];
+        const candidateContext = [
+          `Source: Cooler session ${candidate.source.coolerSessionId}`,
+          `Location: ${candidate.source.location}`,
+          `Topic: ${candidate.source.topic}`,
+          `Score: ${candidate.score} (threshold: ${candidate.threshold})`,
+          ...candidate.reasons.map((r) => `- ${r}`),
+          ...candidate.kb.topSnippets.slice(0, 2).map((s) => `KB: ${s}`),
+        ];
+
+        let session = createScrumSession(topic, participants, candidateContext);
+        while (session.finalStatus !== "complete" && session.finalStatus !== "failed") {
+          const { session: updatedSession } = await advanceScrumSession(session);
+          session = updatedSession;
+          if (session.finalStatus === "failed") break;
+        }
+
+        if (isSessionComplete(session)) {
+          try {
+            const githubClient = createSafeScrumRepoClient({
+              GITHUB_TOKEN: process.env.GITHUB_TOKEN,
+              SAFE_SCRUM_REPO: process.env.SAFE_SCRUM_REPO,
+              SAFE_SCRUM_BRANCH: process.env.SAFE_SCRUM_BRANCH,
+              SAFE_SCRUM_REPORTS_DIR: process.env.SAFE_SCRUM_REPORTS_DIR,
+              SAFE_SCRUM_NOTES_PATH: process.env.SAFE_SCRUM_NOTES_PATH,
+            });
+            await exportScrumReport(session.id, "localReport", githubClient || undefined);
+          } catch { /* non-fatal */ }
+        }
+
+        results.approved++;
+      } catch (e: any) {
+        results.errors.push(`Error processing candidate ${c.id}: ${e.message}`);
+      }
+    }
+
+    if (currentScrumSession && currentScrumSession.finalStatus !== "complete" && currentScrumSession.finalStatus !== "failed") {
+      try {
+        let advanced = 0;
+        while (currentScrumSession.finalStatus !== "complete" && currentScrumSession.finalStatus !== "failed") {
+          const { session } = await advanceScrumSession(currentScrumSession);
+          currentScrumSession = session;
+          advanced++;
+          if (currentScrumSession.finalStatus === "failed") break;
+        }
+        results.advanced = advanced;
+      } catch (e: any) {
+        results.errors.push(`Error advancing session: ${e.message}`);
+      }
+    }
+
+    res.json({ ok: true, ...results });
+  } catch (error: any) {
+    console.error("Error in auto-run:", error);
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 app.post("/api/scrum/export", async (req, res) => {
   try {
     const { sessionId, mode = "localReport" } = req.body as { sessionId?: string; mode: ExportMode };
@@ -2518,7 +2593,22 @@ participants: "${selectedParticipants.join(', ')}"
       }
     }
     
-    // Trigger automatic Scrum after cooler session (if enabled)
+    // Process pending SCRUM candidates (auto-approve high-scoring ones)
+    setTimeout(async () => {
+      try {
+        const autoRunRes = await fetch('/api/scrum/auto-run', { method: 'POST' });
+        if (autoRunRes.ok) {
+          const autoRunData = await autoRunRes.json();
+          if (autoRunData.approved > 0 || autoRunData.advanced > 0) {
+            console.log(`[AutoCooler] Auto-run: ${autoRunData.approved} candidates approved, ${autoRunData.advanced} stage advances`);
+          }
+        }
+      } catch (e) {
+        console.warn("[AutoCooler] Auto-run failed:", e);
+      }
+    }, 2000); // 2s delay after cooler session
+
+    // Trigger automatic test Scrum after cooler session (if enabled)
     if (AUTO_SCRUM_ENABLED) {
       setTimeout(async () => {
         try {
@@ -2526,7 +2616,7 @@ participants: "${selectedParticipants.join(', ')}"
           const scrumRes = await fetch('/api/scrum/test', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ coolerSessionId: null }) // Will use random session
+            body: JSON.stringify({ coolerSessionId: null })
           });
           const scrumData = await scrumRes.json();
           console.log("[AutoCooler] Auto-Scrum triggered:", scrumData.message);

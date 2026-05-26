@@ -69,12 +69,37 @@ export default function ScrumPanel() {
   const [githubStatus, setGithubStatus] = useState<GitHubStatus | null>(null);
   const [candidates, setCandidates] = useState<ScrumCandidateListItem[]>([]);
   const [candidateMsg, setCandidateMsg] = useState<string | null>(null);
+  const [autoAdvance, setAutoAdvance] = useState(() => localStorage.getItem("scrumAutoAdvance") === "true");
+  const [autoRunning, setAutoRunning] = useState(false);
 
   useEffect(() => {
     fetchStatus();
     fetchGitHubStatus();
     fetchCandidates();
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("scrumAutoAdvance", String(autoAdvance));
+    if (!autoAdvance) return;
+
+    const run = async () => {
+      setAutoRunning(true);
+      try {
+        const res = await fetch(`${API_BASE}/api/scrum/auto-run`, { method: "POST" });
+        if (res.ok) {
+          await fetchStatus();
+          await fetchCandidates();
+        }
+      } catch (err) {
+        console.error("Auto-advance failed:", err);
+      }
+      setAutoRunning(false);
+    };
+
+    run();
+    const interval = setInterval(run, 30000);
+    return () => clearInterval(interval);
+  }, [autoAdvance]);
 
   async function fetchStatus() {
     try {
@@ -250,14 +275,33 @@ export default function ScrumPanel() {
     <div style={styles.container}>
       <div style={styles.header}>
         <h3 style={styles.title}>SCRUM</h3>
-        {githubStatus && (
-          <span style={{
-            ...styles.githubBadge,
-            background: githubStatus.configured ? "#26de81" : "#888"
-          }}>
-            {githubStatus.configured ? "GH" : "Local"}
-          </span>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <label style={{
+            display: "flex", alignItems: "center", gap: 4, cursor: "pointer",
+            padding: "2px 6px", borderRadius: 4,
+            background: autoAdvance ? "rgba(78, 205, 196, 0.15)" : "transparent",
+            border: "1px solid", borderColor: autoAdvance ? "#4ecdc4" : "transparent",
+            userSelect: "none"
+          }} title="Auto-approve candidates and advance sessions">
+            <input
+              type="checkbox"
+              checked={autoAdvance}
+              onChange={(e) => setAutoAdvance(e.target.checked)}
+              style={{ margin: 0, cursor: "pointer" }}
+            />
+            <span style={{ fontSize: 10, color: autoAdvance ? "#4ecdc4" : "#666", fontWeight: autoAdvance ? "bold" : "normal" }}>
+              {autoRunning ? "RUN" : "Auto"}
+            </span>
+          </label>
+          {githubStatus && (
+            <span style={{
+              ...styles.githubBadge,
+              background: githubStatus.configured ? "#26de81" : "#888"
+            }}>
+              {githubStatus.configured ? "GH" : "Local"}
+            </span>
+          )}
+        </div>
       </div>
 
       {error && <div style={styles.error}>{error}</div>}
