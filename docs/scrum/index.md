@@ -1,9 +1,15 @@
 # Scrum Index
 
-_Auto-generated: 2026-05-26T08:28:24.777Z_
+_Auto-generated: 2026-05-27T07:19:07.024Z_
 
 | date | title | source_session | stage | summary |
 |---|---|---|---|---|
+| 2026-05-27 | [SCRUM (Planning): At the A.I. Epicenter, Technologists Dismiss Pope Leos Warnings About th…](./2026-05-27T07-14-45-052Z_scrum-planning-scrumcand-1779866056939-syn52q.md) |  |  |  |
+| 2026-05-26 | [SCRUM (Planning): Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-26T20-11-33-556Z_scrum-planning-scrumcand-1779782939821-1w98hi.md) |  |  |  |
+| 2026-05-26 | [SCRUM (Planning): Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-26T20-11-33-495Z_scrum-planning-scrumcand-1779783138131-mvdnxl.md) |  |  |  |
+| 2026-05-26 | [SCRUM (Planning): Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-26T20-11-33-442Z_scrum-planning-scrumcand-1779783334987-rm9fio.md) |  |  |  |
+| 2026-05-26 | [SCRUM (Planning): Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sher…](./2026-05-26T20-11-33-199Z_scrum-planning-scrumcand-1779784105188-dpgla1.md) |  |  |  |
+| 2026-05-26 | [SCRUM (Planning): Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sher…](./2026-05-26T20-11-32-817Z_scrum-planning-scrumcand-1779784302507-wzg0pc.md) |  |  |  |
 | 2026-05-26 | [SCRUM (Planning): Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-26T08-08-41-284Z_scrum-planning-scrumcand-1779779203299-y501nc.md) |  |  |  |
 | 2026-05-26 | [SCRUM (Planning): Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-26T08-08-40-613Z_scrum-planning-scrumcand-1779779391213-vc4gvp.md) |  |  |  |
 | 2026-05-26 | [SCRUM (Planning): Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-26T08-08-40-067Z_scrum-planning-scrumcand-1779779594506-4n7mtf.md) |  |  |  |
@@ -100,4 +106,4 @@ _Auto-generated: 2026-05-26T08:28:24.777Z_
 | 2026-04-09 | [Test SCRUM: Test SCRUM from cooler session](./2026-04-09_scrum-scrum-1775776097379-9lcztk.md) | random | check | N/A |
 | 2026-04-09 | [Test SCRUM: Test SCRUM from cooler session](./2026-04-09_scrum-scrum-1775761038722-ydxixs.md) | random | check | N/A |
 
-Total: **95** scrum exports
+Total: **101** scrum exports

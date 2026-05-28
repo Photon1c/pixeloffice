@@ -1,9 +1,12 @@
 # Cooler Index
 
-_Auto-generated: 2026-05-26T08:28:24.776Z_
+_Auto-generated: 2026-05-27T07:19:07.024Z_
 
 | date | title | session | participants | escalations |
 |---|---|---|---:|---:|
+| 2026-05-27 | [Cooler Talk - At the A.I. Epicenter, Technologists Dismiss Pope Leos Warnings About the New Technology](./2026-05-27T07-14-16-131Z_cooler-ct-1779865506421.md) | ct-1779865506421 | 3 | 2 |
+| 2026-05-27 | [Cooler Talk - At the A.I. Epicenter, Technologists Dismiss Pope Leos Warnings About the New Technology](./2026-05-27T07-05-17-677Z_cooler-ct-1779865506421.md) | ct-1779865506421 | 3 | 1 |
+| 2026-05-26 | [Cooler Talk - Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)](./2026-05-26T08-31-41-971Z_cooler-ct-1779783510936.md) | ct-1779783510936 | 3 | 2 |
 | 2026-05-26 | [Cooler Talk - Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)](./2026-05-26T08-28-24-593Z_cooler-ct-1779783510936.md) | ct-1779783510936 | 3 | 1 |
 | 2026-05-26 | [Cooler Talk - Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)](./2026-05-26T08-25-11-965Z_cooler-ct-1779783510936.md) | ct-1779783510936 | 3 | 0 |
 | 2026-05-26 | [Cooler Talk - Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)](./2026-05-26T08-21-55-325Z_cooler-ct-1779783510936.md) | ct-1779783510936 | 3 | 0 |
@@ -75,4 +78,4 @@ _Auto-generated: 2026-05-26T08:28:24.776Z_
 | 2026-05-25 | [Cooler Talk - Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-25T10-11-17-378Z_cooler-ct-1779671126927.md) | ct-1779671126927 | 3 | 2 |
 | 2026-05-25 | [Cooler Talk - Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-25T01-05-38-112Z_cooler-ct-1779671126927.md) | ct-1779671126927 | 3 | 1 |
 
-Total: **70** cooler sessions
+Total: **73** cooler sessions

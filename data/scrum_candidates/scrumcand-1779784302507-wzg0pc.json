@@ -1,25 +1,25 @@
 {
-  "id": "scrumcand-1779784105188-dpgla1",
+  "id": "scrumcand-1779784302507-wzg0pc",
   "status": "approved",
-  "createdAt": "2026-05-26T08:28:25.188Z",
-  "updatedAt": "2026-05-26T20:11:33.199Z",
+  "createdAt": "2026-05-26T08:31:42.507Z",
+  "updatedAt": "2026-05-26T20:11:32.817Z",
   "source": {
     "location": "kitchen",
     "coolerSessionId": "ct-1779783510936",
     "topic": "Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)",
     "participants": [
       "IronClaw",
-      "OpenClaw",
-      "Sherlock"
+      "Sherlobster",
+      "ZeroClaw"
     ],
-    "utteranceCount": 12,
-    "coolerMarkdownPath": "/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler/2026-05-26T08-28-24-593Z_cooler-ct-1779783510936.md"
+    "utteranceCount": 15,
+    "coolerMarkdownPath": "/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler/2026-05-26T08-31-41-971Z_cooler-ct-1779783510936.md"
   },
-  "score": 39,
+  "score": 58,
   "threshold": 25,
   "reasons": [
-    "contains 1 escalate intent(s)",
-    "action phrasing detected (6 hits)"
+    "contains 2 escalate intent(s)",
+    "action phrasing detected (7 hits)"
   ],
   "kb": {
     "query": "Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)",
@@ -51,5 +51,5 @@
       }
     ]
   },
-  "approvedAt": "2026-05-26T20:11:33.199Z"
+  "approvedAt": "2026-05-26T20:11:32.817Z"
 }

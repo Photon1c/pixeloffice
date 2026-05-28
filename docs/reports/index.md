@@ -1,9 +1,15 @@
 # Reports Index
 
-_Auto-generated: 2026-05-26T06:30:19.085Z_
+_Auto-generated: 2026-05-27T07:19:07.024Z_
 
 | date | title | file |
 |---|---|---|
+| 2026-05-27 | [SCRUM Report: SCRUM (Planning): At the A.I. Epicenter, Technologists Dismiss Pope Leos Warnings About th…](./2026-05-27_scrum-scrum-1779866085054-sdij1j.md) | 2026-05-27_scrum-scrum-1779866085054-sdij1j.md |
+| 2026-05-26 | [SCRUM Report: SCRUM (Planning): Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sher…](./2026-05-26_scrum-scrum-1779826292819-96d4as.md) | 2026-05-26_scrum-scrum-1779826292819-96d4as.md |
+| 2026-05-26 | [SCRUM Report: SCRUM (Planning): Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sher…](./2026-05-26_scrum-scrum-1779826293201-k9ovmw.md) | 2026-05-26_scrum-scrum-1779826293201-k9ovmw.md |
+| 2026-05-26 | [SCRUM Report: SCRUM (Planning): Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-26_scrum-scrum-1779826293444-xybgbl.md) | 2026-05-26_scrum-scrum-1779826293444-xybgbl.md |
+| 2026-05-26 | [SCRUM Report: SCRUM (Planning): Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-26_scrum-scrum-1779826293497-sf6djg.md) | 2026-05-26_scrum-scrum-1779826293497-sf6djg.md |
+| 2026-05-26 | [SCRUM Report: SCRUM (Planning): Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-26_scrum-scrum-1779826293558-jdfut3.md) | 2026-05-26_scrum-scrum-1779826293558-jdfut3.md |
 | 2026-05-24 | [SCRUM Report: Autonomous planning session #301](./2026-05-24_scrum-scrum-1779585036392-q4atdw.md) | 2026-05-24_scrum-scrum-1779585036392-q4atdw.md |
 | 2026-05-24 | [SCRUM Report: Autonomous planning session #302](./2026-05-24_scrum-scrum-1779585336373-be8oaa.md) | 2026-05-24_scrum-scrum-1779585336373-be8oaa.md |
 | 2026-05-24 | [SCRUM Report: Autonomous planning session #303](./2026-05-24_scrum-scrum-1779585636381-rrvooy.md) | 2026-05-24_scrum-scrum-1779585636381-rrvooy.md |
@@ -329,4 +335,4 @@ _Auto-generated: 2026-05-26T06:30:19.085Z_
 | 2026-04-23 | [SCRUM Report: SCRUM (Planning): Anthropics New Mythos A.I. Model Sets Off Global Alarms](./2026-04-23_scrum-scrum-1776921781954-zdd9gy.md) | 2026-04-23_scrum-scrum-1776921781954-zdd9gy.md |
 | 2026-04-23 | [SCRUM Report: SCRUM (Planning): Anthropics New Mythos A.I. Model Sets Off Global Alarms](./2026-04-23_scrum-scrum-1776921790667-fgoeem.md) | 2026-04-23_scrum-scrum-1776921790667-fgoeem.md |
 
-Total: **324** report exports
+Total: **330** report exports
