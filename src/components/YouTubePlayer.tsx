@@ -85,13 +85,14 @@ export default function YouTubePlayer() {
       )}
       {!minimized && (
         <div>
-          <div style={{ display: "none" }}>
-            <iframe title="youtube" src={src} />
-          </div>
-          <div style={{ display: "flex", gap: "4px", justifyContent: "center" }}>
-            <button style={btnStyle} title="Previous">⏮</button>
-            <button style={{ ...btnStyle, background: "#4ecdc4", color: "#0a0a12" }} title="Play/Pause">▶</button>
-            <button style={btnStyle} title="Next">⏭</button>
+          <div style={{ position: "relative", paddingBottom: "56.25%", height: 0, overflow: "hidden", borderRadius: "4px", marginBottom: "4px" }}>
+            <iframe
+              src={src}
+              title="youtube"
+              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", border: "none", borderRadius: "4px" }}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
           </div>
           <div style={{ display: "flex", gap: "4px", marginTop: "4px" }}>
             <select

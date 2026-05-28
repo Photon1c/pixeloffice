@@ -527,6 +527,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   
   const [isScrumRunning, setIsScrumRunning] = useState<boolean>(false);
   const [isCoolerTalkRunning, setIsCoolerTalkRunning] = useState<boolean>(false);
+  const [lastCoolerSessionId, setLastCoolerSessionId] = useState<string | null>(null);
   const [sleepMode, setSleepMode] = useState<boolean>(true);
   const [vacationMode, setVacationMode] = useState<boolean>(false);
   const [vacationStatus, setVacationStatus] = useState<string>('');
@@ -2032,6 +2033,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             }).then(r => r.json()).then(data => {
               console.log("[CoolerTalk] Response:", data);
               console.log("[CoolerTalk] Topic sent:", currentTopic);
+              if (data?.sessionId) setLastCoolerSessionId(data.sessionId);
               
               // Emit session results to router visualizer
               if (data && data.summary) {
@@ -2161,7 +2163,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               const scrumRes = await fetch('/api/scrum/test', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic, coolerSessionId: undefined })
+                body: JSON.stringify({ topic, coolerSessionId: lastCoolerSessionId })
               });
               const scrumData = await scrumRes.json();
               
@@ -2314,6 +2316,13 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               />
             )}
         </div>
+        <StabilityMonitor 
+          visible={true}
+          metrics={{ cpu: Math.round(cpu), memory: Math.round(memory), fps }}
+          onReset={handleReset}
+          resetInterval={resetInterval}
+          onResetIntervalChange={setResetInterval}
+        />
         {!isMobile || (isMobile && showRightPanel) ? (
         <div style={{ 
           width: isMobile ? '100%' : '260px', 
@@ -2329,15 +2338,6 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           ...(isMobile && { position: 'absolute', right: 0, top: 0, bottom: 0, zIndex: 50, width: '100%', maxWidth: '320px' })
         }}>
           {isMobile && <div style={{ height: '50px' }} />} {/* Spacer for toggle button */}
-          <div style={{ background: '#0f1520', borderRadius: '6px', padding: '8px', border: '1px solid #1b2333', marginBottom: '8px' }}>
-            <StabilityMonitor 
-              visible={true}
-              metrics={{ cpu: Math.round(cpu), memory: Math.round(memory), fps }}
-              onReset={handleReset}
-              resetInterval={resetInterval}
-              onResetIntervalChange={setResetInterval}
-            />
-          </div>
           <div style={{ background: '#0f1520', borderRadius: '6px', padding: '8px', border: '1px solid #1b2333' }}>
             <TSAHealthPanel visible={true} embedded agentActivities={agents.map(a => {
               let activity: "thinking" | "speaking" | "acting" | "idle" = "idle";
