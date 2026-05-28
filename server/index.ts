@@ -1904,7 +1904,9 @@ app.post("/api/scrum/auto-run", async (req, res) => {
     };
 
     const pending = listScrumCandidates("pending");
+    const AUTO_APPROVE_THRESHOLD = 75;
     for (const c of pending) {
+      if (c.score < AUTO_APPROVE_THRESHOLD) continue;
       try {
         const approveResult = approveScrumCandidate(c.id);
         if (!approveResult.ok) {
