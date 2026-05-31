@@ -59,7 +59,12 @@ interface ScrumCandidateListItem {
 
 type ExportMode = "preview" | "localReport" | "localNotes" | "githubReport" | "githubNotes";
 
-export default function ScrumPanel() {
+interface ScrumPanelProps {
+  scrumRepo?: string;
+  scrumTask?: string;
+}
+
+export default function ScrumPanel({ scrumRepo, scrumTask }: ScrumPanelProps) {
   const [status, setStatus] = useState<ScrumStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +81,7 @@ export default function ScrumPanel() {
     fetchStatus();
     fetchGitHubStatus();
     fetchCandidates();
-  }, []);
+  }, [scrumRepo]);
 
   useEffect(() => {
     localStorage.setItem("scrumAutoAdvance", String(autoAdvance));
@@ -113,7 +118,8 @@ export default function ScrumPanel() {
 
   async function fetchGitHubStatus() {
     try {
-      const res = await fetch(`${API_BASE}/api/scrum/github/status`);
+      const params = scrumRepo ? `?repo=${encodeURIComponent(scrumRepo)}` : "";
+      const res = await fetch(`${API_BASE}/api/scrum/github/status${params}`);
       const data = await res.json();
       setGithubStatus(data);
     } catch (err) {
@@ -185,8 +191,10 @@ export default function ScrumPanel() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          topic: "Daily standup",
-          participants: ["clerk", "specialist", "executive", "archivist"]
+          topic: scrumTask || "Daily standup",
+          participants: ["clerk", "specialist", "executive", "archivist"],
+          repo: scrumRepo || undefined,
+          task: scrumTask || undefined
         })
       });
       const data = await res.json();
@@ -493,6 +501,13 @@ export default function ScrumPanel() {
             {exportResult.error && (
               <p style={{ color: "#ff6b6b" }}>Error: {exportResult.error}</p>
             )}
+          </div>
+        )}
+
+        {scrumRepo && (
+          <div style={{ ...styles.configHint, borderColor: '#2ecc71' }}>
+            <p style={{ margin: 0, fontSize: 11, color: '#2ecc71' }}>Repo: {scrumRepo}</p>
+            {scrumTask && <p style={{ margin: '4px 0 0', fontSize: 11, color: '#feca57' }}>Task: {scrumTask}</p>}
           </div>
         )}
 

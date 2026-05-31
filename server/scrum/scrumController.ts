@@ -24,7 +24,7 @@ function generateSessionId(): string {
   return `scrum-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 }
 
-export function createScrumSession(topic: string, participants: string[], sourceContext?: string[]): ScrumSession {
+export function createScrumSession(topic: string, participants: string[], sourceContext?: string[], repo?: string, task?: string): ScrumSession {
   return {
     id: generateSessionId(),
     timestamp: new Date().toISOString(),
@@ -34,6 +34,8 @@ export function createScrumSession(topic: string, participants: string[], source
     results: [],
     finalStatus: "pending",
     sourceContext,
+    repo,
+    task,
   };
 }
 
@@ -86,7 +88,7 @@ async function fetchGitHubREADME(owner: string, repo: string): Promise<string | 
 }
 
 export async function runCheckStage(session: ScrumSession, sourceContext?: string[]): Promise<ScrumStageResult> {
-  const targetRepo = "Photon1c/pixeloffice";
+  const targetRepo = session.repo || process.env.SAFE_SCRUM_REPO || "Photon1c/pixeloffice";
   let readmeContent: string | undefined;
   let repoStatus: "clean" | "changes_detected" | "error" = "changes_detected";
   const findings: string[] = [
@@ -99,7 +101,8 @@ export async function runCheckStage(session: ScrumSession, sourceContext?: strin
   }
 
   try {
-    const readme = await fetchGitHubREADME("Photon1c", "pixeloffice");
+    const [repoOwner, repoName] = targetRepo.split("/");
+    const readme = await fetchGitHubREADME(repoOwner || "Photon1c", repoName || "pixeloffice");
     if (readme) {
       readmeContent = readme.substring(0, 2000);
       findings.push("README.md found - " + readme.split('\n').length + " lines");

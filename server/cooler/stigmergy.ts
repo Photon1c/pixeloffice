@@ -166,23 +166,6 @@ export function depositTrace(trace: Partial<StigmergyTrace>): DepositResult {
   const decay = decayConfig.decayMs;
   const expires = new Date(now.getTime() + (trace.metadata?.ttl || decay));
 
-  // Deduplication: don't deposit if same type+agent exists within cooldown period
-  // For task_shadows, key on agentId only (not roomId) to prevent duplicates
-  // when agent moves between zones.
-  if (trace.agentId) {
-    const active = getActiveTraces();
-    const recentDuplicate = active.find(t => 
-      t.type === trace.type && 
-      t.agentId === trace.agentId &&
-      (trace.type === "task_shadow" || t.roomId === trace.roomId) &&
-      new Date(t.created_at).getTime() > now.getTime() - 5 * 60 * 1000 // 5 min cooldown
-    );
-    if (recentDuplicate) {
-      console.log(`[Stigmergy] Skipping duplicate deposit: ${trace.type} for ${trace.agentId} in ${trace.roomId}`);
-      return { success: true, skipped: true, reason: "Duplicate within cooldown period", trace: recentDuplicate };
-    }
-  }
-  
   const newTrace: StigmergyTrace = {
     id: `trace-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
     type: trace.type,
@@ -198,8 +181,15 @@ export function depositTrace(trace: Partial<StigmergyTrace>): DepositResult {
   };
 
   const active = getActiveTraces();
-  active.push(newTrace);
-  saveTraces(active);
+  // Deduplication: remove old traces of same type+agentId for task_shadow
+  // (replaces rather than accumulates, since agent can only have one active shadow)
+  // For other types, prevent duplicates within cooldown period.
+  const filtered = trace.agentId && trace.type === "task_shadow"
+    ? active.filter(t => !(t.type === trace.type && t.agentId === trace.agentId))
+    : active;
+
+  filtered.push(newTrace);
+  saveTraces(filtered);
   return { success: true, trace: newTrace };
 }
 

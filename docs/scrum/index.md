@@ -1,9 +1,10 @@
 # Scrum Index
 
-_Auto-generated: 2026-05-27T07:19:07.024Z_
+_Auto-generated: 2026-05-30T02:55:19.782Z_
 
 | date | title | source_session | stage | summary |
 |---|---|---|---|---|
+| 2026-05-30 | [SCRUM (Planning): Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-05-30T02-35-28-965Z_scrum-planning-scrumcand-1780108519941-0x34jq.md) |  |  |  |
 | 2026-05-27 | [SCRUM (Planning): At the A.I. Epicenter, Technologists Dismiss Pope Leos Warnings About th…](./2026-05-27T07-14-45-052Z_scrum-planning-scrumcand-1779866056939-syn52q.md) |  |  |  |
 | 2026-05-26 | [SCRUM (Planning): Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-26T20-11-33-556Z_scrum-planning-scrumcand-1779782939821-1w98hi.md) |  |  |  |
 | 2026-05-26 | [SCRUM (Planning): Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-26T20-11-33-495Z_scrum-planning-scrumcand-1779783138131-mvdnxl.md) |  |  |  |
@@ -106,4 +107,4 @@ _Auto-generated: 2026-05-27T07:19:07.024Z_
 | 2026-04-09 | [Test SCRUM: Test SCRUM from cooler session](./2026-04-09_scrum-scrum-1775776097379-9lcztk.md) | random | check | N/A |
 | 2026-04-09 | [Test SCRUM: Test SCRUM from cooler session](./2026-04-09_scrum-scrum-1775761038722-ydxixs.md) | random | check | N/A |
 
-Total: **101** scrum exports
+Total: **102** scrum exports

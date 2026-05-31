@@ -12,7 +12,9 @@ import { startSupabaseKeepAlive } from "./services/supabaseKeepAlive.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-config({ path: path.resolve(__dirname, "../.env") });
+const envPath = path.resolve(__dirname, "../.env");
+const rootEnvPath = path.resolve(__dirname, "../../.env");
+config({ path: fs.existsSync(envPath) ? envPath : rootEnvPath });
 
 const app = express();
 const PORT = process.env.PORT || 4173;
@@ -995,7 +997,7 @@ app.post("/api/cooler/sessions/cleanup", async (req, res) => {
 // Test SCRUM: Create mock SCRUM from a cooler session
 app.post("/api/scrum/test", async (req, res) => {
   try {
-    const { coolerSessionId, topic: reqTopic } = req.body;
+    const { coolerSessionId, topic: reqTopic, repo, task } = req.body;
     
     let topic = reqTopic || "Test SCRUM from cooler session";
     let participants: string[] = [];
@@ -1048,7 +1050,7 @@ app.post("/api/scrum/test", async (req, res) => {
     }
     
     // Create the SCRUM session
-    currentScrumSession = createScrumSession(topic, participants);
+    currentScrumSession = createScrumSession(topic, participants, [], repo, task);
     
     const { session, stageResult } = await advanceScrumSession(currentScrumSession);
     currentScrumSession = session;
@@ -1730,7 +1732,7 @@ app.post("/api/detect-delegation", async (req, res) => {
 
 app.post("/api/scrum/start", async (req, res) => {
   try {
-    let { topic, participants } = req.body;
+    let { topic, participants, repo, task } = req.body;
     
     // Use stigmergy-weighted participant selection if not provided
     if (!participants || participants.length === 0) {
@@ -1740,7 +1742,10 @@ app.post("/api/scrum/start", async (req, res) => {
     
     currentScrumSession = createScrumSession(
       topic || "Daily standup",
-      participants
+      participants,
+      [],
+      repo,
+      task
     );
     
     const { session, stageResult } = await advanceScrumSession(currentScrumSession);
@@ -2043,9 +2048,12 @@ app.get("/api/scrum/export/preview/:sessionId", async (req, res) => {
 });
 
 app.get("/api/scrum/github/status", async (req, res) => {
-  const configured = !!(process.env.GITHUB_TOKEN && process.env.SAFE_SCRUM_REPO);
-  const repo = process.env.SAFE_SCRUM_REPO || null;
+  const envConfigured = !!(process.env.GITHUB_TOKEN && process.env.SAFE_SCRUM_REPO);
+  const envRepo = process.env.SAFE_SCRUM_REPO || null;
   const branch = process.env.SAFE_SCRUM_BRANCH || "main";
+  const fallbackRepo = (req.query as any).repo || null;
+  const repo = fallbackRepo || envRepo;
+  const configured = envConfigured || !!fallbackRepo;
   
   res.json({
     configured,

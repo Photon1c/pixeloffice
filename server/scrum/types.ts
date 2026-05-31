@@ -55,6 +55,8 @@ export interface ScrumSession {
   results: ScrumStageResult[];
   finalStatus: "pending" | "complete" | "failed";
   sourceContext?: string[];
+  repo?: string;
+  task?: string;
 }
 
 export interface ScrumSessionResponse {

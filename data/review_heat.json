@@ -1,42 +1,12 @@
 [
   {
-    "id": "heat-1779783715804-555",
+    "id": "heat-1780109720192-255",
     "trace_type": "review_heat",
-    "source_session_id": "ct-1779783510936",
-    "intensity": 0.4,
-    "topic": "Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)",
+    "source_session_id": "ct-1780109111065",
+    "intensity": 0.2,
+    "topic": "Whats Next for Blue Origin After Rocket Explosion",
     "anchor": "kitchen",
-    "created_at": "2026-05-26T08:21:55.804Z",
-    "expires_at": "2026-05-26T08:31:55.804Z"
-  },
-  {
-    "id": "heat-1779783912574-57",
-    "trace_type": "review_heat",
-    "source_session_id": "ct-1779783510936",
-    "intensity": 0.4,
-    "topic": "Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)",
-    "anchor": "kitchen",
-    "created_at": "2026-05-26T08:25:12.574Z",
-    "expires_at": "2026-05-26T08:35:12.574Z"
-  },
-  {
-    "id": "heat-1779784105190-926",
-    "trace_type": "review_heat",
-    "source_session_id": "ct-1779783510936",
-    "intensity": 0.4,
-    "topic": "Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)",
-    "anchor": "kitchen",
-    "created_at": "2026-05-26T08:28:25.190Z",
-    "expires_at": "2026-05-26T08:38:25.190Z"
-  },
-  {
-    "id": "heat-1779784302510-791",
-    "trace_type": "review_heat",
-    "source_session_id": "ct-1779783510936",
-    "intensity": 0.4,
-    "topic": "Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)",
-    "anchor": "kitchen",
-    "created_at": "2026-05-26T08:31:42.510Z",
-    "expires_at": "2026-05-26T08:41:42.510Z"
+    "created_at": "2026-05-30T02:55:20.192Z",
+    "expires_at": "2026-05-30T03:05:20.192Z"
   }
 ]

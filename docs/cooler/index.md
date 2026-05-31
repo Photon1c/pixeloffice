@@ -1,9 +1,17 @@
 # Cooler Index
 
-_Auto-generated: 2026-05-27T07:19:07.024Z_
+_Auto-generated: 2026-05-30T02:55:19.781Z_
 
 | date | title | session | participants | escalations |
 |---|---|---|---:|---:|
+| 2026-05-30 | [Cooler Talk - Whats Next for Blue Origin After Rocket Explosion](./2026-05-30T02-55-19-358Z_cooler-ct-1780109111065.md) | ct-1780109111065 | 3 | 3 |
+| 2026-05-30 | [Cooler Talk - Whats Next for Blue Origin After Rocket Explosion](./2026-05-30T02-45-17-294Z_cooler-ct-1780109111065.md) | ct-1780109111065 | 3 | 1 |
+| 2026-05-30 | [Cooler Talk - Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-05-30T02-35-19-309Z_cooler-ct-1780107311012.md) | ct-1780107311012 | 3 | 4 |
+| 2026-05-30 | [Cooler Talk - Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-05-30T02-25-17-424Z_cooler-ct-1780107311012.md) | ct-1780107311012 | 3 | 2 |
+| 2026-05-30 | [Cooler Talk - Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-05-30T02-15-21-602Z_cooler-ct-1780107311012.md) | ct-1780107311012 | 3 | 1 |
+| 2026-05-30 | [Cooler Talk - Latest commit: fix: remove root-level hermitclaw_workspace symlink, add to .gitignore (by Sherlock)](./2026-05-30T02-05-17-704Z_cooler-ct-1780105510689.md) | ct-1780105510689 | 3 | 2 |
+| 2026-05-30 | [Cooler Talk - Latest commit: fix: remove root-level hermitclaw_workspace symlink, add to .gitignore (by Sherlock)](./2026-05-30T01-55-21-342Z_cooler-ct-1780105510689.md) | ct-1780105510689 | 3 | 2 |
+| 2026-05-30 | [Cooler Talk - Latest commit: fix: remove root-level hermitclaw_workspace symlink, add to .gitignore (by Sherlock)](./2026-05-30T01-45-22-164Z_cooler-ct-1780105510689.md) | ct-1780105510689 | 3 | 1 |
 | 2026-05-27 | [Cooler Talk - At the A.I. Epicenter, Technologists Dismiss Pope Leos Warnings About the New Technology](./2026-05-27T07-14-16-131Z_cooler-ct-1779865506421.md) | ct-1779865506421 | 3 | 2 |
 | 2026-05-27 | [Cooler Talk - At the A.I. Epicenter, Technologists Dismiss Pope Leos Warnings About the New Technology](./2026-05-27T07-05-17-677Z_cooler-ct-1779865506421.md) | ct-1779865506421 | 3 | 1 |
 | 2026-05-26 | [Cooler Talk - Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sherlock)](./2026-05-26T08-31-41-971Z_cooler-ct-1779783510936.md) | ct-1779783510936 | 3 | 2 |
@@ -78,4 +86,4 @@ _Auto-generated: 2026-05-27T07:19:07.024Z_
 | 2026-05-25 | [Cooler Talk - Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-25T10-11-17-378Z_cooler-ct-1779671126927.md) | ct-1779671126927 | 3 | 2 |
 | 2026-05-25 | [Cooler Talk - Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-25T01-05-38-112Z_cooler-ct-1779671126927.md) | ct-1779671126927 | 3 | 1 |
 
-Total: **73** cooler sessions
+Total: **81** cooler sessions

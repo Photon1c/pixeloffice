@@ -1,9 +1,10 @@
 # Reports Index
 
-_Auto-generated: 2026-05-27T07:19:07.024Z_
+_Auto-generated: 2026-05-30T02:55:19.782Z_
 
 | date | title | file |
 |---|---|---|
+| 2026-05-30 | [SCRUM Report: SCRUM (Planning): Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-05-30_scrum-scrum-1780108528966-dlvt98.md) | 2026-05-30_scrum-scrum-1780108528966-dlvt98.md |
 | 2026-05-27 | [SCRUM Report: SCRUM (Planning): At the A.I. Epicenter, Technologists Dismiss Pope Leos Warnings About th…](./2026-05-27_scrum-scrum-1779866085054-sdij1j.md) | 2026-05-27_scrum-scrum-1779866085054-sdij1j.md |
 | 2026-05-26 | [SCRUM Report: SCRUM (Planning): Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sher…](./2026-05-26_scrum-scrum-1779826292819-96d4as.md) | 2026-05-26_scrum-scrum-1779826292819-96d4as.md |
 | 2026-05-26 | [SCRUM Report: SCRUM (Planning): Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sher…](./2026-05-26_scrum-scrum-1779826293201-k9ovmw.md) | 2026-05-26_scrum-scrum-1779826293201-k9ovmw.md |
@@ -335,4 +336,4 @@ _Auto-generated: 2026-05-27T07:19:07.024Z_
 | 2026-04-23 | [SCRUM Report: SCRUM (Planning): Anthropics New Mythos A.I. Model Sets Off Global Alarms](./2026-04-23_scrum-scrum-1776921781954-zdd9gy.md) | 2026-04-23_scrum-scrum-1776921781954-zdd9gy.md |
 | 2026-04-23 | [SCRUM Report: SCRUM (Planning): Anthropics New Mythos A.I. Model Sets Off Global Alarms](./2026-04-23_scrum-scrum-1776921790667-fgoeem.md) | 2026-04-23_scrum-scrum-1776921790667-fgoeem.md |
 
-Total: **330** report exports
+Total: **331** report exports

@@ -1100,13 +1100,13 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       if (!session) return;
       setActiveWalkUpChats(prev => { const m = new Map(prev); m.set(session.initiatorId, session); return m; });
       setSpeechBubbles(prev => {
-        // Remove any existing bubbles for these agents (prevent duplicates)
         const filtered = prev.filter(b => b.speakerId !== session.initiatorId && b.speakerId !== session.partnerId);
         return [
           ...filtered,
           {
             speakerId: session.initiatorId,
             text: enhanceTextWithEmoji(session.script[0]?.text || "Hey!", currentAgents.find(a => a.id === session.initiatorId)?.mood || "neutral", session.initiatorId),
+            offset: 0,
           }
         ];
       });
@@ -1196,13 +1196,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           } else {
             const line = session.script[nextLine];
             setSpeechBubbles(prevBubbles => {
-              // Remove existing bubble for THIS speaker only (preserve other conversations)
-              const filtered = prevBubbles.filter(b => b.speakerId !== line.speakerId);
               return [
-                ...filtered,
+                ...prevBubbles,
                 {
                   speakerId: line.speakerId,
-                  text: enhanceTextWithEmoji(line.text, "neutral", line.speakerId)
+                  text: enhanceTextWithEmoji(line.text, "neutral", line.speakerId),
+                  offset: nextLine * 55,
                 }
               ];
             });
@@ -1425,7 +1424,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
       currentAgents.forEach((agent) => {
         if (shouldRespectPrivacy && agent.visibility === "offline") return;
         const speech = speechBubbles.find(sb => sb.speakerId === agent.id);
-        drawAgent(ctx, { ...agent, speechBubble: speech ? { text: speech.text, offset: (speech.offset || 0) * 55, expiresAt: 0 } : undefined }, currentConfig.showNames);
+        drawAgent(ctx, { ...agent, speechBubble: speech ? { text: speech.text, offset: speech.offset || 0, expiresAt: 0 } : undefined }, currentConfig.showNames);
       });
 
       drawZoneIndicators(ctx, zoneActivity, stigmergyTraces);
@@ -2163,7 +2162,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               const scrumRes = await fetch('/api/scrum/test', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ topic, coolerSessionId: lastCoolerSessionId })
+                body: JSON.stringify({ topic, coolerSessionId: lastCoolerSessionId, repo: scrumRepo || undefined, task: scrumTask || undefined })
               });
               const scrumData = await scrumRes.json();
               
@@ -2200,6 +2199,33 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
             } catch (err) {
               console.error('[TEST SCRUM] Error:', err);
             }
+
+            // Show SCRUM speech bubbles during the meeting
+            const scrumLines = [
+              { text: `Standup: ${(currentTopic || scrumTask || "Daily standup").slice(0, 60)}`, delay: 500 },
+              { text: `Checking ${scrumRepo || "repo"}...`, delay: 3000 },
+              { text: "Reviewing findings...", delay: 6000 },
+              { text: "Decision: proceed", delay: 9000 },
+              { text: "SCRUM complete!", delay: 12000 },
+            ];
+            const scrumSpeakers = confAgents;
+            scrumLines.forEach((line, i) => {
+              const timeoutId = setTimeout(() => {
+                const speaker = scrumSpeakers[i % scrumSpeakers.length];
+                if (!speaker) return;
+                setSpeechBubbles(prev => {
+                  const filtered = prev.filter(b => !scrumSpeakers.find(a => a.id === b.speakerId));
+                  return [
+                    ...filtered,
+                    {
+                      speakerId: speaker.id,
+                      text: line.text,
+                      offset: i * 55,
+                    }
+                  ];
+                });
+              }, line.delay);
+            });
             
             // SCRUM meeting lasts 20-25 seconds (realistic standup duration)
             setTimeout(() => {
@@ -2226,7 +2252,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
         {showParams && <Dashboard config={dashboardConfig} onUpdate={updateConfig} onOpenGenealogyLab={() => setShowGenealogyLab(true)} onOpenAdminAssistant={() => setShowAdminAssistant(true)} onOpenStockForecasts={() => setShowStockForecasts(true)} onOpenConvoViewer={() => { setConvoViewerType("cooler"); setShowConvoViewer(true); }} />}
         {showTimeTasks && <TimeTasksPanel onClose={() => setShowTimeTasks(false)} />}
-        {showScrum && <ScrumPanel />}
+        {showScrum && <ScrumPanel scrumRepo={scrumRepo} scrumTask={scrumTask} />}
         {showChat && <ChatOverlay currentTopic={currentTopic} onClose={() => setShowChat(false)} />}
         {showInventoryWorkflow && <InventoryWorkflowDemo 
           onComplete={() => console.log("[Inventory] Workflow complete")}
