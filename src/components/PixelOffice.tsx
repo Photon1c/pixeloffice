@@ -437,6 +437,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [showStockForecasts, setShowStockForecasts] = useState<boolean>(false);
   const [showConvoViewer, setShowConvoViewer] = useState<boolean>(false);
   const [showEditor, setShowEditor] = useState<boolean>(false);
+  const [selectedExternalApp, setSelectedExternalApp] = useState<string>("");
   const [scrumRepo, setScrumRepo] = useState<string>("");
   const [scrumTask, setScrumTask] = useState<string>("");
   const [convoViewerType, setConvoViewerType] = useState<"cooler" | "scrum">("cooler");
@@ -2390,6 +2391,41 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               📅 Calendar
             </button>
             <YouTubePlayer />
+          </div>
+
+          {/* External Apps Switcher */}
+          <div style={{ borderTop: '1px solid #1b2333', paddingTop: '8px' }}>
+            <div style={{ fontSize: '11px', color: '#4ecdc4', marginBottom: '8px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              🔗 External Apps
+            </div>
+            <select
+              value={selectedExternalApp}
+              onChange={(e) => {
+                const url = e.target.value;
+                if (url) {
+                  window.open(url, '_blank');
+                  // Reset selection after opening
+                  setTimeout(() => setSelectedExternalApp(''), 100);
+                }
+              }}
+              style={{
+                width: '100%',
+                padding: '8px',
+                background: '#1a1a2a',
+                border: '1px solid #2a3548',
+                borderRadius: '6px',
+                color: '#e8e8f0',
+                fontSize: '12px',
+                cursor: 'pointer',
+              }}
+            >
+              <option value="">Select an app...</option>
+              <option value="http://localhost:5050">🤖 MiroZero (port 5050)</option>
+              <option value="http://localhost:4173/command">⌨️ Terminal</option>
+              <option value="http://127.0.0.1:5190">🕵️ Sherlock CS</option>
+              <option value="http://185.211.4.97">🌙 NightWatchauton</option>
+              <option value="http://localhost:3847">🛡️ ClawGuard</option>
+            </select>
           </div>
         </div>
         ) : null}
