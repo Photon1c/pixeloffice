@@ -4,7 +4,7 @@ import { LAB_MODE } from "../config/env";
 import { setupConsoleMonitor } from "../utils/consoleMonitor";
 import { StabilityMonitor, AgentIssueMonitor } from "./StabilityMonitor";
 import { TSAHealthPanel } from "./TSAHealthPanel";
-import GenealogyLab from "./GenealogyLab";
+import CriminologyLab from "./CriminologyLab";
 import AdminAssistant from "./AdminAssistant";
 import StockForecasts from "./StockForecasts";
 import TimeTasksPanel from "./TimeTasksPanel";
@@ -56,6 +56,7 @@ import {
   CHAIR_POSITIONS,
   ENTRANCE_POSITION,
   getZoneAtPosition,
+  ROOMS,
 } from "../utils/layout";
 
 // Loop detection available at: import { detectLoopOrStall } from "../utils/loopDetection";
@@ -432,7 +433,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [showScrum, setShowScrum] = useState<boolean>(false);
   const [showScrumSettings, setShowScrumSettings] = useState<boolean>(false);
   const [showChat, setShowChat] = useState<boolean>(false);
-  const [showGenealogyLab, setShowGenealogyLab] = useState<boolean>(false);
+  const [showCriminologyLab, setShowCriminologyLab] = useState<boolean>(false);
   const [showAdminAssistant, setShowAdminAssistant] = useState<boolean>(false);
   const [showStockForecasts, setShowStockForecasts] = useState<boolean>(false);
   const [showConvoViewer, setShowConvoViewer] = useState<boolean>(false);
@@ -449,7 +450,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [stigmergyTraces, setStigmergyTraces] = useState<any[]>([]);
   const [socialPotential, setSocialPotential] = useState<{sessionCount: number; participantCount: number; intensity: number} | null>(null);
   const [currentTopic, setCurrentTopic] = useState<string>("");
-  const [newsApiSource, setNewsApiSource] = useState<"auto" | "news" | "github" | "office" | "fallback">("auto");
+  const [newsApiSource, setNewsApiSource] = useState<"auto" | "news" | "github" | "office" | "fallback">("news");
   const [newsGithubRepo, setNewsGithubRepo] = useState<string>("photon1c/pixeloffice");
   const [syncAgentTopics, setSyncAgentTopics] = useState<boolean>(true);
   const [speechBubbles, setSpeechBubbles] = useState<{speakerId: string; text: string; offset?: number; yOffset?: number; model?: string; expiresAt?: number}[]>([]);
@@ -976,30 +977,60 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   }, [agents, tasks]);
 
    useEffect(() => {
-     if (dashboardConfig.liveMode) {
-       const interval = setInterval(fetchStatus, dashboardConfig.pollingInterval);
-       return () => clearInterval(interval);
-     }
- 
+      if (dashboardConfig.liveMode) {
+        const interval = setInterval(fetchStatus, dashboardConfig.pollingInterval);
+        return () => clearInterval(interval);
+      }
+  
       if (dashboardConfig.mockMode) {
           const interval = setInterval(
             () => {
               if (activeConversationZone) return;
-              // Sleep mode = MORE activity! Office runs wild while user sleeps
-              if (!sleepMode && Math.random() > 0.7) return; // Only throttle when awake
+              // Agents should mostly stay at their desks working
+              // Only occasionally take breaks or go to meetings
+              if (!sleepMode && Math.random() > 0.15) return; // 85% chance to skip when awake
+              if (sleepMode && Math.random() > 0.05) return; // 95% chance to skip when sleeping (more stable)
 
               setAgents((prevAgents) =>
                 prevAgents.map((agent) => {
-                  // More status changes in sleep mode
-                  const newStatus: AgentStatus =
-                    sleepMode 
-                      ? (Math.random() > 0.2 ? "working" : "idle") // 80% working when sleeping
-                      : (Math.random() > 0.3 ? "working" : "idle"); // 70% working when awake
-                  return updateAgentStatus(agent, newStatus);
+                  // 90% chance to be working (at desk), 10% chance for break/meeting
+                  const roll = Math.random();
+                  let newStatus: AgentStatus = "working";
+                  let targetZone: string | null = null;
+                  
+                  if (roll < 0.05) {
+                    // 5% chance: kitchen break
+                    newStatus = "idle";
+                    targetZone = "kitchen";
+                  } else if (roll < 0.08) {
+                    // 3% chance: conference room meeting
+                    newStatus = "idle";
+                    targetZone = "conference";
+                  } else if (roll < 0.10) {
+                    // 2% chance: lobby/cooler chat
+                    newStatus = "idle";
+                    targetZone = "lobby";
+                  }
+                  
+                  const updatedAgent = updateAgentStatus(agent, newStatus);
+                  
+                  // If going to a specific zone, set target position there
+                  if (targetZone && ROOMS[targetZone]) {
+                    const room = ROOMS[targetZone];
+                    const padding = 40;
+                    return {
+                      ...updatedAgent,
+                      targetX: room.x + padding + Math.random() * (room.width - padding * 2),
+                      targetY: room.y + (room.height * 0.6) + (Math.random() * 20),
+                      mode: "walking"
+                    };
+                  }
+                  
+                  return updatedAgent;
                 })
               );
             },
-            sleepMode ? 1000 : dashboardConfig.mockToggleSpeed // Faster updates in sleep mode
+            sleepMode ? 30000 : dashboardConfig.mockToggleSpeed // Slower updates in sleep mode
           );
           return () => clearInterval(interval);
         }
@@ -1465,7 +1496,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
     setSelectedAgent(clickedAgent || null);
   }, [agents]);
 
-  if (showGenealogyLab) return <GenealogyLab onNavigate={() => setShowGenealogyLab(false)} />;
+  if (showCriminologyLab) return <CriminologyLab onNavigate={() => setShowCriminologyLab(false)} />;
   if (showAdminAssistant) return <AdminAssistant onNavigate={() => setShowAdminAssistant(false)} />;
   if (showStockForecasts) return <StockForecasts />;
   if (showCalendar) return <CalendarPanel onClose={() => setShowCalendar(false)} />;
@@ -1686,9 +1717,9 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
               }}
               style={{ width: '100%', padding: '4px 6px', background: '#1a1a2a', border: '1px solid #ff6432', borderRadius: '3px', color: '#feca57', fontSize: '10px' }}
             >
+              <option value="news">RSS/News Only</option>
               <option value="auto">Auto (GitHub → News → Fallback)</option>
               <option value="office">Office Topics</option>
-              <option value="news">RSS/News Only</option>
               <option value="github">GitHub Activity</option>
               <option value="fallback">Fallback Topics</option>
             </select>
@@ -2251,7 +2282,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           </a>
         </div>
 
-        {showParams && <Dashboard config={dashboardConfig} onUpdate={updateConfig} onOpenGenealogyLab={() => setShowGenealogyLab(true)} onOpenAdminAssistant={() => setShowAdminAssistant(true)} onOpenStockForecasts={() => setShowStockForecasts(true)} onOpenConvoViewer={() => { setConvoViewerType("cooler"); setShowConvoViewer(true); }} />}
+        {showParams && <Dashboard config={dashboardConfig} onUpdate={updateConfig} onOpenCriminologyLab={() => setShowCriminologyLab(true)} onOpenAdminAssistant={() => setShowAdminAssistant(true)} onOpenStockForecasts={() => setShowStockForecasts(true)} onOpenConvoViewer={() => { setConvoViewerType("cooler"); setShowConvoViewer(true); }} />}
         {showTimeTasks && <TimeTasksPanel onClose={() => setShowTimeTasks(false)} />}
         {showScrum && <ScrumPanel scrumRepo={scrumRepo} scrumTask={scrumTask} />}
         {showChat && <ChatOverlay currentTopic={currentTopic} onClose={() => setShowChat(false)} />}
@@ -2438,7 +2469,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 // SUB-COMPONENTS
 // ============================================================================
 
-function Dashboard({ config, onUpdate, onOpenGenealogyLab, onOpenAdminAssistant, onOpenStockForecasts, onOpenConvoViewer }: any) {
+function Dashboard({ config, onUpdate, onOpenCriminologyLab, onOpenAdminAssistant, onOpenStockForecasts, onOpenConvoViewer }: any) {
   return (
     <div style={styles.subPanel}>
       {LAB_MODE && (
@@ -2461,7 +2492,7 @@ function Dashboard({ config, onUpdate, onOpenGenealogyLab, onOpenAdminAssistant,
       </div>
       {LAB_MODE && (
         <>
-          <button style={styles.secondaryBtn} onClick={onOpenGenealogyLab}>Genealogy Lab</button>
+          <button style={styles.secondaryBtn} onClick={onOpenCriminologyLab}>Criminology Lab</button>
           <button style={styles.secondaryBtn} onClick={onOpenAdminAssistant}>Admin Assistant</button>
           <button style={styles.secondaryBtn} onClick={onOpenStockForecasts}>Stock Forecasts</button>
           <button style={styles.secondaryBtn} onClick={onOpenConvoViewer}>Convo Viewer</button>

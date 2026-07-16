@@ -144,8 +144,20 @@ export default function CalendarPanel({ onClose }: { onClose: () => void }) {
     setViewMonth(n.getMonth());
   };
 
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  const handleCloseClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onClose();
+  };
+
   return (
-    <div style={styles.overlay} onClick={onClose}>
+    <div style={styles.overlay} onClick={handleOverlayClick}>
       <div style={styles.container} onClick={e => e.stopPropagation()}>
         <div style={styles.header}>
           <h3 style={styles.title}>📅 Office Calendar</h3>
@@ -154,7 +166,7 @@ export default function CalendarPanel({ onClose }: { onClose: () => void }) {
             <button style={styles.navBtn} onClick={goToday}>Today</button>
             <button style={styles.navBtn} onClick={nextMonth}>▶</button>
           </div>
-          <button style={styles.closeBtn} onClick={onClose}>×</button>
+          <button style={styles.closeBtn} onClick={handleCloseClick}>×</button>
         </div>
 
         <div style={{ padding: "12px 16px", fontSize: "14px", color: "#4ecdc4", fontWeight: "bold", textAlign: "center" }}>

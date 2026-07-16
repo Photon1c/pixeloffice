@@ -8,7 +8,7 @@ import { openai } from "./client.js";
 export async function routeChat(
   messages: any[],
   options: any = {}
-): Promise<{ content: string; provider: 'nvidia' | 'openai'; model: string; raw: any }> {
+): Promise<{ content: string; provider: 'nvidia' | 'ollama'; model: string; raw: any }> {
   const useNvidia = !!process.env.NVIDIA_API_KEY;
 
   if (useNvidia) {
@@ -27,17 +27,17 @@ export async function routeChat(
     }
   }
 
-  console.log("[LLM Router] Routing to OpenAI...");
+  console.log("[LLM Router] Routing to Ollama...");
   const response = await openai.chat.completions.create({
-    model: options.model || "gpt-4o-mini",
+    model: options.model || "gemma4:12b",
     messages,
     ...options
   });
 
   return {
     content: response.choices[0].message.content || "",
-    provider: 'openai',
-    model: response.model || 'gpt-4o-mini',
+    provider: 'ollama',
+    model: response.model || 'gemma4:12b',
     raw: response
   };
 }

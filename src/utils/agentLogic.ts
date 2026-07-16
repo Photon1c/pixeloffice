@@ -218,7 +218,7 @@ export const INITIAL_AGENTS: Agent[] = [
     targetY: CHAIR_POSITIONS[1].y,
     dir: "left",
     frame: 0,
-    mode: "walking",
+    mode: "sitting",
     deskIndex: 1,
   },
   {
@@ -234,7 +234,7 @@ export const INITIAL_AGENTS: Agent[] = [
     targetY: CHAIR_POSITIONS[2].y,
     dir: "right",
     frame: 0,
-    mode: "walking",
+    mode: "sitting",
     deskIndex: 2,
   },
   {
@@ -250,7 +250,7 @@ export const INITIAL_AGENTS: Agent[] = [
     targetY: CHAIR_POSITIONS[3].y,
     dir: "right",
     frame: 0,
-    mode: "walking",
+    mode: "sitting",
     deskIndex: 3,
   },
   {
@@ -314,7 +314,7 @@ export const INITIAL_AGENTS: Agent[] = [
     targetY: CHAIR_POSITIONS[7].y,
     dir: "left",
     frame: 0,
-    mode: "walking",
+    mode: "sitting",
     deskIndex: 7,
   },
   {
@@ -330,7 +330,7 @@ export const INITIAL_AGENTS: Agent[] = [
     targetY: CHAIR_POSITIONS[8].y,
     dir: "right",
     frame: 0,
-    mode: "walking",
+    mode: "sitting",
     deskIndex: 8,
   },
 ];
@@ -430,8 +430,8 @@ export function handleWanderLogic(agent: Agent): Agent {
   const distance = Math.sqrt(dx * dx + dy * dy);
 
   if (distance < 10) {
-    // 5% chance to pick a new wander point — agents should stay put unless called into workflow
-    if (Math.random() > 0.95) {
+    // 1% chance to pick a new wander point — agents should mostly stay at their desks
+    if (Math.random() > 0.99) {
       const points = getWanderPointsForDesk(agent.deskIndex);
       const newPoint = points[Math.floor(Math.random() * points.length)];
       return { ...agent, targetX: newPoint.x, targetY: newPoint.y, mode: "idle-wander" as const };
@@ -820,7 +820,7 @@ export function applyScheduleToAgents(
 
     // Small chance to let agent wander freely instead of following schedule.
     // Keep this very low so agents mostly stay near their desks.
-    if (Math.random() < 0.03) {
+    if (Math.random() < 0.01) {
       const points = getWanderPointsForDesk(agent.deskIndex);
       const wanderPoint = points[Math.floor(Math.random() * points.length)];
       return {
@@ -848,7 +848,11 @@ export function applyScheduleToAgents(
            };
          }
       }
-      targetZoneId = "openOffice";
+      if (agent.id === "frontdesk") {
+        targetZoneId = Math.random() < 0.7 ? "lobby" : "kitchen";
+      } else {
+        targetZoneId = "openOffice";
+      }
     }
 
     const room = ROOMS[targetZoneId];

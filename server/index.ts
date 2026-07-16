@@ -149,6 +149,7 @@ import { getPool, getConfig } from "./pixel_memory/config.js";
 import { fetchCurrentPrice, fetchPriceForDate } from "./services/priceFeed.js";
 import { createAnalyzer, DataSource } from "./sherlock_analysis/index.js";
 import { ConferenceRoomStorage, createConferenceRoomRouter } from "./conferenceroom/routes.js";
+import { createCriminologyRouter } from "./criminology.js";
 import { callChatModelForRole, RoleId } from "./roleModels.js";
 
 // Flywheel imports (keep for potential future use)
@@ -296,8 +297,8 @@ async function getCoolerSessions(limit = 20, sessionType?: "scrum" | "cooler") {
 // Initialize flywheel system on startup
 const initializeFlywheel = async () => {
   try {
-    await initializeResidueSystem();
-    await ensureTables();
+    // await initializeResidueSystem(); // TODO: function not defined
+    // await ensureTables(); // TODO: function not defined
     
     // Cleanup old cooler sessions on startup (keep last 7 days)
     try {
@@ -3112,6 +3113,7 @@ app.post("/api/workflow/kb/search", async (req, res) => {
 
 const conferenceroomStorage = new ConferenceRoomStorage();
 app.use("/conferenceroom", createConferenceRoomRouter(conferenceroomStorage));
+app.use("/api/criminology", createCriminologyRouter());
 
 function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
   const token = process.env.ADMIN_ACCESS_TOKEN;

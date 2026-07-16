@@ -1,17 +1,17 @@
 import { useState } from "react";
 import PixelOffice from "./components/PixelOffice";
 import BudgetingDashboard from "./components/BudgetingDashboard";
-import GenealogyLab from "./components/GenealogyLab";
+import CriminologyLab from "./components/CriminologyLab";
 import AdminAssistant from "./components/AdminAssistant";
 import StockForecasts from "./components/StockForecasts";
 
-type ViewType = "main" | "genealogy" | "admin" | "stocks" | "budgeting";
+type ViewType = "main" | "criminology" | "admin" | "stocks" | "budgeting";
 
 function App() {
   const [currentView, setCurrentView] = useState<ViewType>("main");
 
-  if (currentView === "genealogy") {
-    return <GenealogyLab onNavigate={(view) => setCurrentView(view as ViewType)} />;
+  if (currentView === "criminology") {
+    return <CriminologyLab onNavigate={(view) => setCurrentView(view as ViewType)} />;
   }
 
   if (currentView === "admin") {

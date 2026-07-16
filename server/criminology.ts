@@ -24,15 +24,11 @@ interface ResearchResult {
 
 async function webSearch(query: string, numResults: number = 5): Promise<{ title: string; url: string; snippet: string }[]> {
   const results: { title: string; url: string; snippet: string }[] = [];
-  
   try {
     const encodedQuery = encodeURIComponent(query);
     const response = await fetch(`https://duckduckgo.com/?q=${encodedQuery}&format=json&no_html=1`, {
-      headers: {
-        'Accept': 'application/json',
-      }
+      headers: { 'Accept': 'application/json' }
     });
-    
     if (response.ok) {
       const data = await response.json();
       if (data.Results) {
@@ -59,47 +55,40 @@ async function webSearch(query: string, numResults: number = 5): Promise<{ title
   } catch (error) {
     console.error("Web search error:", error);
   }
-  
   return results;
 }
 
 function parseMermaidTree(mermaidCode: string): GenealogyTree {
   const nodes: Record<string, GenealogyNode> = {};
   const rootIds: string[] = [];
-  
   const lines = mermaidCode.split("\n").filter(line => line.trim());
-  
+
   for (const line of lines) {
     const trimmed = line.trim();
-    
     if (trimmed.startsWith("graph") || trimmed.startsWith("flowchart")) continue;
-    
+
     const edgeMatch = trimmed.match(/^(\w+)\s*-->\s*(\w+)$/);
     if (edgeMatch) {
       const [, parentId, childId] = edgeMatch;
-      
       if (!nodes[parentId]) {
         nodes[parentId] = { id: parentId, name: parentId, generation: 0, children: [], parents: [] };
       }
       if (!nodes[childId]) {
         nodes[childId] = { id: childId, name: childId, generation: 0, children: [], parents: [] };
       }
-      
       nodes[parentId].children.push(childId);
       nodes[childId].parents.push(parentId);
     }
-    
+
     const labelMatch = trimmed.match(/^(\w+)\s*\[\s*([^\]]+)\s*\](?:\s*-->\s*(\w+))?$/);
     if (labelMatch) {
       const [, id, rawName, childId] = labelMatch;
       const name = rawName.replace(/^"(.*)"$/, "$1");
-      
       if (!nodes[id]) {
         nodes[id] = { id, name, generation: 0, children: [], parents: [] };
       } else {
         nodes[id].name = name;
       }
-      
       if (childId) {
         if (!nodes[childId]) {
           nodes[childId] = { id: childId, name: childId, generation: 0, children: [], parents: [] };
@@ -109,21 +98,20 @@ function parseMermaidTree(mermaidCode: string): GenealogyTree {
       }
     }
   }
-  
+
   for (const [id, node] of Object.entries(nodes)) {
     if (node.parents.length === 0) {
       rootIds.push(id);
     }
     node.generation = calculateGeneration(id, nodes);
   }
-  
+
   return { nodes, rootIds };
 }
 
 function calculateGeneration(nodeId: string, nodes: Record<string, GenealogyNode>): number {
   const node = nodes[nodeId];
   if (!node || node.parents.length === 0) return 0;
-  
   let maxParentGen = 0;
   for (const parentId of node.parents) {
     const parentGen = calculateGeneration(parentId, nodes);
@@ -135,12 +123,10 @@ function calculateGeneration(nodeId: string, nodes: Record<string, GenealogyNode
 function getAllDescendants(nodeId: string, nodes: Record<string, GenealogyNode>): string[] {
   const descendants: string[] = [];
   const queue = [nodeId];
-  
   while (queue.length > 0) {
     const current = queue.shift()!;
     const node = nodes[current];
     if (!node) continue;
-    
     for (const childId of node.children) {
       if (!descendants.includes(childId)) {
         descendants.push(childId);
@@ -148,23 +134,19 @@ function getAllDescendants(nodeId: string, nodes: Record<string, GenealogyNode>)
       }
     }
   }
-  
   return descendants;
 }
 
 function analyzeBranches(tree: GenealogyTree): { branchId: string; branchName: string; size: number; depth: number }[] {
   const branches: { branchId: string; branchName: string; size: number; depth: number }[] = [];
-  
   for (const rootId of tree.rootIds) {
     const descendants = getAllDescendants(rootId, tree.nodes);
     const rootNode = tree.nodes[rootId];
-    
     const getDepth = (nodeId: string): number => {
       const node = tree.nodes[nodeId];
       if (!node || node.children.length === 0) return 1;
       return 1 + Math.max(...node.children.map(getDepth));
     };
-    
     branches.push({
       branchId: rootId,
       branchName: rootNode?.name || rootId,
@@ -172,45 +154,39 @@ function analyzeBranches(tree: GenealogyTree): { branchId: string; branchName: s
       depth: getDepth(rootId)
     });
   }
-  
   return branches;
 }
 
 async function researchBranch(branchName: string): Promise<ResearchResult> {
   const searchQuery = `${branchName} genealogy family history records`;
-  
   try {
     const results = await webSearch(searchQuery, 5);
-    
-    const searchableNames = branchName.split(" ").filter(n => n.length > 2);
     let difficulty: "easy" | "medium" | "hard" = "medium";
     let recommendation = "";
     const sources: string[] = [];
-    
     const resultTexts = results.map(r => `${r.title} ${r.snippet || ""}`.toLowerCase());
-    const hasRecords = resultTexts.some(t => 
+    const hasRecords = resultTexts.some(t =>
       t.includes("census") || t.includes("vital") || t.includes("records") || t.includes("archives")
     );
-    const hasGenealogy = resultTexts.some(t => 
+    const hasGenealogy = resultTexts.some(t =>
       t.includes("genealogy") || t.includes("familysearch") || t.includes("ancestry")
     );
-    const hasWikipedia = resultTexts.some(t => t.includes("wikipedia"));
-    
+
     if (hasRecords && hasGenealogy) {
       difficulty = "easy";
       recommendation = "Excellent online record availability. Start with genealogical databases.";
-    } else if (hasWikipedia || hasGenealogy) {
+    } else if (hasGenealogy) {
       difficulty = "medium";
       recommendation = "Moderate research difficulty. Some online presence but may require archival work.";
     } else {
       difficulty = "hard";
-      recommendation = "Limited online presence. May require线下 archives and specialized research.";
+      recommendation = "Limited online presence. May require offline archives and specialized research.";
     }
-    
+
     for (const result of results.slice(0, 3)) {
       sources.push(result.url);
     }
-    
+
     return {
       branchId: branchName.toLowerCase().replace(/\s+/g, "-"),
       branchName,
@@ -231,24 +207,20 @@ async function researchBranch(branchName: string): Promise<ResearchResult> {
   }
 }
 
-export function createGenealogyRouter() {
+export function createCriminologyRouter() {
   const router = express.Router();
-  
   let currentTree: GenealogyTree | null = null;
   let researchResults: ResearchResult[] = [];
   let isResearching = false;
-  
+
   router.post("/parse", express.json(), (req, res) => {
     const { mermaid } = req.body;
-    
     if (!mermaid) {
       return res.status(400).json({ success: false, error: "Mermaid diagram required" });
     }
-    
     try {
       currentTree = parseMermaidTree(mermaid);
       const branches = analyzeBranches(currentTree);
-      
       res.json({
         success: true,
         tree: currentTree,
@@ -259,36 +231,32 @@ export function createGenealogyRouter() {
       res.status(400).json({ success: false, error: "Failed to parse mermaid diagram" });
     }
   });
-  
+
   router.post("/research", express.json(), async (req, res) => {
     const { branchIds } = req.body;
-    
     if (!currentTree) {
       return res.status(400).json({ success: false, error: "No tree parsed. Send mermaid diagram first." });
     }
-    
     if (isResearching) {
       return res.status(409).json({ success: false, error: "Research already in progress" });
     }
-    
     isResearching = true;
     researchResults = [];
-    
     try {
-      const branchesToResearch = branchIds?.length > 0 
+      const branchesToResearch = branchIds?.length > 0
         ? branchIds.map((id: string) => currentTree!.nodes[id]).filter(Boolean)
         : currentTree.rootIds.map(id => currentTree!.nodes[id]);
-      
+
       for (const branch of branchesToResearch) {
         const result = await researchBranch(branch.name);
         researchResults.push(result);
       }
-      
+
       researchResults.sort((a, b) => {
         const difficultyOrder = { easy: 0, medium: 1, hard: 2 };
         return difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty];
       });
-      
+
       res.json({
         success: true,
         results: researchResults,
@@ -300,7 +268,7 @@ export function createGenealogyRouter() {
       isResearching = false;
     }
   });
-  
+
   router.get("/results", (_req, res) => {
     res.json({
       tree: currentTree,
@@ -308,6 +276,6 @@ export function createGenealogyRouter() {
       isResearching
     });
   });
-  
+
   return router;
 }
