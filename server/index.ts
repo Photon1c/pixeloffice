@@ -9,6 +9,7 @@ import { config } from "dotenv";
 const _require = createRequire(import.meta.url);
 import { rebuildDocIndexes } from "./docs/docIndex.js";
 import { startSupabaseKeepAlive } from "./services/supabaseKeepAlive.js";
+import { startAutoSync, syncModels, getRegistry } from "./services/modelRegistry.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -339,6 +340,25 @@ app.get("/api/workflow/health", (_req, res) => {
   });
 });
 
+// Model Registry API
+app.get("/api/models/registry", (_req, res) => {
+  res.json(getRegistry());
+});
+
+app.post("/api/models/registry/sync", async (_req, res) => {
+  try {
+    const result = await syncModels();
+    res.json({ success: true, models: result.available.length, lastSync: result.lastSync });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.get("/api/models/role-mapping", async (_req, res) => {
+  const { getAllRoleMappings } = await import("./llm/llmRouter.js");
+  res.json(getAllRoleMappings());
+});
+
 // ============================================================================
 // Metrics Endpoint (Prometheus)
 // ============================================================================
@@ -544,6 +564,9 @@ updateModelMetrics().then(updateAgentMetrics);
 
 // Supabase keep-alive to prevent project pausing due to inactivity
 startSupabaseKeepAlive();
+
+// Start model registry auto-sync (polls ollama list every 60s)
+startAutoSync();
 
 // Stigmergy Metrics (per thought_speech_stigmergy.md)
 const deskStigmergyGauge = new client.Gauge({
@@ -3299,8 +3322,8 @@ app.post("/api/chat", async (req, res) => {
             ...(history || []).slice(-10),
             { role: "user", content: message }
           ],
-          stream: true, // Enable streaming for faster response
-          options: { num_predict: isLargeModel ? 100 : 50, temperature: 0.7 }
+          stream: true,
+          options: { num_predict: 512, temperature: 0.7 }
         }),
         signal: controller.signal
       });

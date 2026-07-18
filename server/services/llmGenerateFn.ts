@@ -1,25 +1,19 @@
 import type { GenerateFn } from "../conversation/api.js";
 import { tryLocalModel, isLocalModelAvailable, LOCAL_MODEL } from "../llm/localClient.js";
 import { routeChat } from "../llm/llmRouter.js";
+import { getRegistry, isModelAvailable } from "./modelRegistry.js";
 
 const MAX_TOKENS = 40;
 const TEMPERATURE = 0.7;
 
 let localModelAvailable: boolean | null = null;
 
-// Track the last used model for display
 let lastUsedModel: string = LOCAL_MODEL;
 
-/**
- * Get the currently tracked model name
- */
 export function getLastUsedModel(): string {
   return lastUsedModel;
 }
 
-/**
- * Check if local model is available (cached)
- */
 async function checkLocalAvailability(): Promise<boolean> {
   if (localModelAvailable === null) {
     localModelAvailable = await isLocalModelAvailable();
@@ -34,21 +28,27 @@ async function checkLocalAvailability(): Promise<boolean> {
 
 /**
  * Tiered generation strategy:
- * 1. Local (Ollama)
+ * 1. Local (Ollama) — with model registry awareness
  * 2. Cloud Router (NVIDIA -> OpenAI)
  */
 export const generateFn: GenerateFn = async (prompt: string): Promise<string> => {
-  // 1. Local
   const localAvailable = await checkLocalAvailability();
   if (localAvailable) {
-    lastUsedModel = LOCAL_MODEL;
+    const registry = getRegistry();
+
+    // Use best available model from registry, defaulting to LOCAL_MODEL
+    const sorted = [...registry.available].sort((a, b) => b.size - a.size);
+    const preferredModel = sorted.length > 0
+      ? sorted.find(m => !m.name.includes("cloud") && !m.name.includes("embed"))?.name || LOCAL_MODEL
+      : LOCAL_MODEL;
+
+    lastUsedModel = preferredModel;
     const localResult = await tryLocalModel(prompt);
     if (localResult !== null && localResult.length > 0) {
       return localResult;
     }
   }
-  
-  // 2. Cloud Router
+
   try {
     lastUsedModel = "cloud";
     const result = await routeChat([{ role: "user", content: prompt }], {
@@ -63,10 +63,6 @@ export const generateFn: GenerateFn = async (prompt: string): Promise<string> =>
   }
 };
 
-/**
- * Reset the local model availability cache
- * Useful for testing or when Ollama is restarted
- */
 export function resetLocalModelCache(): void {
   localModelAvailable = null;
 }

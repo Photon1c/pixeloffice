@@ -33,7 +33,7 @@ export const roleToAgentMap: Record<RoleId, string> = {
 
 export interface RoleModelConfig {
   role: RoleId;
-  provider: "ollama" | "llama_cpp" | "remote";
+  provider: "ollama" | "llama_cpp" | "remote" | "nvidia";
   modelName: string;
   endpoint: string;
   params?: {
@@ -379,6 +379,29 @@ export async function callChatModelForRole(role: RoleId, messages: any[], option
         prompt_tokens: promptTokens || approximateTokens(promptContent),
         completion_tokens: completionTokens || approximateTokens(finalResponse),
         total_tokens: (promptTokens || approximateTokens(promptContent)) + (completionTokens || approximateTokens(finalResponse)),
+      },
+    };
+  } else if (config.provider === "nvidia") {
+    const { nvidiaChat } = await import("./llm/nvidiaClient.js");
+    const nvidiaResult = await nvidiaChat(messages as any[], {
+      model: effectiveModel,
+      maxTokens: options.max_tokens ?? config.params?.max_tokens ?? 1024,
+      temperature: options.temperature ?? config.params?.temperature ?? 0.2,
+    });
+    console.log(`[Office-Chat] Role=${config.role}, Model=${effectiveModel} (NVIDIA), Latency=N/A, Success=True`);
+    return {
+      success: true,
+      role: config.role,
+      agent: agentName,
+      model: effectiveModel,
+      provider: "nvidia",
+      response: nvidiaResult.content,
+      raw_response: nvidiaResult.raw,
+      latency_ms: 0,
+      usage: {
+        prompt_tokens: 0,
+        completion_tokens: 0,
+        total_tokens: 0,
       },
     };
   } else {
