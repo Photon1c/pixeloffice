@@ -1,7 +1,23 @@
 {
   "_available": {
-    "lastSync": "2026-07-18T23:16:13.354Z",
+    "lastSync": "2026-07-29T12:26:56.027Z",
     "models": {
+      "narrativerouter:latest": {
+        "name": "narrativerouter:latest",
+        "size": 4791070792
+      },
+      "nemotron-3-super:cloud": {
+        "name": "nemotron-3-super:cloud",
+        "size": 315
+      },
+      "PhysicsObsession/blaze-3b:latest": {
+        "name": "PhysicsObsession/blaze-3b:latest",
+        "size": 2019393292
+      },
+      "PhysicsObsession/Zion-12b:latest": {
+        "name": "PhysicsObsession/Zion-12b:latest",
+        "size": 4791060427
+      },
       "cicero-beta:latest": {
         "name": "cicero-beta:latest",
         "size": 9608357242
@@ -25,18 +41,6 @@
       "deepseek-v4-flash:cloud": {
         "name": "deepseek-v4-flash:cloud",
         "size": 348
-      },
-      "LiquidAI/lfm2.5-350m:latest": {
-        "name": "LiquidAI/lfm2.5-350m:latest",
-        "size": 379218501
-      },
-      "qwen3.5:4b": {
-        "name": "qwen3.5:4b",
-        "size": 3389983735
-      },
-      "gemma4:e4b": {
-        "name": "gemma4:e4b",
-        "size": 9608350718
       },
       "kimi-k2.6:cloud": {
         "name": "kimi-k2.6:cloud",
@@ -62,37 +66,9 @@
         "name": "ministral-3:14b-cloud",
         "size": 395
       },
-      "gemma3:270m": {
-        "name": "gemma3:270m",
-        "size": 291554930
-      },
-      "qwen3.5:0.8B": {
-        "name": "qwen3.5:0.8B",
-        "size": 1036046583
-      },
-      "qwen:0.5b": {
-        "name": "qwen:0.5b",
-        "size": 394998579
-      },
       "glm-5.1:cloud": {
         "name": "glm-5.1:cloud",
         "size": 327
-      },
-      "granite4:350m": {
-        "name": "granite4:350m",
-        "size": 708458314
-      },
-      "huihui_ai/qwen3.5-abliterated:0.8B": {
-        "name": "huihui_ai/qwen3.5-abliterated:0.8B",
-        "size": 1036046628
-      },
-      "gemma-3-1b-it:latest": {
-        "name": "gemma-3-1b-it:latest",
-        "size": 1003541420
-      },
-      "PhysicsObsession/blaze-3b:latest": {
-        "name": "PhysicsObsession/blaze-3b:latest",
-        "size": 2019393292
       }
     }
   },
@@ -101,17 +77,17 @@
     "sync_policy": "Auto-synced every 60s by server/services/modelRegistry.ts. Manual edits to role config are preserved; _available is overwritten on sync."
   },
   "clerk": {
-    "model_name": "gemma-3-1b-it:latest",
+    "model_name": "cicero-beta:latest",
     "provider": "ollama",
     "use_case": "quick_transitions"
   },
   "custodian": {
-    "model_name": "gemma-3-1b-it:latest",
+    "model_name": "cicero-beta:latest",
     "provider": "ollama",
     "use_case": "quick_transitions"
   },
   "executive": {
-    "model_name": "gemma4:e4b",
+    "model_name": "gemma4:31b-cloud",
     "provider": "ollama",
     "use_case": "reasoning_delegation"
   },
@@ -121,52 +97,52 @@
     "use_case": "reasoning_delegation"
   },
   "fallback": {
-    "model_name": "gemma3:270m",
+    "model_name": "cicero-beta:latest",
     "provider": "ollama",
     "use_case": "fallback_agent"
   },
   "handoff": {
-    "model_name": "gemma3:270m",
+    "model_name": "cicero-beta:latest",
     "provider": "ollama",
     "use_case": "quick_transitions"
   },
   "me_assistant": {
-    "model_name": "gemma-3-1b-it:latest",
+    "model_name": "cicero-beta:latest",
     "provider": "ollama",
     "use_case": "quick_transitions"
   },
   "me_diary": {
-    "model_name": "gemma-3-1b-it:latest",
+    "model_name": "cicero-beta:latest",
     "provider": "ollama",
     "use_case": "quick_transitions"
   },
   "me_triage": {
-    "model_name": "gemma-3-1b-it:latest",
+    "model_name": "cicero-beta:latest",
     "provider": "ollama",
     "use_case": "quick_transitions"
   },
   "office_assistant": {
-    "model_name": "gemma-3-1b-it:latest",
+    "model_name": "cicero-beta:latest",
     "provider": "ollama",
     "use_case": "quick_transitions"
   },
   "primary": {
-    "model_name": "gemma-3-1b-it:latest",
+    "model_name": "cicero-beta:latest",
     "provider": "ollama",
     "use_case": "primary_agent"
   },
   "specialist": {
-    "model_name": "qwen3.5:4b",
+    "model_name": "cicero-beta:latest",
     "provider": "ollama",
     "use_case": "reasoning"
   },
   "thought_loop": {
-    "model_name": "gemma3:270m",
+    "model_name": "cicero-beta:latest",
     "provider": "ollama",
     "use_case": "quick_transitions"
   },
   "workload_planner": {
-    "model_name": "gemma-3-1b-it:latest",
+    "model_name": "cicero-beta:latest",
     "provider": "ollama",
     "use_case": "quick_transitions"
   }

@@ -1,0 +1,55 @@
+{
+  "id": "scrumcand-1780316847976-1b3in9",
+  "status": "approved",
+  "createdAt": "2026-06-01T12:27:27.976Z",
+  "updatedAt": "2026-06-01T12:28:06.827Z",
+  "source": {
+    "location": "kitchen",
+    "coolerSessionId": "ct-1780314320354",
+    "topic": "I Tried to Sell My House With A.I.",
+    "participants": [
+      "OpenClaw",
+      "FrontDesk",
+      "Hercule Prawnro"
+    ],
+    "utteranceCount": 18,
+    "coolerMarkdownPath": "/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler/2026-06-01T12-27-26-957Z_cooler-ct-1780314320354.md"
+  },
+  "score": 96,
+  "threshold": 25,
+  "reasons": [
+    "contains 6 escalate intent(s)",
+    "urgency detected (1 hits)"
+  ],
+  "kb": {
+    "query": "I Tried to Sell My House With A.I.",
+    "resultsCount": 0,
+    "topSnippets": []
+  },
+  "proposed": {
+    "scrumTitle": "SCRUM (Planning): I Tried to Sell My House With A.I.",
+    "scrumType": "planning",
+    "agenda": [
+      "Intake: what happened / what we noticed (I Tried to Sell My House With A.I.)",
+      "Define goal and success criteria",
+      "Constraints and assumptions",
+      "Implementation plan (milestones + owners)",
+      "Next actions (tickets / scripts / tests)"
+    ],
+    "tasks": [
+      {
+        "title": "Convert cooler topic into a concrete goal",
+        "description": "Turn: \"I Tried to Sell My House With A.I.\" into a measurable deliverable."
+      },
+      {
+        "title": "Outline implementation plan",
+        "description": "List milestones, risks, and required artifacts (scripts, docs, dashboards)."
+      },
+      {
+        "title": "Create first 3 tickets",
+        "description": "Seed tasks with owners and acceptance criteria so this doesn't evaporate."
+      }
+    ]
+  },
+  "approvedAt": "2026-06-01T12:28:06.827Z"
+}

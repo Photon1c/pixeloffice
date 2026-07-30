@@ -1,0 +1,55 @@
+{
+  "id": "scrumcand-1785307170321-6kyhoc",
+  "status": "pending",
+  "createdAt": "2026-07-29T06:39:30.321Z",
+  "updatedAt": "2026-07-29T06:39:30.321Z",
+  "source": {
+    "location": "kitchen",
+    "coolerSessionId": "ct-1785306241854",
+    "topic": "Dow Jones Futures U.S.-Iran Peace Hopes Send Oil Prices Plunging Nvidia, Micron, Sandisk, SpaceX, Tesla Sell Off - Investors Business Daily",
+    "participants": [
+      "FrontDesk",
+      "ZeroClaw",
+      "LeslieClaw"
+    ],
+    "utteranceCount": 9,
+    "coolerMarkdownPath": "/home/sherlockhums/systems-lab/infrastructure/pixelworld/pixel_office/docs/cooler/2026-07-29T06-39-29-571Z_cooler-ct-1785306241854.md"
+  },
+  "score": 65,
+  "threshold": 25,
+  "reasons": [
+    "contains 3 escalate intent(s)",
+    "action phrasing detected (2 hits)",
+    "urgency detected (2 hits)"
+  ],
+  "kb": {
+    "query": "Dow Jones Futures U.S.-Iran Peace Hopes Send Oil Prices Plunging Nvidia, Micron, Sandisk, SpaceX, Tesla Sell Off - Investors Business Daily",
+    "resultsCount": 0,
+    "topSnippets": []
+  },
+  "proposed": {
+    "scrumTitle": "SCRUM (Planning): FSD Python Test Engine",
+    "scrumType": "planning",
+    "agenda": [
+      "Intake: what happened / what we noticed (Dow Jones Futures U.S.-Iran Peace Hopes Send Oil Prices Plunging Nvidia, Micron,…)",
+      "Define goal and success criteria",
+      "Constraints and assumptions",
+      "Implementation plan (milestones + owners)",
+      "Next actions (tickets / scripts / tests)"
+    ],
+    "tasks": [
+      {
+        "title": "Draft FSD python test engine architecture",
+        "description": "Define modules (scenario ingestion, sim harness, assertions, reporting) + interfaces. Include 3 acceptance tests."
+      },
+      {
+        "title": "Spike: minimal scenario runner script",
+        "description": "Implement a tiny CLI that runs 1 scenario and emits a JSON report. Success = deterministic output + basic metrics."
+      },
+      {
+        "title": "Integrate with Pixel Office tasking",
+        "description": "Create backlog tickets and a cadence for iteration (weekly SCRUM, daily micro-standup)."
+      }
+    ]
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "id": "scrumcand-1780300527005-u2rj2w",
+  "status": "approved",
+  "createdAt": "2026-06-01T07:55:27.005Z",
+  "updatedAt": "2026-06-03T03:40:42.445Z",
+  "source": {
+    "location": "kitchen",
+    "coolerSessionId": "ct-1780299743251",
+    "topic": "In Argentina, U.S. Tech Billionaire Peter Thiel Finds An Escape",
+    "participants": [
+      "FrontDesk",
+      "LeslieClaw",
+      "Sherlock"
+    ],
+    "utteranceCount": 9,
+    "coolerMarkdownPath": "/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler/2026-06-01T07-55-26-162Z_cooler-ct-1780299743251.md"
+  },
+  "score": 53,
+  "threshold": 25,
+  "reasons": [
+    "contains 3 escalate intent(s)",
+    "action phrasing detected (2 hits)"
+  ],
+  "kb": {
+    "query": "In Argentina, U.S. Tech Billionaire Peter Thiel Finds An Escape",
+    "resultsCount": 0,
+    "topSnippets": []
+  },
+  "proposed": {
+    "scrumTitle": "SCRUM (Planning): In Argentina, U.S. Tech Billionaire Peter Thiel Finds An Escape",
+    "scrumType": "planning",
+    "agenda": [
+      "Intake: what happened / what we noticed (In Argentina, U.S. Tech Billionaire Peter Thiel Finds An Escape)",
+      "Define goal and success criteria",
+      "Constraints and assumptions",
+      "Implementation plan (milestones + owners)",
+      "Next actions (tickets / scripts / tests)"
+    ],
+    "tasks": [
+      {
+        "title": "Convert cooler topic into a concrete goal",
+        "description": "Turn: \"In Argentina, U.S. Tech Billionaire Peter Thiel Finds An Escape\" into a measurable deliverable."
+      },
+      {
+        "title": "Outline implementation plan",
+        "description": "List milestones, risks, and required artifacts (scripts, docs, dashboards)."
+      },
+      {
+        "title": "Create first 3 tickets",
+        "description": "Seed tasks with owners and acceptance criteria so this doesn't evaporate."
+      }
+    ]
+  },
+  "approvedAt": "2026-06-03T03:40:42.445Z"
+}

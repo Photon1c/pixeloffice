@@ -1,0 +1,56 @@
+{
+  "id": "scrumcand-1783278837048-z8z5xc",
+  "status": "approved",
+  "createdAt": "2026-07-05T19:13:57.048Z",
+  "updatedAt": "2026-07-07T18:43:53.358Z",
+  "source": {
+    "location": "kitchen",
+    "coolerSessionId": "ct-1783277632490",
+    "topic": "U.S. Lifts Restrictions on Anthropics Most Powerful A.I. Models",
+    "participants": [
+      "ZeroClaw",
+      "HermitClaw",
+      "Sherlobster"
+    ],
+    "utteranceCount": 9,
+    "coolerMarkdownPath": "/home/sherlockhums/systems-lab/infrastructure/pixelworld/pixel_office/docs/cooler/2026-07-05T19-13-55-978Z_cooler-ct-1783277632490.md"
+  },
+  "score": 29,
+  "threshold": 25,
+  "reasons": [
+    "contains 1 escalate intent(s)",
+    "action phrasing detected (2 hits)",
+    "urgency detected (1 hits)"
+  ],
+  "kb": {
+    "query": "U.S. Lifts Restrictions on Anthropics Most Powerful A.I. Models",
+    "resultsCount": 0,
+    "topSnippets": []
+  },
+  "proposed": {
+    "scrumTitle": "SCRUM (Planning): U.S. Lifts Restrictions on Anthropics Most Powerful A.I. Models",
+    "scrumType": "planning",
+    "agenda": [
+      "Intake: what happened / what we noticed (U.S. Lifts Restrictions on Anthropics Most Powerful A.I. Models)",
+      "Define goal and success criteria",
+      "Constraints and assumptions",
+      "Implementation plan (milestones + owners)",
+      "Next actions (tickets / scripts / tests)"
+    ],
+    "tasks": [
+      {
+        "title": "Convert cooler topic into a concrete goal",
+        "description": "Turn: \"U.S. Lifts Restrictions on Anthropics Most Powerful A.I. Models\" into a measurable deliverable."
+      },
+      {
+        "title": "Outline implementation plan",
+        "description": "List milestones, risks, and required artifacts (scripts, docs, dashboards)."
+      },
+      {
+        "title": "Create first 3 tickets",
+        "description": "Seed tasks with owners and acceptance criteria so this doesn't evaporate."
+      }
+    ]
+  },
+  "approvedAt": "2026-07-07T18:43:53.358Z"
+}

@@ -1,5 +1,32 @@
 # Changelog
 
+## 2026-07-18 — Model registry, role-aware LLM routing, NVIDIA provider
+
+- **Model Registry** (`server/services/modelRegistry.ts`)
+  - NEW service: periodic `ollama list` sync every 60s
+  - Auto-populates `_available.models` in `model_role_mapping.json`
+  - Validates role model names against installed models, auto-corrects tags
+  - API endpoints at `/api/models/registry`, `/api/models/registry/refresh`
+
+- **Role-Aware LLM Routing** (`server/llm/llmRouter.ts`)
+  - Accepts `role` parameter, consults `model_role_mapping.json` for routing
+  - Fallback chain: preferred model → role default → global default
+
+- **NVIDIA Provider** (`server/roleModels.ts`)
+  - Previously threw "not supported" for NVIDIA; now works
+
+- **Default Local Model** (`server/llm/localClient.ts`)
+  - Changed from `llama3.2` (not installed) to `qwen3.5:4b`
+
+- **Model Role Mapping** (`server/model_role_mapping.json`)
+  - Added `_available` and `_meta` sections for registry state
+
+- **LLM Generate** (`server/services/llmGenerateFn.ts`)
+  - Uses model registry to select best available model per role
+
+- **Server Startup** (`server/index.ts`)
+  - Model registry auto-sync on startup, API route registration
+
 ## 2026-05-26 — Topic diversity, auto-cooler candidate generation
 
 - **Scrum Auto-Advance Toggle** (ScrumPanel.tsx)

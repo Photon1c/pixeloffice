@@ -2282,6 +2282,14 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
           </a>
         </div>
 
+        <div style={{ marginBottom: '12px', padding: '10px', background: '#0a0a12', border: '1px solid #1b2333', borderRadius: '6px' }}>
+          <div style={{ fontSize: '11px', color: '#606070', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>PixelWorld Apps</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <a href="http://localhost:5001" target="_blank" style={{ color: '#a8dadc', textDecoration: 'none', fontSize: '12px', padding: '4px 8px', borderRadius: '4px', background: 'rgba(168,218,220,0.08)' }}>Pixel Me — Self Simulator</a>
+            <a href="http://localhost:5000" target="_blank" style={{ color: '#4ecdc4', textDecoration: 'none', fontSize: '12px', padding: '4px 8px', borderRadius: '4px', background: 'rgba(78,205,196,0.08)' }}>PixelTroupe — Starship Crew</a>
+          </div>
+        </div>
+
         {showParams && <Dashboard config={dashboardConfig} onUpdate={updateConfig} onOpenCriminologyLab={() => setShowCriminologyLab(true)} onOpenAdminAssistant={() => setShowAdminAssistant(true)} onOpenStockForecasts={() => setShowStockForecasts(true)} onOpenConvoViewer={() => { setConvoViewerType("cooler"); setShowConvoViewer(true); }} />}
         {showTimeTasks && <TimeTasksPanel onClose={() => setShowTimeTasks(false)} />}
         {showScrum && <ScrumPanel scrumRepo={scrumRepo} scrumTask={scrumTask} />}

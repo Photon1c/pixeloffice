@@ -1,12 +1,22 @@
 [
   {
-    "id": "heat-1780109720192-255",
+    "id": "heat-1785312510407-194",
     "trace_type": "review_heat",
-    "source_session_id": "ct-1780109111065",
+    "source_session_id": "ct-1785311546257",
     "intensity": 0.2,
-    "topic": "Whats Next for Blue Origin After Rocket Explosion",
+    "topic": "Apple Introduces Leasing Program for iPhones and Other Devices",
     "anchor": "kitchen",
-    "created_at": "2026-05-30T02:55:20.192Z",
-    "expires_at": "2026-05-30T03:05:20.192Z"
+    "created_at": "2026-07-29T08:08:30.407Z",
+    "expires_at": "2026-07-29T08:18:30.407Z"
+  },
+  {
+    "id": "heat-1785312990434-54",
+    "trace_type": "review_heat",
+    "source_session_id": "ct-1785311546257",
+    "intensity": 0.2,
+    "topic": "Apple Introduces Leasing Program for iPhones and Other Devices",
+    "anchor": "kitchen",
+    "created_at": "2026-07-29T08:16:30.434Z",
+    "expires_at": "2026-07-29T08:26:30.434Z"
   }
 ]

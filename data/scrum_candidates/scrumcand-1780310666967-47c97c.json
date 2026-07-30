@@ -1,0 +1,56 @@
+{
+  "id": "scrumcand-1780310666967-47c97c",
+  "status": "approved",
+  "createdAt": "2026-06-01T10:44:26.967Z",
+  "updatedAt": "2026-06-01T10:44:36.798Z",
+  "source": {
+    "location": "kitchen",
+    "coolerSessionId": "ct-1780308920231",
+    "topic": "Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up",
+    "participants": [
+      "LeslieClaw",
+      "Sherlock",
+      "Sherlobster"
+    ],
+    "utteranceCount": 12,
+    "coolerMarkdownPath": "/home/sherlockhums/apps/pixelworld/pixel_office/docs/cooler/2026-06-01T10-44-26-377Z_cooler-ct-1780308920231.md"
+  },
+  "score": 100,
+  "threshold": 25,
+  "reasons": [
+    "contains 6 escalate intent(s)",
+    "action phrasing detected (5 hits)",
+    "urgency detected (3 hits)"
+  ],
+  "kb": {
+    "query": "Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up",
+    "resultsCount": 0,
+    "topSnippets": []
+  },
+  "proposed": {
+    "scrumTitle": "SCRUM (Planning): Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up",
+    "scrumType": "planning",
+    "agenda": [
+      "Intake: what happened / what we noticed (Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up)",
+      "Define goal and success criteria",
+      "Constraints and assumptions",
+      "Implementation plan (milestones + owners)",
+      "Next actions (tickets / scripts / tests)"
+    ],
+    "tasks": [
+      {
+        "title": "Convert cooler topic into a concrete goal",
+        "description": "Turn: \"Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up\" into a measurable deliverable."
+      },
+      {
+        "title": "Outline implementation plan",
+        "description": "List milestones, risks, and required artifacts (scripts, docs, dashboards)."
+      },
+      {
+        "title": "Create first 3 tickets",
+        "description": "Seed tasks with owners and acceptance criteria so this doesn't evaporate."
+      }
+    ]
+  },
+  "approvedAt": "2026-06-01T10:44:36.798Z"
+}

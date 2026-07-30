@@ -1,9 +1,32 @@
 # Reports Index
 
-_Auto-generated: 2026-05-30T02:55:19.782Z_
+_Auto-generated: 2026-07-29T08:16:29.867Z_
 
 | date | title | file |
 |---|---|---|
+| 2026-07-29 | [SCRUM Report: SCRUM (Planning): FSD Python Test Engine](./2026-07-29_scrum-scrum-1785307651010-ni9345.md) | 2026-07-29_scrum-scrum-1785307651010-ni9345.md |
+| 2026-07-29 | [SCRUM Report: SCRUM (Planning): Latest commit: feat: add CriminologyLab, supabase heartbeat, genealogy u…](./2026-07-29_scrum-scrum-1785311071025-h9sh6p.md) | 2026-07-29_scrum-scrum-1785311071025-h9sh6p.md |
+| 2026-07-07 | [SCRUM Report: SCRUM (Planning): Why A.I. Distillation Has Become a Hot Topic in the Race with China](./2026-07-07_scrum-scrum-1783453410687-oxtyou.md) | 2026-07-07_scrum-scrum-1783453410687-oxtyou.md |
+| 2026-07-07 | [SCRUM Report: SCRUM (Planning): How Metas Threads Became as Popular as X](./2026-07-07_scrum-scrum-1783457010722-6rx854.md) | 2026-07-07_scrum-scrum-1783457010722-6rx854.md |
+| 2026-06-03 | [SCRUM Report: SCRUM (Planning): Latest commit: fix: correct broken stringified path.resolve calls in com…](./2026-06-03_scrum-scrum-1780460392844-jvs68d.md) | 2026-06-03_scrum-scrum-1780460392844-jvs68d.md |
+| 2026-06-03 | [SCRUM Report: SCRUM (Planning): Latest commit: fix: correct broken stringified path.resolve calls in com…](./2026-06-03_scrum-scrum-1780460752841-5yxqyc.md) | 2026-06-03_scrum-scrum-1780460752841-5yxqyc.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-06-01_scrum-scrum-1780298796728-56qm5z.md) | 2026-06-01_scrum-scrum-1780298796728-56qm5z.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-06-01_scrum-scrum-1780299066726-73b77e.md) | 2026-06-01_scrum-scrum-1780299066726-73b77e.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-06-01_scrum-scrum-1780299561729-180rlm.md) | 2026-06-01_scrum-scrum-1780299561729-180rlm.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): In Argentina, U.S. Tech Billionaire Peter Thiel Finds An Escape](./2026-06-01_scrum-scrum-1780301496745-629pu2.md) | 2026-06-01_scrum-scrum-1780301496745-629pu2.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Latest commit: fix: remove broken public/hermitclaw_workspace symlink (b…](./2026-06-01_scrum-scrum-1780306806784-9j51m9.md) | 2026-06-01_scrum-scrum-1780306806784-9j51m9.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-06-01_scrum-scrum-1780310091802-cpvgt8.md) | 2026-06-01_scrum-scrum-1780310091802-cpvgt8.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-06-01_scrum-scrum-1780310676799-1o65x9.md) | 2026-06-01_scrum-scrum-1780310676799-1o65x9.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-06-01_scrum-scrum-1780311216807-k67g15.md) | 2026-06-01_scrum-scrum-1780311216807-k67g15.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-06-01_scrum-scrum-1780311846814-bd19n1.md) | 2026-06-01_scrum-scrum-1780311846814-bd19n1.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): I Tried to Sell My House With A.I.](./2026-06-01_scrum-scrum-1780316886832-ofh83g.md) | 2026-06-01_scrum-scrum-1780316886832-ofh83g.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): I Tried to Sell My House With A.I.](./2026-06-01_scrum-scrum-1780317336829-h8wa6p.md) | 2026-06-01_scrum-scrum-1780317336829-h8wa6p.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Latest commit: fix: correct broken stringified path.resolve calls in com…](./2026-06-01_scrum-scrum-1780322562748-f32a6g.md) | 2026-06-01_scrum-scrum-1780322562748-f32a6g.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Latest commit: fix: correct broken stringified path.resolve calls in com…](./2026-06-01_scrum-scrum-1780322781877-muween.md) | 2026-06-01_scrum-scrum-1780322781877-muween.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Latest commit: fix: correct broken stringified path.resolve calls in com…](./2026-06-01_scrum-scrum-1780323006878-th63ib.md) | 2026-06-01_scrum-scrum-1780323006878-th63ib.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Interesting Times Why Are We Still Driving](./2026-06-01_scrum-scrum-1780324086900-8ptm9b.md) | 2026-06-01_scrum-scrum-1780324086900-8ptm9b.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Interesting Times Why Are We Still Driving](./2026-06-01_scrum-scrum-1780324266889-0kfixm.md) | 2026-06-01_scrum-scrum-1780324266889-0kfixm.md |
+| 2026-06-01 | [SCRUM Report: SCRUM (Planning): Interesting Times Why Are We Still Driving](./2026-06-01_scrum-scrum-1780324491892-xvk2mf.md) | 2026-06-01_scrum-scrum-1780324491892-xvk2mf.md |
 | 2026-05-30 | [SCRUM Report: SCRUM (Planning): Anthropic Tops OpenAI to Become the Worlds Most Valuable A.I. Start-Up](./2026-05-30_scrum-scrum-1780108528966-dlvt98.md) | 2026-05-30_scrum-scrum-1780108528966-dlvt98.md |
 | 2026-05-27 | [SCRUM Report: SCRUM (Planning): At the A.I. Epicenter, Technologists Dismiss Pope Leos Warnings About th…](./2026-05-27_scrum-scrum-1779866085054-sdij1j.md) | 2026-05-27_scrum-scrum-1779866085054-sdij1j.md |
 | 2026-05-26 | [SCRUM Report: SCRUM (Planning): Latest commit: chore: untrack SCRUM_REPORTS/, add to .gitignore (by Sher…](./2026-05-26_scrum-scrum-1779826292819-96d4as.md) | 2026-05-26_scrum-scrum-1779826292819-96d4as.md |
@@ -336,4 +359,4 @@ _Auto-generated: 2026-05-30T02:55:19.782Z_
 | 2026-04-23 | [SCRUM Report: SCRUM (Planning): Anthropics New Mythos A.I. Model Sets Off Global Alarms](./2026-04-23_scrum-scrum-1776921781954-zdd9gy.md) | 2026-04-23_scrum-scrum-1776921781954-zdd9gy.md |
 | 2026-04-23 | [SCRUM Report: SCRUM (Planning): Anthropics New Mythos A.I. Model Sets Off Global Alarms](./2026-04-23_scrum-scrum-1776921790667-fgoeem.md) | 2026-04-23_scrum-scrum-1776921790667-fgoeem.md |
 
-Total: **331** report exports
+Total: **354** report exports
