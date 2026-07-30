@@ -30,10 +30,11 @@ const CONFIG = {
   SCHEDULE_INTERVAL_MS: 15 * 60 * 1000,  // 15 min
   RANDOM_INTERVAL_MS: 5 * 60 * 1000,       // 5 min random bursts
   KERNEL_INTERVAL_MS: 30 * 60 * 1000,      // 30 min for kernel cycles
-  REPORT_FILE: 'process.cwd()/data/orchestrator_report.json',
-  LOG_FILE: 'process.cwd()/data/orchestrator.log',
-  PID_FILE: 'process.cwd()/data/orchestrator.pid',
-  KERNEL_REPORT_FILE: 'process.cwd()/data/kernel_report.json',
+  DATA_DIR: path.join(process.cwd(), '..', 'data'),
+  REPORT_FILE: path.join(process.cwd(), '..', 'data', 'orchestrator_report.json'),
+  LOG_FILE: path.join(process.cwd(), '..', 'data', 'orchestrator.log'),
+  PID_FILE: path.join(process.cwd(), '..', 'data', 'orchestrator.pid'),
+  KERNEL_REPORT_FILE: path.join(process.cwd(), '..', 'data', 'kernel_report.json'),
 };
 
 const AGENT_ROLES = ['clerk', 'specialist', 'custodian', 'thought_loop'];
