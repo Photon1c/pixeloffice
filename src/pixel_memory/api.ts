@@ -236,6 +236,11 @@ export const entities = {
   },
 };
 
+export function createCoolerSession() {
+    // Placeholder for actual logic
+    console.log('Cooler session created');
+}
+
 export const memEntries = {
   async create(input: CreateMemEntryInput): Promise<MemEntry> {
     const sql = `

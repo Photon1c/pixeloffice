@@ -1,9 +1,34 @@
 # Scrum Index
 
-_Auto-generated: 2026-07-29T08:16:29.867Z_
+_Auto-generated: 2026-07-30T02:47:38.567Z_
 
 | date | title | source_session | stage | summary |
 |---|---|---|---|---|
+| 2026-07-30 | [SCRUM (Planning): Latest commit: chore: auto-generated cooler, scrum, and report updates (…](./2026-07-30T02-44-23-603Z_scrum-planning-scrumcand-1783451160718-6odhf9.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Why A.I. Distillation Has Become a Hot Topic in the Race with China](./2026-07-30T02-44-23-051Z_scrum-planning-scrumcand-1783451701168-lrhrca.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Ozlos Sleepbuds 2 build on Boses sleep earbud legacy - TechCrunch](./2026-07-30T02-44-22-200Z_scrum-planning-scrumcand-1785379461203-p8mqj6.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Why A.I. Distillation Has Become a Hot Topic in the Race with China](./2026-07-30T02-44-21-538Z_scrum-planning-scrumcand-1783452240927-hkrr47.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Why A.I. Distillation Has Become a Hot Topic in the Race with China](./2026-07-30T02-44-19-391Z_scrum-planning-scrumcand-1783452840839-7u3soq.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Businesses Fear Politicization as Trump Gains More Power Over U.S. Agenc…](./2026-07-30T02-44-18-118Z_scrum-planning-scrumcand-1783454460746-oeghvf.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Businesses Fear Politicization as Trump Gains More Power Over U.S. Agenc…](./2026-07-30T02-44-16-683Z_scrum-planning-scrumcand-1783455002981-5uklob.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): How Metas Threads Became as Popular as X](./2026-07-30T02-44-14-270Z_scrum-planning-scrumcand-1783456020363-15njgi.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): How Metas Threads Became as Popular as X](./2026-07-30T02-44-13-411Z_scrum-planning-scrumcand-1783456500365-ztdtay.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): FSD Python Test Engine](./2026-07-30T02-44-11-582Z_scrum-planning-scrumcand-1785306246300-9u0tuq.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): FSD Python Test Engine](./2026-07-30T02-44-10-888Z_scrum-planning-scrumcand-1785306690371-371251.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): FSD Python Test Engine](./2026-07-30T02-44-10-172Z_scrum-planning-scrumcand-1785307170321-6kyhoc.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): AI stock sell-off deepens as investors dump chipmakers - Financial Times](./2026-07-30T02-44-05-916Z_scrum-planning-scrumcand-1785309630410-th0bio.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Latest commit: feat: add CriminologyLab, supabase heartbeat, genealogy u…](./2026-07-30T02-44-04-218Z_scrum-planning-scrumcand-1785310110304-1yqyiw.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Latest commit: feat: add CriminologyLab, supabase heartbeat, genealogy u…](./2026-07-30T02-44-03-341Z_scrum-planning-scrumcand-1785310590376-cbw1pv.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Apple Introduces Leasing Program for iPhones and Other Devices](./2026-07-30T02-44-01-364Z_scrum-planning-scrumcand-1785312030431-xumrdd.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Apple Introduces Leasing Program for iPhones and Other Devices](./2026-07-30T02-44-00-591Z_scrum-planning-scrumcand-1785312510406-dj17fh.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Apple Introduces Leasing Program for iPhones and Other Devices](./2026-07-30T02-43-59-285Z_scrum-planning-scrumcand-1785312990433-v9fzhk.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): SK Hynix second-quarter profit surges 557 to a new high  but misses esti…](./2026-07-30T02-43-58-332Z_scrum-planning-scrumcand-1785376519811-l2nzpc.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Ozlos Sleepbuds 2 build on Boses sleep earbud legacy - TechCrunch](./2026-07-30T02-43-56-196Z_scrum-planning-scrumcand-1785378631858-hcw2bb.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): Ozlos Sleepbuds 2 build on Boses sleep earbud legacy - TechCrunch](./2026-07-30T02-39-02-835Z_scrum-planning-scrumcand-1785379112427-29debh.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): SK Hynix second-quarter profit surges 557 to a new high  but misses esti…](./2026-07-30T02-22-32-780Z_scrum-planning-scrumcand-1785378151982-k6o4lf.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): SK Hynix second-quarter profit surges 557 to a new high  but misses esti…](./2026-07-30T02-15-02-804Z_scrum-planning-scrumcand-1785377672112-5pq544.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): SK Hynix second-quarter profit surges 557 to a new high  but misses esti…](./2026-07-30T02-06-02-783Z_scrum-planning-scrumcand-1785377132879-unwdgf.md) |  |  |  |
+| 2026-07-30 | [SCRUM (Planning): SK Hynix second-quarter profit surges 557 to a new high  but misses esti…](./2026-07-30T01-58-32-728Z_scrum-planning-scrumcand-1785376683686-a25k1j.md) |  |  |  |
 | 2026-07-29 | [SCRUM (Planning): Latest commit: feat: add CriminologyLab, supabase heartbeat, genealogy u…](./2026-07-29T07-44-31-025Z_scrum-planning-scrumcand-1785311070724-7niqax.md) |  |  |  |
 | 2026-07-29 | [SCRUM (Planning): FSD Python Test Engine](./2026-07-29T06-47-31-009Z_scrum-planning-scrumcand-1785307650343-1m8jrk.md) |  |  |  |
 | 2026-07-07 | [SCRUM (Planning): How Metas Threads Became as Popular as X](./2026-07-07T20-43-30-716Z_scrum-planning-scrumcand-1783456980764-ejqe6e.md) |  |  |  |
@@ -176,4 +201,4 @@ _Auto-generated: 2026-07-29T08:16:29.867Z_
 | 2026-04-09 | [Test SCRUM: Test SCRUM from cooler session](./2026-04-09_scrum-scrum-1775776097379-9lcztk.md) | random | check | N/A |
 | 2026-04-09 | [Test SCRUM: Test SCRUM from cooler session](./2026-04-09_scrum-scrum-1775761038722-ydxixs.md) | random | check | N/A |
 
-Total: **171** scrum exports
+Total: **196** scrum exports

@@ -1,8 +1,8 @@
 {
   "id": "scrumcand-1785306690371-371251",
-  "status": "pending",
+  "status": "approved",
   "createdAt": "2026-07-29T06:31:30.371Z",
-  "updatedAt": "2026-07-29T06:31:30.371Z",
+  "updatedAt": "2026-07-30T02:44:10.888Z",
   "source": {
     "location": "kitchen",
     "coolerSessionId": "ct-1785306241854",
@@ -51,5 +51,6 @@
         "description": "Create backlog tickets and a cadence for iteration (weekly SCRUM, daily micro-standup)."
       }
     ]
-  }
+  },
+  "approvedAt": "2026-07-30T02:44:10.888Z"
 }

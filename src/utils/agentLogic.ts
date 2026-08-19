@@ -555,6 +555,13 @@ function generatePacketId(): string {
   return `pkt_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 }
 
+// New feedback function
+export function collectAgentFeedback(agentId: string, taskId: string, performance: number) {
+    console.log(`[Feedback] Agent: ${agentId}, Task: ${taskId}, Performance: ${performance}`);
+    // Placeholder for further feedback processing
+}
+
+// Enhanced logging
 export function createTaskPacket(
   workflowType: string,
   creatorRole: string,

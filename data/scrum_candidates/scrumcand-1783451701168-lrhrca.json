@@ -1,8 +1,8 @@
 {
   "id": "scrumcand-1783451701168-lrhrca",
-  "status": "pending",
+  "status": "approved",
   "createdAt": "2026-07-07T19:15:01.168Z",
-  "updatedAt": "2026-07-07T19:15:01.168Z",
+  "updatedAt": "2026-07-30T02:44:23.051Z",
   "source": {
     "location": "kitchen",
     "coolerSessionId": "ct-1783451695965",
@@ -51,5 +51,6 @@
         "description": "Seed tasks with owners and acceptance criteria so this doesn't evaporate."
       }
     ]
-  }
+  },
+  "approvedAt": "2026-07-30T02:44:23.051Z"
 }

@@ -1,7 +1,19 @@
 {
   "_available": {
-    "lastSync": "2026-07-29T12:26:56.027Z",
+    "lastSync": "2026-08-10T15:38:55.795Z",
     "models": {
+      "oir:latest": {
+        "name": "oir:latest",
+        "size": 8669
+      },
+      "ornith:9b": {
+        "name": "ornith:9b",
+        "size": 5629110568
+      },
+      "PhysicsObsession/blaze-3b:latest": {
+        "name": "PhysicsObsession/blaze-3b:latest",
+        "size": 2019393292
+      },
       "narrativerouter:latest": {
         "name": "narrativerouter:latest",
         "size": 4791070792
@@ -10,10 +22,6 @@
         "name": "nemotron-3-super:cloud",
         "size": 315
       },
-      "PhysicsObsession/blaze-3b:latest": {
-        "name": "PhysicsObsession/blaze-3b:latest",
-        "size": 2019393292
-      },
       "PhysicsObsession/Zion-12b:latest": {
         "name": "PhysicsObsession/Zion-12b:latest",
         "size": 4791060427
@@ -21,18 +29,6 @@
       "cicero-beta:latest": {
         "name": "cicero-beta:latest",
         "size": 9608357242
-      },
-      "rtrp:latest": {
-        "name": "rtrp:latest",
-        "size": 2019409152
-      },
-      "ornith:9b": {
-        "name": "ornith:9b",
-        "size": 5629110568
-      },
-      "ciceroagent:latest": {
-        "name": "ciceroagent:latest",
-        "size": 2019400862
       },
       "nemotron-3-ultra:cloud": {
         "name": "nemotron-3-ultra:cloud",

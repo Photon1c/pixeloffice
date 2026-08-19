@@ -1,22 +1,32 @@
 [
   {
-    "id": "heat-1785312510407-194",
+    "id": "heat-1785379112427-896",
     "trace_type": "review_heat",
-    "source_session_id": "ct-1785311546257",
+    "source_session_id": "ct-1785378628016",
     "intensity": 0.2,
-    "topic": "Apple Introduces Leasing Program for iPhones and Other Devices",
+    "topic": "Ozlos Sleepbuds 2 build on Boses sleep earbud legacy - TechCrunch",
     "anchor": "kitchen",
-    "created_at": "2026-07-29T08:08:30.407Z",
-    "expires_at": "2026-07-29T08:18:30.407Z"
+    "created_at": "2026-07-30T02:38:32.427Z",
+    "expires_at": "2026-07-30T02:48:32.427Z"
   },
   {
-    "id": "heat-1785312990434-54",
+    "id": "heat-1785379461203-600",
     "trace_type": "review_heat",
-    "source_session_id": "ct-1785311546257",
+    "source_session_id": "ct-1785378628016",
     "intensity": 0.2,
-    "topic": "Apple Introduces Leasing Program for iPhones and Other Devices",
+    "topic": "Ozlos Sleepbuds 2 build on Boses sleep earbud legacy - TechCrunch",
     "anchor": "kitchen",
-    "created_at": "2026-07-29T08:16:30.434Z",
-    "expires_at": "2026-07-29T08:26:30.434Z"
+    "created_at": "2026-07-30T02:44:21.203Z",
+    "expires_at": "2026-07-30T02:54:21.203Z"
+  },
+  {
+    "id": "heat-1785379659135-158",
+    "trace_type": "review_heat",
+    "source_session_id": "ct-1785378628016",
+    "intensity": 0.2,
+    "topic": "Ozlos Sleepbuds 2 build on Boses sleep earbud legacy - TechCrunch",
+    "anchor": "kitchen",
+    "created_at": "2026-07-30T02:47:39.135Z",
+    "expires_at": "2026-07-30T02:57:39.135Z"
   }
 ]

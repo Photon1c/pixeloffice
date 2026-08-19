@@ -1,8 +1,8 @@
 {
   "id": "scrumcand-1785312990433-v9fzhk",
-  "status": "pending",
+  "status": "approved",
   "createdAt": "2026-07-29T08:16:30.433Z",
-  "updatedAt": "2026-07-29T08:16:30.433Z",
+  "updatedAt": "2026-07-30T02:43:59.285Z",
   "source": {
     "location": "kitchen",
     "coolerSessionId": "ct-1785311546257",
@@ -51,5 +51,6 @@
         "description": "Seed tasks with owners and acceptance criteria so this doesn't evaporate."
       }
     ]
-  }
+  },
+  "approvedAt": "2026-07-30T02:43:59.285Z"
 }

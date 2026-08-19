@@ -76,4 +76,8 @@ export async function closePool(): Promise<void> {
   }
 }
 
+export const COOLER_CONFIG = {
+    setting: 'default', // Placeholder for actual config settings
+};
+
 export { getConfig };

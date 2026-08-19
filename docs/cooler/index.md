@@ -1,9 +1,18 @@
 # Cooler Index
 
-_Auto-generated: 2026-07-29T08:16:29.866Z_
+_Auto-generated: 2026-07-30T02:47:38.566Z_
 
 | date | title | session | participants | escalations |
 |---|---|---|---:|---:|
+| 2026-07-30 | [Cooler Talk - Ozlos Sleepbuds 2 build on Boses sleep earbud legacy - TechCrunch](./2026-07-30T02-47-38-300Z_cooler-ct-1785378628016.md) | ct-1785378628016 | 3 | 4 |
+| 2026-07-30 | [Cooler Talk - Ozlos Sleepbuds 2 build on Boses sleep earbud legacy - TechCrunch](./2026-07-30T02-44-20-611Z_cooler-ct-1785378628016.md) | ct-1785378628016 | 3 | 4 |
+| 2026-07-30 | [Cooler Talk - Ozlos Sleepbuds 2 build on Boses sleep earbud legacy - TechCrunch](./2026-07-30T02-38-31-450Z_cooler-ct-1785378628016.md) | ct-1785378628016 | 3 | 3 |
+| 2026-07-30 | [Cooler Talk - Ozlos Sleepbuds 2 build on Boses sleep earbud legacy - TechCrunch](./2026-07-30T02-30-31-358Z_cooler-ct-1785378628016.md) | ct-1785378628016 | 3 | 1 |
+| 2026-07-30 | [Cooler Talk - SK Hynix second-quarter profit surges 557 to a new high  but misses estimates - CNBC](./2026-07-30T02-22-31-483Z_cooler-ct-1785376515362.md) | ct-1785376515362 | 3 | 8 |
+| 2026-07-30 | [Cooler Talk - SK Hynix second-quarter profit surges 557 to a new high  but misses estimates - CNBC](./2026-07-30T02-14-31-465Z_cooler-ct-1785376515362.md) | ct-1785376515362 | 3 | 6 |
+| 2026-07-30 | [Cooler Talk - SK Hynix second-quarter profit surges 557 to a new high  but misses estimates - CNBC](./2026-07-30T02-05-31-590Z_cooler-ct-1785376515362.md) | ct-1785376515362 | 3 | 3 |
+| 2026-07-30 | [Cooler Talk - SK Hynix second-quarter profit surges 557 to a new high  but misses estimates - CNBC](./2026-07-30T01-58-03-217Z_cooler-ct-1785376515362.md) | ct-1785376515362 | 3 | 3 |
+| 2026-07-30 | [Cooler Talk - SK Hynix second-quarter profit surges 557 to a new high  but misses estimates - CNBC](./2026-07-30T01-55-18-846Z_cooler-ct-1785376515362.md) | ct-1785376515362 | 3 | 1 |
 | 2026-07-29 | [Cooler Talk - Apple Introduces Leasing Program for iPhones and Other Devices](./2026-07-29T08-16-29-758Z_cooler-ct-1785311546257.md) | ct-1785311546257 | 3 | 2 |
 | 2026-07-29 | [Cooler Talk - Apple Introduces Leasing Program for iPhones and Other Devices](./2026-07-29T08-08-29-729Z_cooler-ct-1785311546257.md) | ct-1785311546257 | 3 | 2 |
 | 2026-07-29 | [Cooler Talk - Apple Introduces Leasing Program for iPhones and Other Devices](./2026-07-29T08-00-29-744Z_cooler-ct-1785311546257.md) | ct-1785311546257 | 3 | 1 |
@@ -207,4 +216,4 @@ _Auto-generated: 2026-07-29T08:16:29.866Z_
 | 2026-05-25 | [Cooler Talk - Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-25T10-11-17-378Z_cooler-ct-1779671126927.md) | ct-1779671126927 | 3 | 2 |
 | 2026-05-25 | [Cooler Talk - Latest commit: chore: Delete legacy session cache files (by Sherlock)](./2026-05-25T01-05-38-112Z_cooler-ct-1779671126927.md) | ct-1779671126927 | 3 | 1 |
 
-Total: **202** cooler sessions
+Total: **211** cooler sessions
