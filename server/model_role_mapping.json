@@ -1,7 +1,31 @@
 {
   "_available": {
-    "lastSync": "2026-08-10T15:38:55.795Z",
+    "lastSync": "2026-08-20T20:36:34.169Z",
     "models": {
+      "dolphin-llama3:8b": {
+        "name": "dolphin-llama3:8b",
+        "size": 4661235994
+      },
+      "cicero-beta:latest": {
+        "name": "cicero-beta:latest",
+        "size": 5629112415
+      },
+      "geometrid:latest": {
+        "name": "geometrid:latest",
+        "size": 5629116807
+      },
+      "ornith:latest": {
+        "name": "ornith:latest",
+        "size": 5629110568
+      },
+      "cicero-sharp:latest": {
+        "name": "cicero-sharp:latest",
+        "size": 5629110056
+      },
+      "qwen2.5:7b": {
+        "name": "qwen2.5:7b",
+        "size": 4683087332
+      },
       "oir:latest": {
         "name": "oir:latest",
         "size": 8669
@@ -25,10 +49,6 @@
       "PhysicsObsession/Zion-12b:latest": {
         "name": "PhysicsObsession/Zion-12b:latest",
         "size": 4791060427
-      },
-      "cicero-beta:latest": {
-        "name": "cicero-beta:latest",
-        "size": 9608357242
       },
       "nemotron-3-ultra:cloud": {
         "name": "nemotron-3-ultra:cloud",

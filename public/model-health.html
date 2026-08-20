@@ -13,7 +13,7 @@
       min-height: 100vh;
       padding: 20px;
     }
-    .container { max-width: 900px; margin: 0 auto; }
+    .container { max-width: 980px; margin: 0 auto; }
     h1 {
       color: #4ecdc4;
       font-size: 24px;
@@ -26,7 +26,7 @@
     .summary {
       display: flex;
       gap: 16px;
-      margin-bottom: 32px;
+      margin-bottom: 24px;
     }
     .summary-card {
       background: #1a1f2e;
@@ -34,6 +34,7 @@
       border-radius: 8px;
       padding: 16px 24px;
       text-align: center;
+      flex: 1;
     }
     .summary-card .count {
       font-size: 32px;
@@ -48,6 +49,101 @@
     .online .count { color: #20c997; }
     .lagging .count { color: #ffc107; }
     .offline .count { color: #dc3545; }
+
+    /* Ollama endpoint card */
+    .endpoint-card {
+      background: #1a1f2e;
+      border: 1px solid #2a3040;
+      border-left: 3px solid #2a3040;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .endpoint-card.online { border-left-color: #20c997; }
+    .endpoint-card.lagging { border-left-color: #ffc107; }
+    .endpoint-card.offline { border-left-color: #dc3545; }
+    .endpoint-card .indicator {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .endpoint-card .indicator.online { background: #20c997; box-shadow: 0 0 10px #20c99780; }
+    .endpoint-card .indicator.lagging { background: #ffc107; box-shadow: 0 0 10px #ffc10780; }
+    .endpoint-card .indicator.offline { background: #dc3545; box-shadow: 0 0 10px #dc354580; }
+    .endpoint-card .endpoint-info { flex: 1; min-width: 220px; }
+    .endpoint-card .endpoint-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+    .endpoint-card .endpoint-url {
+      font-size: 11px;
+      color: #6c757d;
+    }
+    .endpoint-card .endpoint-meta {
+      font-size: 11px;
+      color: #4ecdc4;
+      text-align: right;
+    }
+    .endpoint-card .endpoint-meta .err {
+      color: #dc3545;
+      max-width: 320px;
+      word-break: break-word;
+    }
+    .endpoint-actions { display: flex; gap: 8px; align-items: center; }
+    .endpoint-actions button {
+      background: #2a3548;
+      border: none;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+    }
+    .endpoint-actions button:hover { background: #3a4558; }
+    .endpoint-actions button:disabled { opacity: 0.5; cursor: wait; }
+    .test-row {
+      width: 100%;
+      margin-top: 12px;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .test-row label { font-size: 11px; color: #6c757d; text-transform: uppercase; }
+    .test-row select, .test-row input {
+      background: #0a0e14;
+      border: 1px solid #2a3040;
+      color: #e6e6e6;
+      padding: 6px 8px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 12px;
+    }
+    .test-row input { flex: 1; min-width: 220px; }
+    .test-output {
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: #0a0e14;
+      border: 1px solid #2a3040;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #e6e6e6;
+      white-space: pre-wrap;
+      display: none;
+    }
+    .test-output.show { display: block; }
+    .test-output.ok { border-left: 3px solid #20c997; }
+    .test-output.fail { border-left: 3px solid #dc3545; }
+
     .models-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -71,35 +167,13 @@
       border-radius: 50%;
       flex-shrink: 0;
     }
-    .indicator.online {
-      background: #20c997;
-      box-shadow: 0 0 8px #20c99780;
-    }
-    .indicator.lagging {
-      background: #ffc107;
-      box-shadow: 0 0 8px #ffc10780;
-    }
-    .indicator.offline {
-      background: #dc3545;
-      box-shadow: 0 0 8px #dc354580;
-    }
+    .indicator.online { background: #20c997; box-shadow: 0 0 8px #20c99780; }
+    .indicator.lagging { background: #ffc107; box-shadow: 0 0 8px #ffc10780; }
+    .indicator.offline { background: #dc3545; box-shadow: 0 0 8px #dc354580; }
     .model-info { flex: 1; }
-    .model-name {
-      font-size: 14px;
-      font-weight: 600;
-      color: #fff;
-      margin-bottom: 4px;
-    }
-    .model-provider {
-      font-size: 11px;
-      color: #6c757d;
-      text-transform: uppercase;
-    }
-    .model-latency {
-      font-size: 11px;
-      color: #4ecdc4;
-      text-align: right;
-    }
+    .model-name { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+    .model-provider { font-size: 11px; color: #6c757d; text-transform: uppercase; }
+    .model-latency { font-size: 11px; color: #4ecdc4; text-align: right; }
     .refresh-btn {
       background: #2a3548;
       border: none;
@@ -120,13 +194,22 @@
       font-size: 12px;
     }
     .loading { color: #6c757d; text-align: center; padding: 40px; }
+    .section-title {
+      color: #4ecdc4;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 24px 0 12px;
+      border-bottom: 1px solid #2a3040;
+      padding-bottom: 6px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🤖 Model Health Dashboard</h1>
+    <h1>Model Health Dashboard</h1>
     <div class="subtitle">Pixel Office - Real-time status at <span id="timestamp">-</span></div>
-    
+
     <div class="summary">
       <div class="summary-card online">
         <div class="count" id="online-count">-</div>
@@ -141,28 +224,130 @@
         <div class="label">Offline</div>
       </div>
     </div>
-    
+
+    <div class="section-title">Ollama Endpoint</div>
+    <div class="endpoint-card" id="endpoint-card">
+      <div class="indicator" id="endpoint-indicator"></div>
+      <div class="endpoint-info">
+        <div class="endpoint-title" id="endpoint-title">Ollama</div>
+        <div class="endpoint-url" id="endpoint-url">-</div>
+      </div>
+      <div class="endpoint-meta" id="endpoint-meta">-</div>
+      <div class="endpoint-actions">
+        <button id="test-btn" onclick="runTest()">Send test message</button>
+        <button onclick="fetchModels()">Refresh</button>
+      </div>
+      <div class="test-row">
+        <label for="test-model">Model</label>
+        <select id="test-model"></select>
+        <label for="test-prompt">Prompt</label>
+        <input id="test-prompt" type="text" value="Reply with the single word: PONG" maxlength="500" />
+      </div>
+      <div class="test-output" id="test-output"></div>
+    </div>
+
+    <div class="section-title">Models</div>
     <div id="models-container" class="models-grid">
       <div class="loading">Loading models...</div>
     </div>
-    
-    <button class="refresh-btn" onclick="fetchModels()">🔄 Refresh</button>
   </div>
 
   <script>
+    function statusFor(latencyMs) {
+      if (latencyMs == null) return 'offline';
+      if (latencyMs < 800) return 'online';
+      if (latencyMs < 3000) return 'lagging';
+      return 'offline';
+    }
+    function fmtTs(s) {
+      if (!s) return 'never';
+      const d = new Date(s);
+      return d.toLocaleString();
+    }
+    function renderOllama(o) {
+      const card = document.getElementById('endpoint-card');
+      const ind = document.getElementById('endpoint-indicator');
+      const title = document.getElementById('endpoint-title');
+      const url = document.getElementById('endpoint-url');
+      const meta = document.getElementById('endpoint-meta');
+      const sel = document.getElementById('test-model');
+      if (!o) {
+        card.className = 'endpoint-card offline';
+        ind.className = 'indicator offline';
+        title.textContent = 'Ollama (unreachable)';
+        url.textContent = '-';
+        meta.innerHTML = '<div class="err">no response</div>';
+        return;
+      }
+      const status = o.up ? statusFor(o.latencyMs) : 'offline';
+      card.className = 'endpoint-card ' + status;
+      ind.className = 'indicator ' + status;
+      title.textContent = o.up ? 'Ollama (' + status + ')' : 'Ollama (down)';
+      url.textContent = o.endpoint;
+      let metaHtml = '';
+      metaHtml += '<div>latency: ' + (o.latencyMs ?? '?') + 'ms</div>';
+      metaHtml += '<div>models: ' + (o.modelCount ?? 0) + '</div>';
+      metaHtml += '<div>last sync: ' + fmtTs(o.lastSync) + '</div>';
+      if (o.error) metaHtml += '<div class="err">' + o.error + '</div>';
+      meta.innerHTML = metaHtml;
+
+      if (window.__availableModels) {
+        const cur = sel.value;
+        sel.innerHTML = window.__availableModels
+          .map(m => '<option value="' + m + '">' + m + '</option>')
+          .join('');
+        if (cur && [...sel.options].some(o2 => o2.value === cur)) sel.value = cur;
+      }
+    }
+
+    async function runTest() {
+      const btn = document.getElementById('test-btn');
+      const out = document.getElementById('test-output');
+      const sel = document.getElementById('test-model');
+      const promptEl = document.getElementById('test-prompt');
+      btn.disabled = true;
+      const oldLabel = btn.textContent;
+      btn.textContent = 'Sending...';
+      out.className = 'test-output show';
+      out.textContent = 'Contacting ' + (sel.value || 'ollama') + '...';
+      try {
+        const r = await fetch('/api/ollama/test', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ model: sel.value, prompt: promptEl.value }),
+        });
+        const data = await r.json();
+        if (data.ok) {
+          out.className = 'test-output show ok';
+          out.textContent = 'OK in ' + data.latencyMs + 'ms\nmodel: ' + data.model +
+                            '\nresponse: ' + (data.response || '(empty)');
+        } else {
+          out.className = 'test-output show fail';
+          out.textContent = 'FAIL after ' + data.latencyMs + 'ms\nmodel: ' + data.model +
+                            '\nerror: ' + (data.error || 'unknown');
+        }
+      } catch (e) {
+        out.className = 'test-output show fail';
+        out.textContent = 'Network error: ' + e.message;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = oldLabel;
+      }
+    }
+
     async function fetchModels() {
       const container = document.getElementById('models-container');
       container.innerHTML = '<div class="loading">Checking models...</div>';
-      
       try {
         const res = await fetch('/api/models/health');
         const data = await res.json();
-        
         document.getElementById('timestamp').textContent = new Date(data.timestamp).toLocaleString();
         document.getElementById('online-count').textContent = data.summary.online;
         document.getElementById('lagging-count').textContent = data.summary.lagging;
         document.getElementById('offline-count').textContent = data.summary.offline;
-        
+        renderOllama(data.ollama);
+        const ollamaModels = (data.models || []).filter(m => m.provider === 'ollama');
+        window.__availableModels = ollamaModels.map(m => m.id);
         container.innerHTML = data.models.map(m => `
           <div class="model-card ${m.status}">
             <div class="indicator ${m.status}"></div>
@@ -176,9 +361,10 @@
         `).join('');
       } catch (e) {
         container.innerHTML = `<div class="error-msg">Failed to load: ${e.message}</div>`;
+        renderOllama(null);
       }
     }
-    
+
     fetchModels();
     setInterval(fetchModels, 30000);
   </script>

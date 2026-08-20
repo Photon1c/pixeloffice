@@ -50,26 +50,131 @@ app.get("/api/nvidia/models", async (_req, res) => {
 app.get("/api/ollama/models", async (_req, res) => {
   try {
     const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
-    const response = await fetch(`${ollamaUrl}/api/tags`, { 
-      signal: AbortSignal.timeout(3000) 
+    const response = await fetch(`${ollamaUrl}/api/tags`, {
+      signal: AbortSignal.timeout(3000)
     });
-    
+
     if (!response.ok) {
       res.status(500).json({ error: "Failed to fetch Ollama models" });
       return;
     }
-    
+
     const data = await response.json();
     const models = (data.models || []).map((m: any) => ({
       id: m.name,
       name: m.name.split(':')[0],
       size: m.size
     }));
-    
+
     res.json({ models });
   } catch (err) {
     console.error("Failed to fetch Ollama models:", err);
     res.status(500).json({ error: "Failed to fetch Ollama models" });
+  }
+});
+
+// Ollama endpoint health — single source of truth for the indicator light.
+// Returns: { up, endpoint, latencyMs, modelCount, lastSync, error? }.
+app.get("/api/ollama/health", async (_req, res) => {
+  const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
+  const t0 = performance.now();
+  try {
+    const response = await fetch(`${ollamaUrl}/api/tags`, {
+      signal: AbortSignal.timeout(3000),
+    });
+    const latencyMs = Math.round(performance.now() - t0);
+    if (!response.ok) {
+      res.status(503).json({
+        up: false,
+        endpoint: ollamaUrl,
+        latencyMs,
+        modelCount: 0,
+        lastSync: getRegistry().lastSync,
+        error: `Ollama API ${response.status}`,
+      });
+      return;
+    }
+    const data = await response.json();
+    res.json({
+      up: true,
+      endpoint: ollamaUrl,
+      latencyMs,
+      modelCount: (data.models || []).length,
+      lastSync: getRegistry().lastSync,
+    });
+  } catch (err: any) {
+    const latencyMs = Math.round(performance.now() - t0);
+    res.status(503).json({
+      up: false,
+      endpoint: ollamaUrl,
+      latencyMs,
+      modelCount: 0,
+      lastSync: getRegistry().lastSync,
+      error: err?.name === "TimeoutError" ? "timeout (3s)" : (err?.message || String(err)),
+    });
+  }
+});
+
+// Ollama test message — runs a tiny chat probe so the UI can confirm
+// end-to-end inference works (catches stuck workers that /api/tags won't).
+// Body: { model?: string, prompt?: string }. Returns: { ok, model,
+// latencyMs, response?, error? }.
+app.post("/api/ollama/test", async (req, res) => {
+  const ollamaUrl = process.env.OLLAMA_URL || "http://localhost:11434";
+  const registry = getRegistry();
+  const requestedModel = (req.body?.model || "").trim();
+  const availableNames = registry.available.map((m) => m.name);
+  const model =
+    requestedModel ||
+    (availableNames.find((n) => !n.includes("embed")) ||
+      availableNames[0] ||
+      "geometrid:latest");
+  const prompt =
+    (req.body?.prompt || "Reply with the single word: PONG").toString().slice(0, 500);
+
+  const t0 = performance.now();
+  try {
+    const response = await fetch(`${ollamaUrl}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: "user", content: prompt }],
+        stream: false,
+        options: { num_predict: 4 },
+      }),
+      signal: AbortSignal.timeout(20000),
+    });
+    const latencyMs = Math.round(performance.now() - t0);
+    if (!response.ok) {
+      const text = await response.text().catch(() => "");
+      res.status(502).json({
+        ok: false,
+        model,
+        latencyMs,
+        error: `Ollama API ${response.status}: ${text.slice(0, 200)}`,
+      });
+      return;
+    }
+    const data = await response.json();
+    const content = data?.message?.content?.toString().trim() || "";
+    res.json({
+      ok: true,
+      model,
+      latencyMs,
+      response: content.slice(0, 200),
+    });
+  } catch (err: any) {
+    const latencyMs = Math.round(performance.now() - t0);
+    const timedOut = err?.name === "TimeoutError" || err?.name === "AbortError";
+    res.status(timedOut ? 504 : 502).json({
+      ok: false,
+      model,
+      latencyMs,
+      error: timedOut
+        ? `Ollama did not respond within 20s — likely a stuck worker. Try again or restart ollama.`
+        : err?.message || String(err),
+    });
   }
 });
 
@@ -162,9 +267,9 @@ import { callChatModelForRole, RoleId } from "./roleModels.js";
 // Cooler Talk Session Storage (PostgreSQL/MySQL)
 async function ensureCoolerSessionsTable() {
   try {
-    const pool = await getPool();
+    const pool = (await getPool()) as any;
     const dbType = getConfig().db.type;
-    
+
     if (dbType === "postgres") {
       await pool.query(`
         CREATE TABLE IF NOT EXISTS cooler_sessions (
@@ -175,12 +280,12 @@ async function ensureCoolerSessionsTable() {
           participants TEXT[],
           utterances JSONB,
           metadata JSONB,
-          created_at TIMESTAMP DEFAULT NOW(),
-          updated_at TIMESTAMP DEFAULT NOW()
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
         )
       `);
     } else {
-      await (pool as any).query(`
+      await pool.query(`
         CREATE TABLE IF NOT EXISTS cooler_sessions (
           id INT AUTO_INCREMENT PRIMARY KEY,
           session_id VARCHAR(255) UNIQUE NOT NULL,
@@ -238,11 +343,11 @@ async function saveCoolerSession(
   metadata?: Record<string, any>
 ) {
   try {
-    const pool = await getPool();
+    const pool = (await getPool()) as any;
     const dbType = getConfig().db.type;
     const metadataJson = JSON.stringify(metadata || {});
     const utterancesJson = JSON.stringify(utterances);
-    
+
     if (dbType === "postgres") {
       await pool.query(
         `INSERT INTO cooler_sessions (session_id, session_type, topic, participants, utterances, metadata, updated_at)
@@ -252,11 +357,11 @@ async function saveCoolerSession(
         [sessionId, sessionType, topic, participants, utterancesJson, metadataJson]
       );
     } else {
-      await (pool as any).query(
+      await pool.query(
         `INSERT INTO cooler_sessions (session_id, session_type, topic, participants, utterances, metadata, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, NOW())
          ON DUPLICATE KEY UPDATE
-           topic = VALUES(topic), participants = VALUES(participants), utterances = VALUES(utterances), 
+           topic = VALUES(topic), participants = VALUES(participants), utterances = VALUES(utterances),
            metadata = VALUES(metadata), updated_at = NOW()`,
         [sessionId, sessionType, topic, participants.join(","), utterancesJson, metadataJson]
       );
@@ -269,24 +374,24 @@ async function saveCoolerSession(
 
 async function getCoolerSessions(limit = 20, sessionType?: "scrum" | "cooler") {
   try {
-    const pool = await getPool();
+    const pool = (await getPool()) as any;
     const dbType = getConfig().db.type;
     let query = "SELECT * FROM cooler_sessions";
     const params: any[] = [];
-    
+
     if (sessionType) {
       query += " WHERE session_type = ?";
       params.push(sessionType);
     }
     query += " ORDER BY created_at DESC LIMIT ?";
     params.push(limit);
-    
+
     if (dbType === "postgres") {
-      query = query.replace("?", (i) => `$${i}`);
+      query = query.replace(/\?/g, (_, i) => `$${i + 1}`);
       const result = await pool.query(query, params);
       return result.rows;
     } else {
-      const [rows] = await (pool as any).query(query, params);
+      const [rows] = await pool.query(query, params);
       return rows;
     }
   } catch (err) {
@@ -300,29 +405,29 @@ const initializeFlywheel = async () => {
   try {
     // await initializeResidueSystem(); // TODO: function not defined
     // await ensureTables(); // TODO: function not defined
-    
+
     // Cleanup old cooler sessions on startup (keep last 7 days)
     try {
-      const pool = await getPool();
+      const pool = (await getPool()) as any;
       const dbType = getConfig().db.type;
       const cutoffDate = new Date();
       cutoffDate.setDate(cutoffDate.getDate() - 7);
-      
+
       let query = "DELETE FROM cooler_sessions WHERE created_at < ?";
       const params = [cutoffDate];
-      
+
       if (dbType === "postgres") {
-        query = query.replace("?", (i) => `$${i}`);
+        query = query.replace(/\?/g, (_, i) => `$${i + 1}`);
         const result = await pool.query(query, params);
         console.log(`[Startup] Cleaned ${result.rowCount || 0} old cooler sessions from database`);
       } else {
-        const [result] = await (pool as any).query(query, params);
+        const [result] = await pool.query(query, params);
         console.log(`[Startup] Cleaned ${result.affectedRows || 0} old cooler sessions from database`);
       }
     } catch (err) {
       console.warn("[Startup] Failed to cleanup old sessions:", err);
     }
-    
+
     console.log("[Flywheel] System initialized");
   } catch (err) {
     console.error("[Flywheel] Initialization error:", err);
@@ -513,7 +618,7 @@ async function updateModelMetrics() {
       // Clear old model metrics
       const existing = await register.getSingleMetric('pixel_office_model_available');
       if (existing) {
-        register.removeSingleMetric(existing);
+        register.removeSingleMetric((existing as any).name as string);
       }
       
       let availableCount = 0;
@@ -624,8 +729,17 @@ function selectWeightedParticipants(participants: string[], count: number): stri
   return weighted.slice(0, count).map(w => w.name);
 }
 import { getActiveHeat, depositReviewHeat } from "./cooler/reviewHeat.js";
-import { createScrumSession, advanceScrumSession, type ScrumSession } from "./scrum/scrumController.js";
+import { createScrumSession, advanceScrumSession } from "./scrum/scrumController.js";
 import { runRoomTurn, exportRoomSession } from "./services/coolerTalkService.js";
+import {
+  createCoolerSession,
+  getNextIntent,
+  buildTurnPrompt,
+  validateUtterance,
+  getRepairText,
+  addUtteranceToHistory,
+  type Utterance,
+} from "./conversation/coolerController.js";
 import { generateFn, getLastUsedModel } from "./services/llmGenerateFn.js";
 import { maybeCreateScrumCandidate, listScrumCandidates, approveScrumCandidate, rejectScrumCandidate, type ScrumCandidate } from "./cooler/scrumCandidates.js";
 import { createSafeScrumRepoClient } from "./github/safeScrumRepoClient.js";
@@ -634,8 +748,12 @@ import {
   previewScrumReport,
   exportScrumReport,
   isSessionComplete,
+  exportLatestCompletedScrum,
+  appendToGithubNotes,
+  generateGithubNotes,
   type ExportMode,
 } from "./scrum/scrumExporter.js";
+import type { ScrumSession } from "./scrum/types.js";
 
 let currentScrumSession: ScrumSession | null = null;
 
@@ -993,23 +1111,23 @@ app.post("/api/cooler/sessions/cleanup", async (req, res) => {
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
     
-    const pool = await getPool();
+    const pool = (await getPool()) as any;
     const dbType = getConfig().db.type;
-    
+
     let query = "DELETE FROM cooler_sessions WHERE created_at < ?";
     const params: any[] = [cutoffDate];
-    
+
     if (sessionType) {
       query = "DELETE FROM cooler_sessions WHERE session_type = ? AND created_at < ?";
       params.unshift(sessionType);
     }
-    
+
     if (dbType === "postgres") {
-      query = query.replace(/\?/g, (_, i) => `$${i + 1}`);
+      query = query.replace(/\?/g, (_m: string, i: number) => `$${i + 1}`);
       const result = await pool.query(query, params);
       res.json({ deleted: result.rowCount || 0, cutoffDate });
     } else {
-      const [result] = await (pool as any).query(query, params);
+      const [result] = await pool.query(query, params);
       res.json({ deleted: result.affectedRows || 0, cutoffDate });
     }
   } catch (error) {
@@ -1102,7 +1220,7 @@ source_session: "${coolerSessionId || 'random'}"
 **Source Session:** ${coolerSessionId || "random"}
 
 **Stage:** ${stageResult?.stage || "N/A"}
-**Summary:** ${stageResult?.summary || "N/A"}
+**Summary:** ${(stageResult?.output as any)?.summary || "N/A"}
 
 ---
 *Generated from Pixel Office Test SCRUM*
@@ -1285,22 +1403,31 @@ app.get("/api/models/health", async (req, res) => {
   const now = new Date().toISOString();
   
   // Check Ollama models (just list, no latency check to avoid slowdowns)
+  const ollamaEndpoint = process.env.OLLAMA_URL || "http://localhost:11434";
+  const ollamaT0 = performance.now();
+  let ollamaUp = false;
+  let ollamaLatencyMs = 0;
+  let ollamaModelCount = 0;
   try {
-    const ollamaRes = await fetch("http://localhost:11434/api/tags", { method: "GET" });
+    const ollamaRes = await fetch(`${ollamaEndpoint}/api/tags`, { method: "GET" });
+    ollamaLatencyMs = Math.round(performance.now() - ollamaT0);
     if (ollamaRes.ok) {
       const data = await ollamaRes.json();
+      ollamaUp = true;
+      ollamaModelCount = (data.models || []).length;
       for (const model of data.models || []) {
         models.push({
           name: model.name.replace(":latest", "").split(":")[0],
           id: model.name,
           provider: "ollama",
           status: "online",
-          latency: 0,
+          latency: ollamaLatencyMs,
           lastCheck: now,
         });
       }
     }
   } catch (e) {
+    ollamaLatencyMs = Math.round(performance.now() - ollamaT0);
     console.warn("[ModelHealth] Ollama not available:", e);
   }
   
@@ -1365,6 +1492,13 @@ app.get("/api/models/health", async (req, res) => {
       online: models.filter(m => m.status === "online").length,
       lagging: models.filter(m => m.status === "lagging").length,
       offline: models.filter(m => m.status === "offline").length,
+    },
+    ollama: {
+      up: ollamaUp,
+      endpoint: ollamaEndpoint,
+      latencyMs: ollamaLatencyMs,
+      modelCount: ollamaModelCount,
+      lastSync: getRegistry().lastSync,
     },
     models,
   });
@@ -1482,14 +1616,14 @@ app.post("/api/agent/detect-loop", (req, res) => {
     const maxTokens = maxBurstTokens || 96;
     
     // Detect loop/stall
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+    const sentences = text.split(/[.!?]+/).filter((s: string) => s.trim().length > 10);
     const sentenceFreq: Record<string, number> = {};
-    sentences.forEach(s => {
+    sentences.forEach((s: string) => {
       const norm = s.trim().toLowerCase().slice(0, 30);
       sentenceFreq[norm] = (sentenceFreq[norm] || 0) + 1;
     });
     const maxRepeat = Math.max(...Object.values(sentenceFreq), 0);
-    
+
     const words = text.toLowerCase().split(/\s+/);
     const trigramFreq: Record<string, number> = {};
     for (let i = 0; i < words.length - 2; i++) {
@@ -1497,10 +1631,10 @@ app.post("/api/agent/detect-loop", (req, res) => {
       trigramFreq[trigram] = (trigramFreq[trigram] || 0) + 1;
     }
     const maxTrigramRepeat = Math.max(...Object.values(trigramFreq), 0);
-    
+
     const mid = Math.floor(text.length / 2);
-    const firstSet = new Set(text.slice(0, mid).toLowerCase().split(/\s+/).filter(w => w.length > 3));
-    const secondSet = new Set(text.slice(mid).toLowerCase().split(/\s+/).filter(w => w.length > 3));
+    const firstSet = new Set(text.slice(0, mid).toLowerCase().split(/\s+/).filter((w: string) => w.length > 3));
+    const secondSet = new Set(text.slice(mid).toLowerCase().split(/\s+/).filter((w: string) => w.length > 3));
     const union = new Set([...firstSet, ...secondSet]);
     const intersection = new Set([...firstSet].filter(x => secondSet.has(x)));
     const noveltyScore = union.size > 0 ? intersection.size / union.size : 1;
@@ -1902,8 +2036,8 @@ app.post("/api/scrum/candidates/:id/approve", async (req, res) => {
       sessionId: session.id,
       reportPath: exportResult.path,
       status: "completed",
-      decision: decideResult?.output?.decision || "unknown",
-      recommended_actions: reviewResult?.output?.recommended_actions || [],
+      decision: (decideResult?.output as any)?.decision || "unknown",
+      recommended_actions: (reviewResult?.output as any)?.recommended_actions || [],
       sourceContext: candidateContext,
       exportMode,
     });
@@ -1984,7 +2118,7 @@ app.post("/api/scrum/auto-run", async (req, res) => {
     if (currentScrumSession && currentScrumSession.finalStatus !== "complete" && currentScrumSession.finalStatus !== "failed") {
       try {
         let advanced = 0;
-        while (currentScrumSession.finalStatus !== "complete" && currentScrumSession.finalStatus !== "failed") {
+        while ((currentScrumSession as ScrumSession).finalStatus !== "complete" && (currentScrumSession as ScrumSession).finalStatus !== "failed") {
           const { session } = await advanceScrumSession(currentScrumSession);
           currentScrumSession = session;
           advanced++;
@@ -3138,6 +3272,62 @@ const conferenceroomStorage = new ConferenceRoomStorage();
 app.use("/conferenceroom", createConferenceRoomRouter(conferenceroomStorage));
 app.use("/api/criminology", createCriminologyRouter());
 
+// ── Stubs / local helpers ─────────────────────────────────────────────────────
+// logActivity: append a row to the activity_log table if it exists. Fire and
+// forget — failures here should never break the caller.
+async function logActivity(
+  kind: string,
+  message: string,
+  metadata?: Record<string, any>
+): Promise<void> {
+  try {
+    const payload: any[] = [kind, message, metadata ? JSON.stringify(metadata) : null];
+    await (await getPool() as any).query(
+      "INSERT INTO activity_log (kind, message, metadata) VALUES (?, ?, ?)",
+      payload
+    );
+  } catch (err: any) {
+    // table may not exist or column shape may differ — never throw
+    if (process.env.DEBUG) console.warn("[logActivity] failed:", err?.message);
+  }
+}
+
+// writeCoolerTalkToFile: append a markdown record of one cooler session to
+// cooler_talk_log.md. Accepts a CoolerSession or a pre-shaped logEntry.
+function writeCoolerTalkToFile(sessionOrEntry: any): void {
+  try {
+    const logEntry = sessionOrEntry?.utterances
+      ? {
+          timestamp: sessionOrEntry.timestamp || new Date().toISOString(),
+          topic: sessionOrEntry.topic || "(unknown topic)",
+          participants: sessionOrEntry.participants || [],
+          dialogues: (sessionOrEntry.utterances || []).map((u: any) => ({
+            agent: u.speaker,
+            text: u.text,
+          })),
+        }
+      : sessionOrEntry;
+    const md = [
+      "",
+      `## Cooler Talk Session — ${logEntry.timestamp}`,
+      "",
+      `**Topic:** ${logEntry.topic}`,
+      `**Participants:** ${(logEntry.participants || []).join(", ")}`,
+      "",
+      "### Dialogue",
+      "",
+      ...(logEntry.dialogues || []).map((d: any) => `- **${d.agent}:** ${d.text}`),
+      "",
+      "---",
+      "",
+    ].join("\n");
+    const logPath = path.resolve(process.cwd(), "cooler_talk_log.md");
+    fs.appendFileSync(logPath, md, "utf-8");
+  } catch (err: any) {
+    console.warn("[writeCoolerTalkToFile] failed:", err?.message);
+  }
+}
+
 function requireAdmin(req: express.Request, res: express.Response, next: express.NextFunction) {
   const token = process.env.ADMIN_ACCESS_TOKEN;
 
@@ -3203,7 +3393,7 @@ async function getDbSchema(): Promise<{ schema: string; tables: string[] }> {
 
 async function getTableData(tableName: string, limit: number = 10): Promise<any[]> {
   const rows = await runDbQuery(`SELECT * FROM \`${tableName}\` LIMIT ?`, [limit]);
-  return rows.map(row => {
+  return rows.map((row: any) => {
     const parsed: any = {};
     for (const [key, value] of Object.entries(row)) {
       parsed[key] = parseValue(value);
@@ -3425,7 +3615,7 @@ app.post("/api/agent-chat", async (req, res) => {
           { role: "system", content: fullPrompt },
           { role: "user", content: message }
         ];
-        const result = await routeChat(messages, { maxTokens: 1024, model: selectedModel });
+        const result = await routeChat(messages, { max_tokens: 1024, model: selectedModel });
         
         // Track LLM request
         trackLlmRequest("nvidia", selectedModel);
@@ -3498,10 +3688,7 @@ app.post("/api/agent-chat", async (req, res) => {
       res.json({ reply: `I'm having trouble connecting to the AI model right now. Please try again later. (Model: ${selectedModel})` });
       return;
     }
-    
-    res.json({ reply, model: selectedModel });
   } catch (error: any) {
-    if (typeof timeoutId !== 'undefined') clearTimeout(timeoutId);
     if (error.name === 'AbortError') {
       console.error("Agent chat Ollama timeout:", error);
       res.json({ reply: "The AI model is taking too long to respond. Please try again.", model: "timeout" });
@@ -3568,7 +3755,7 @@ app.get("/api/admin/activity", requireAdmin, async (req, res) => {
     const tableNames = tables.map((row: any) => Object.values(row)[0] as string);
 
     if (!tableNames.includes("activity_log")) {
-      res.json({ 
+      res.json({
         events: [],
         message: "Activity logging not yet configured. The activity_log table does not exist."
       });
@@ -3581,6 +3768,333 @@ app.get("/api/admin/activity", requireAdmin, async (req, res) => {
     console.error("Admin activity error:", error);
     res.status(500).json({ error: error.message || "Failed to get activity" });
   }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Artifact cleanup — prune stale files the loop leaves behind.
+//
+// The cooler → scrum loop persists artifacts in six append-only directories
+// plus cooler_talk_log.md. Without pruning, those grow without bound
+// (currently 1131+ files, 1.5MB+ log). This endpoint + background tick keep
+// them bounded, mirroring the existing DB-side 7-day cooler_sessions cleanup.
+//
+// Default retention:
+//   docs/cooler/*.md          — 14 days (per user request)
+//   data/cooler_sessions/*.json — 14 days
+//   data/scrum_candidates/*.json — 14 days  (only `approved`/`rejected`)
+//   data/scrum_logs/*.md      — 30 days
+//   SCRUM_REPORTS/*.md        — 30 days
+//   docs/scrum/*.md           — 30 days
+//   cooler_talk_log.md        — 14 days (split on `## ` markers, parsed first timestamp)
+//   DB cooler_sessions table  — 14 days (overrides startup 7-day default)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CLEANUP_INTERVAL_MS =
+  parseInt(process.env.CLEANUP_INTERVAL_MS || "") || 60 * 60 * 1000; // 1 hour default
+const CLEANUP_DEFAULT_DAYS = parseInt(process.env.CLEANUP_DEFAULT_DAYS || "") || 14;
+const CLEANUP_SCRUM_DAYS = parseInt(process.env.CLEANUP_SCRUM_DAYS || "") || 30;
+
+interface CleanupResult {
+  byKind: Record<string, number>;
+  total: number;
+  cutoffDate: string;
+  dryRun: boolean;
+  errors: string[];
+  durationMs: number;
+}
+
+interface CleanupState {
+  lastRun: string | null;
+  lastResult: CleanupResult | null;
+  intervalMs: number;
+  active: boolean;
+  nextRun: string | null;
+  defaults: {
+    daysToKeep: number;
+    daysToKeepScrum: number;
+  };
+}
+
+const cleanupState: CleanupState = {
+  lastRun: null,
+  lastResult: null,
+  intervalMs: CLEANUP_INTERVAL_MS,
+  active: false,
+  nextRun: null,
+  defaults: {
+    daysToKeep: CLEANUP_DEFAULT_DAYS,
+    daysToKeepScrum: CLEANUP_SCRUM_DAYS,
+  },
+};
+
+let cleanupInterval: NodeJS.Timeout | null = null;
+
+function pruneFilesInDir(
+  dir: string,
+  cutoffMs: number,
+  dryRun: boolean,
+  predicate?: (filePath: string) => boolean
+): { deleted: number; errors: string[] } {
+  const errors: string[] = [];
+  let deleted = 0;
+  try {
+    if (!fs.existsSync(dir)) return { deleted: 0, errors };
+    const entries = fs.readdirSync(dir);
+    for (const name of entries) {
+      const full = path.join(dir, name);
+      try {
+        const stat = fs.statSync(full);
+        if (!stat.isFile()) continue;
+        if (predicate && !predicate(full)) continue;
+        if (stat.mtimeMs < cutoffMs) {
+          if (!dryRun) fs.unlinkSync(full);
+          deleted++;
+        }
+      } catch (e: any) {
+        errors.push(`${name}: ${e.message}`);
+      }
+    }
+  } catch (e: any) {
+    errors.push(`dir ${dir}: ${e.message}`);
+  }
+  return { deleted, errors };
+}
+
+function pruneCoolerTalkLog(cutoffMs: number, dryRun: boolean): { deleted: number; errors: string[] } {
+  const errors: string[] = [];
+  const logPath = path.resolve(process.cwd(), "cooler_talk_log.md");
+  if (!fs.existsSync(logPath)) return { deleted: 0, errors };
+  try {
+    const text = fs.readFileSync(logPath, "utf-8");
+    // Entries start with `## YYYY-MM-DDTHH:MM:SS...` — split on those markers.
+    const blocks = text.split(/(?=^## )/m);
+    const kept: string[] = [];
+    let dropped = 0;
+    const header = blocks[0]?.startsWith("## ") ? "" : (blocks.shift() || "");
+    if (header) kept.push(header);
+    for (const block of blocks) {
+      const tsMatch = block.match(/^## (\d{4}-\d{2}-\d{2}T[\d:.Z+-]+)/);
+      if (!tsMatch) {
+        kept.push(block);
+        continue;
+      }
+      const ts = Date.parse(tsMatch[1]);
+      if (Number.isFinite(ts) && ts < cutoffMs) {
+        dropped++;
+      } else {
+        kept.push(block);
+      }
+    }
+    if (dropped > 0 && !dryRun) {
+      fs.writeFileSync(logPath, kept.join(""), "utf-8");
+    }
+    return { deleted: dropped, errors };
+  } catch (e: any) {
+    errors.push(`cooler_talk_log.md: ${e.message}`);
+    return { deleted: 0, errors };
+  }
+}
+
+async function runCleanup(opts: {
+  daysToKeep?: number;
+  daysToKeepScrum?: number;
+  dryRun?: boolean;
+} = {}): Promise<CleanupResult> {
+  const t0 = performance.now();
+  const daysToKeep = opts.daysToKeep ?? CLEANUP_DEFAULT_DAYS;
+  const daysToKeepScrum = opts.daysToKeepScrum ?? CLEANUP_SCRUM_DAYS;
+  const dryRun = !!opts.dryRun;
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - daysToKeep);
+  const scrumCutoffDate = new Date();
+  scrumCutoffDate.setDate(scrumCutoffDate.getDate() - daysToKeepScrum);
+  const cutoffMs = cutoffDate.getTime();
+  const scrumCutoffMs = scrumCutoffDate.getTime();
+
+  const byKind: Record<string, number> = {};
+  const errors: string[] = [];
+
+  // docs/cooler/*.md — 14d default
+  const r1 = pruneFilesInDir(
+    path.resolve(process.cwd(), "docs/cooler"),
+    cutoffMs,
+    dryRun,
+    (f) => f.endsWith(".md")
+  );
+  byKind["docs/cooler"] = r1.deleted;
+  errors.push(...r1.errors);
+
+  // data/cooler_sessions/*.json — 14d default (keep location files longer)
+  const r2 = pruneFilesInDir(
+    path.resolve(process.cwd(), "data/cooler_sessions"),
+    cutoffMs,
+    dryRun,
+    (f) => f.endsWith(".json") && path.basename(f) !== "kitchen.json"
+  );
+  byKind["data/cooler_sessions"] = r2.deleted;
+  errors.push(...r2.errors);
+
+  // data/scrum_candidates/*.json — 14d default. Only prune terminal-state
+  // candidates; never delete pending or in-progress ones (the auto-runner
+  // needs them).
+  const r3 = pruneFilesInDir(
+    path.resolve(process.cwd(), "data/scrum_candidates"),
+    cutoffMs,
+    dryRun,
+    (f) => {
+      if (!f.endsWith(".json")) return false;
+      try {
+        const raw = fs.readFileSync(f, "utf-8");
+        const obj = JSON.parse(raw);
+        return obj?.status === "approved" || obj?.status === "rejected";
+      } catch {
+        return false;
+      }
+    }
+  );
+  byKind["data/scrum_candidates"] = r3.deleted;
+  errors.push(...r3.errors);
+
+  // data/scrum_logs/*.md — 30d default
+  const r4 = pruneFilesInDir(
+    path.resolve(process.cwd(), "data/scrum_logs"),
+    scrumCutoffMs,
+    dryRun,
+    (f) => f.endsWith(".md")
+  );
+  byKind["data/scrum_logs"] = r4.deleted;
+  errors.push(...r4.errors);
+
+  // SCRUM_REPORTS/*.md — 30d default
+  const r5 = pruneFilesInDir(
+    path.resolve(process.cwd(), "SCRUM_REPORTS"),
+    scrumCutoffMs,
+    dryRun,
+    (f) => f.endsWith(".md")
+  );
+  byKind["SCRUM_REPORTS"] = r5.deleted;
+  errors.push(...r5.errors);
+
+  // docs/scrum/*.md — 30d default
+  const r6 = pruneFilesInDir(
+    path.resolve(process.cwd(), "docs/scrum"),
+    scrumCutoffMs,
+    dryRun,
+    (f) => f.endsWith(".md")
+  );
+  byKind["docs/scrum"] = r6.deleted;
+  errors.push(...r6.errors);
+
+  // cooler_talk_log.md — 14d default (parsed entry by entry)
+  const r7 = pruneCoolerTalkLog(cutoffMs, dryRun);
+  byKind["cooler_talk_log"] = r7.deleted;
+  errors.push(...r7.errors);
+
+  // DB cooler_sessions — same cutoff as file artifacts (overrides startup 7d)
+  try {
+    const pool = (await getPool()) as any;
+    const dbType = getConfig().db.type;
+    let q = "DELETE FROM cooler_sessions WHERE created_at < ?";
+    const params: any[] = [cutoffDate];
+    if (dbType === "postgres") {
+      q = q.replace(/\?/g, (_m: string, i: number) => `$${i + 1}`);
+      const result = await pool.query(q, params);
+      byKind["db_cooler_sessions"] = result.rowCount || 0;
+    } else {
+      const [result] = await pool.query(q, params);
+      byKind["db_cooler_sessions"] = result.affectedRows || 0;
+    }
+  } catch (e: any) {
+    // table might not exist — record but don't fail the whole cleanup
+    errors.push(`db_cooler_sessions: ${e.message}`);
+    byKind["db_cooler_sessions"] = 0;
+  }
+
+  const total = Object.values(byKind).reduce((a, b) => a + b, 0);
+  const result: CleanupResult = {
+    byKind,
+    total,
+    cutoffDate: cutoffDate.toISOString(),
+    dryRun,
+    errors,
+    durationMs: Math.round(performance.now() - t0),
+  };
+  return result;
+}
+
+app.post("/api/admin/cleanup", requireAdmin, async (req, res) => {
+  try {
+    const opts = {
+      daysToKeep: req.body?.daysToKeep,
+      daysToKeepScrum: req.body?.daysToKeepScrum,
+      dryRun: !!req.body?.dryRun,
+    };
+    const result = await runCleanup(opts);
+    cleanupState.lastRun = new Date().toISOString();
+    cleanupState.lastResult = result;
+    console.log(
+      `[Cleanup] deleted=${result.total} dryRun=${result.dryRun} ` +
+      `cooler-cutoff=${result.cutoffDate} ` +
+      `byKind=${JSON.stringify(result.byKind)} ` +
+      `errors=${result.errors.length}`
+    );
+    res.json({ ok: true, ...result });
+  } catch (error: any) {
+    console.error("Cleanup error:", error);
+    res.status(500).json({ ok: false, error: error.message || "Cleanup failed" });
+  }
+});
+
+app.get("/api/admin/cleanup/status", requireAdmin, (_req, res) => {
+  res.json({
+    cleanup: {
+      ...cleanupState,
+      nextRun:
+        cleanupState.active && cleanupState.lastRun
+          ? new Date(
+              Date.parse(cleanupState.lastRun) + cleanupState.intervalMs
+            ).toISOString()
+          : null,
+    },
+    autoRunner: {
+      active: autoRunInterval !== null,
+      intervalMs: getActiveInterval(AUTO_RUN_INTERVAL_MS),
+      nightMode: nightModeActive,
+      nightModeMultiplier: NIGHT_MODE_MULTIPLIER,
+    },
+  });
+});
+
+app.post("/api/admin/cleanup/start", requireAdmin, (_req, res) => {
+  if (cleanupInterval) {
+    return res.json({ ok: true, active: true, message: "Cleanup already running" });
+  }
+  // First run immediately (best-effort; failures don't kill the tick).
+  runCleanup({}).then((r) => {
+    cleanupState.lastRun = new Date().toISOString();
+    cleanupState.lastResult = r;
+  }).catch((e) => console.warn("[Cleanup] initial run failed:", e?.message));
+  cleanupInterval = setInterval(() => {
+    runCleanup({}).then((r) => {
+      cleanupState.lastRun = new Date().toISOString();
+      cleanupState.lastResult = r;
+      if (r.total > 0) {
+        console.log(`[Cleanup] tick: deleted=${r.total} byKind=${JSON.stringify(r.byKind)}`);
+      }
+    }).catch((e) => console.warn("[Cleanup] tick failed:", e?.message));
+  }, CLEANUP_INTERVAL_MS);
+  cleanupState.active = true;
+  console.log(`[Cleanup] Background tick started. Interval: ${CLEANUP_INTERVAL_MS / 1000}s, default days: cooler=${CLEANUP_DEFAULT_DAYS}, scrum=${CLEANUP_SCRUM_DAYS}`);
+  res.json({ ok: true, active: true, intervalMs: CLEANUP_INTERVAL_MS });
+});
+
+app.post("/api/admin/cleanup/stop", requireAdmin, (_req, res) => {
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+  cleanupState.active = false;
+  res.json({ ok: true, active: false });
 });
 
 app.post("/api/admin/actions/evaluate-stock-forecasts", requireAdmin, async (req, res) => {
@@ -4306,6 +4820,30 @@ app.listen(Number(PORT), "127.0.0.1", () => {
     runAutoRun().catch(() => {});
     autoRunInterval = setInterval(runAutoRun, intervalMs);
     console.log(`[AutoRun] Auto-started. Interval: ${intervalMs/1000}s (night mode: ${nightModeActive})`);
+
+    // Auto-start background cleanup tick. Disabled by default — opt in
+    // with CLEANUP_AUTOSTART=true once you've confirmed the retention
+    // defaults match your expectations.
+    if (process.env.CLEANUP_AUTOSTART === "true") {
+      cleanupState.lastRun = new Date().toISOString();
+      runCleanup({}).then((r) => {
+        cleanupState.lastResult = r;
+        console.log(`[Cleanup] boot run: deleted=${r.total} byKind=${JSON.stringify(r.byKind)}`);
+      }).catch((e) => console.warn("[Cleanup] boot run failed:", e?.message));
+      cleanupInterval = setInterval(() => {
+        runCleanup({}).then((r) => {
+          cleanupState.lastRun = new Date().toISOString();
+          cleanupState.lastResult = r;
+          if (r.total > 0) {
+            console.log(`[Cleanup] tick: deleted=${r.total} byKind=${JSON.stringify(r.byKind)}`);
+          }
+        }).catch((e) => console.warn("[Cleanup] tick failed:", e?.message));
+      }, CLEANUP_INTERVAL_MS);
+      cleanupState.active = true;
+      console.log(`[Cleanup] Auto-started. Interval: ${CLEANUP_INTERVAL_MS/1000}s, default days: cooler=${CLEANUP_DEFAULT_DAYS}, scrum=${CLEANUP_SCRUM_DAYS}`);
+    } else {
+      console.log(`[Cleanup] Background tick disabled. Set CLEANUP_AUTOSTART=true or POST /api/admin/cleanup/start to enable.`);
+    }
   }, 5000);
 });
 
@@ -4572,7 +5110,7 @@ interface WorkflowTask {
   summary: string;
   inputs: Record<string, any>;
   worklog: Array<{ timestamp: string; agent: string; action: string; note: string }>;
-  artifacts: Array<{ type: string; content: string }>;
+  artifacts: Array<{ type: string; content: string; document?: string; question?: string }>;
   response?: string;
   createdAt: string;
   priority: string;
@@ -4584,8 +5122,8 @@ function generateTaskId(): string {
   return `task_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 }
 
-async function fetchGitHubFile(owner: string, repo: string, path: string, token?: string): Promise<{ content: string; sha: string } | null> {
-  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+async function fetchGitHubFile(owner: string, repo: string, filePath: string, token?: string): Promise<{ content: string; sha: string } | null> {
+  const url = `https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`;
   
   const headers: Record<string, string> = {
     "Accept": "application/vnd.github.v3+json",
@@ -5205,7 +5743,6 @@ app.get("/api/flow", (req, res) => {
 // ============================================================================
 
 import { spawn } from "child_process";
-import * as path from "path";
 
 const OPENCODE_AUDIT_BIN = process.env.OPENCOD_AUDIT_BIN || path.resolve(process.cwd(), "..", "tools", "opencode_audit", "opencode_audit.py");
 const AUDIT_DATA_DIR = path.resolve(process.cwd(), "data/audits");
@@ -5436,7 +5973,7 @@ app.get("/api/audit", async (req, res) => {
     
     ensureDir(PROMPT_CARDS_DIR);
     
-    const files = fs.readdirSync(PROMPT_CARDS_DIR).filter(f => f.endsWith(".json"));
+    const files = fs.readdirSync(PROMPT_CARDS_DIR).filter((f: string) => f.endsWith(".json"));
     let cards: PromptCard[] = [];
     
     for (const file of files) {
@@ -5654,7 +6191,7 @@ app.post("/api/conversation/save", async (req, res) => {
       session.utterances.push({
         speaker: turn.speaker,
         text: turn.text,
-        intent: "inform" as const,
+        intent: "inform" as any,
         replyTo: session.utterances.length > 0 ? session.utterances.length - 1 : null,
       });
       session.currentTurn++;
