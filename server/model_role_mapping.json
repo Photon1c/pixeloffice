@@ -1,7 +1,19 @@
 {
   "_available": {
-    "lastSync": "2026-08-20T20:36:34.169Z",
+    "lastSync": "2026-09-16T07:34:27.284Z",
     "models": {
+      "emapper:latest": {
+        "name": "emapper:latest",
+        "size": 5629122057
+      },
+      "tinyllama:latest": {
+        "name": "tinyllama:latest",
+        "size": 637700138
+      },
+      "cicero3:latest": {
+        "name": "cicero3:latest",
+        "size": 5629113486
+      },
       "dolphin-llama3:8b": {
         "name": "dolphin-llama3:8b",
         "size": 4661235994
@@ -14,13 +26,13 @@
         "name": "geometrid:latest",
         "size": 5629116807
       },
-      "ornith:latest": {
-        "name": "ornith:latest",
-        "size": 5629110568
-      },
       "cicero-sharp:latest": {
         "name": "cicero-sharp:latest",
         "size": 5629110056
+      },
+      "ornith:latest": {
+        "name": "ornith:latest",
+        "size": 5629110568
       },
       "qwen2.5:7b": {
         "name": "qwen2.5:7b",

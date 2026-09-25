@@ -1,0 +1,67 @@
+{
+  "lastScan": "2026-09-24T23:08:15Z",
+  "scanDuration": 1250,
+  "riskLevel": "green",
+  "totalIncidents": 28,
+  "criticalCount": 0,
+  "highCount": 0,
+  "mediumCount": 9,
+  "lowCount": 14,
+  "infoCount": 5,
+  "recentIncidents": [
+    {
+      "timestamp": "2026-09-24T23:05:00Z",
+      "level": "low",
+      "category": "SSH",
+      "description": "SSH connection attempt from port 64636",
+      "source": "127.0.0.1:64636",
+      "resolved": false
+    },
+    {
+      "timestamp": "2026-09-24T22:45:00Z",
+      "level": "medium",
+      "category": "SSH",
+      "description": "SSH tunnel attempt to dead port",
+      "source": "172.16.0.0/12",
+      "resolved": false
+    },
+    {
+      "timestamp": "2026-09-24T22:30:00Z",
+      "level": "low",
+      "category": "ENV",
+      "description": "Runtime environment variable detected in logs",
+      "source": "OpenClaw keystore",
+      "resolved": false
+    },
+    {
+      "timestamp": "2026-09-24T22:15:00Z",
+      "level": "info",
+      "category": "GATEWAY",
+      "description": "Gateway health check passed",
+      "source": ":18789",
+      "resolved": true
+    },
+    {
+      "timestamp": "2026-09-24T22:00:00Z",
+      "level": "low",
+      "category": "CRON",
+      "description": "Scheduled job executed successfully",
+      "source": "jackrabbit_trader",
+      "resolved": true
+    }
+  ],
+  "categories": {
+    "SSH": 8,
+    "ENV": 6,
+    "GATEWAY": 5,
+    "CRON": 4,
+    "PROCESS": 3,
+    "FIREWALL": 2
+  },
+  "sensitiveEnvVars": 19,
+  "suspiciousPatterns": [
+    "Repeated failed SSH attempts on non-standard ports (1420, 5160, 64636)",
+    "Dead port connections in tunnel logs (port 3006, 5001)",
+    "Environment variable leakage in debug logs"
+  ]
+}

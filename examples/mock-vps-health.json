@@ -1,0 +1,72 @@
+{
+  "gateway": {
+    "up": true,
+    "latency": 42
+  },
+  "disk": {
+    "percentUsed": 45,
+    "total": "500 GB",
+    "used": "225 GB"
+  },
+  "cpu": {
+    "percentUsed": 28
+  },
+  "ram": {
+    "percentUsed": 62,
+    "total": "32 GB",
+    "used": "19.8 GB"
+  },
+  "services": {
+    "ollama": true,
+    "gateway": true,
+    "keycloak": true,
+    "bowr": true,
+    "flight-sim": false,
+    "trading-cron": true
+  },
+  "cron": {
+    "active": 5,
+    "total": 8
+  },
+  "ollama": {
+    "running": true,
+    "models": 21
+  },
+  "uptime": {
+    "days": 45,
+    "hours": 12,
+    "minutes": 33
+  },
+  "devices": {
+    "eth0": {
+      "type": "ethernet",
+      "status": "up"
+    },
+    "docker0": {
+      "type": "bridge",
+      "status": "up"
+    },
+    "veth123abc": {
+      "type": "veth",
+      "status": "up"
+    }
+  },
+  "gates": {
+    "gate_a": {
+      "status": "synced",
+      "lastSync": "2026-09-24T23:00:00Z"
+    },
+    "gate_b": {
+      "status": "synced",
+      "lastSync": "2026-09-24T23:05:00Z"
+    },
+    "gate_c": {
+      "status": "pending",
+      "lastSync": "2026-09-24T22:55:00Z"
+    },
+    "gate_e": {
+      "status": "synced",
+      "lastSync": "2026-09-24T23:02:00Z"
+    }
+  }
+}

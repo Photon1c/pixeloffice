@@ -1,0 +1,828 @@
+/* Infrastructure Widgets Stylesheet */
+
+.widget-container {
+  background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  font-family: "Monaco", "Courier New", monospace;
+  font-size: 12px;
+  color: #e0e0e0;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #0f3460;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+}
+
+.widget-title {
+  font-weight: bold;
+  color: #00d4ff;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.widget-timestamp {
+  font-size: 10px;
+  color: #666;
+}
+
+.widget-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.widget-content.error {
+  color: #ff4444;
+  padding: 16px;
+  text-align: center;
+}
+
+/* Common Section Styles */
+.vps-section,
+.security-section,
+.explorer-section {
+  border-left: 2px solid #0f3460;
+  padding-left: 12px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.section-title {
+  font-weight: bold;
+  color: #00d4ff;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.healthy {
+  background: #4ade80;
+  color: #0a0a0a;
+}
+
+.status-badge.warning {
+  background: #facc15;
+  color: #0a0a0a;
+}
+
+.status-badge.critical {
+  background: #ef4444;
+  color: white;
+}
+
+/* VPS Health Widget Specific */
+.vps-health-widget .status-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.vps-health-widget .latency {
+  color: #888;
+  font-size: 10px;
+}
+
+.vps-health-widget .model-count {
+  color: #888;
+  font-size: 10px;
+}
+
+.metric-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 80px;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.metric-label {
+  font-weight: 600;
+  color: #00d4ff;
+}
+
+.metric-bar-container {
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 3px;
+  height: 16px;
+  overflow: hidden;
+}
+
+.metric-bar {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+  border-radius: 2px;
+}
+
+.metric-bar.healthy {
+  background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+}
+
+.metric-bar.warning {
+  background: linear-gradient(90deg, #facc15 0%, #eab308 100%);
+}
+
+.metric-bar.critical {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+}
+
+.metric-value {
+  text-align: right;
+  color: #ccc;
+  font-size: 11px;
+}
+
+.uptime-display {
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 8px;
+  text-align: center;
+  color: #4ade80;
+  font-weight: bold;
+  font-family: "Monaco", monospace;
+}
+
+.cron-display {
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 8px;
+  text-align: center;
+  color: #00d4ff;
+  font-weight: bold;
+}
+
+.services-grid,
+.gates-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.service-item,
+.gate-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 10px;
+}
+
+.service-item.up {
+  border-left: 3px solid #4ade80;
+}
+
+.service-item.down {
+  border-left: 3px solid #ef4444;
+}
+
+.service-name,
+.gate-name {
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.service-status {
+  margin-left: 6px;
+  font-weight: bold;
+}
+
+.service-status.healthy {
+  color: #4ade80;
+}
+
+.service-status.critical {
+  color: #ef4444;
+}
+
+.gate-status {
+  margin-left: 6px;
+  font-weight: bold;
+}
+
+.gate-status.synced {
+  color: #4ade80;
+}
+
+.gate-status.pending {
+  color: #facc15;
+}
+
+.gate-status.failed {
+  color: #ef4444;
+}
+
+/* Security Patrol Widget Specific */
+.security-patrol-widget .risk-badge {
+  display: inline-block;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.risk-badge.critical {
+  background: #ef4444;
+  color: white;
+}
+
+.risk-badge.high {
+  background: #f97316;
+  color: white;
+}
+
+.risk-badge.warning {
+  background: #facc15;
+  color: #0a0a0a;
+}
+
+.risk-badge.healthy {
+  background: #4ade80;
+  color: #0a0a0a;
+}
+
+.scan-info {
+  font-size: 10px;
+  color: #888;
+  margin-top: 4px;
+}
+
+.incident-counts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.count-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 8px;
+  text-align: center;
+}
+
+.count-item.critical {
+  border-left: 3px solid #ef4444;
+}
+
+.count-item.high {
+  border-left: 3px solid #f97316;
+}
+
+.count-item.medium {
+  border-left: 3px solid #facc15;
+}
+
+.count-item.low {
+  border-left: 3px solid #3b82f6;
+}
+
+.count-item.info {
+  border-left: 3px solid #8b5cf6;
+}
+
+.count-number {
+  font-weight: bold;
+  font-size: 14px;
+  color: #00d4ff;
+}
+
+.count-label {
+  font-size: 9px;
+  color: #999;
+  margin-top: 2px;
+}
+
+.incidents-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.incident-item {
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.incident-item:hover {
+  border-color: #00d4ff;
+}
+
+.incident-item.critical {
+  border-left: 3px solid #ef4444;
+}
+
+.incident-item.high {
+  border-left: 3px solid #f97316;
+}
+
+.incident-item.medium {
+  border-left: 3px solid #facc15;
+}
+
+.incident-item.low {
+  border-left: 3px solid #3b82f6;
+}
+
+.incident-item.info {
+  border-left: 3px solid #8b5cf6;
+}
+
+.incident-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+}
+
+.incident-icon {
+  font-size: 12px;
+}
+
+.incident-category {
+  font-weight: bold;
+  color: #00d4ff;
+  flex-grow: 1;
+}
+
+.incident-time {
+  color: #888;
+  font-size: 9px;
+}
+
+.incident-detail {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #0f3460;
+  font-size: 10px;
+  color: #ccc;
+}
+
+.incident-detail p {
+  margin: 4px 0;
+}
+
+.incident-detail .source {
+  color: #888;
+  font-style: italic;
+}
+
+.incident-detail .resolved {
+  color: #4ade80;
+  font-weight: bold;
+}
+
+.categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.category-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 10px;
+}
+
+.category-name {
+  flex-grow: 1;
+}
+
+.category-count {
+  background: #0f3460;
+  padding: 2px 6px;
+  border-radius: 3px;
+  color: #00d4ff;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+.security-section.suspicious,
+.security-section.warning {
+  border-left-color: #ef4444;
+}
+
+.patterns-list,
+.env-vars-count {
+  background: #0a0a0a;
+  border-left: 2px solid #ef4444;
+  border-radius: 4px;
+  padding: 8px;
+  margin-top: 6px;
+}
+
+.pattern-item {
+  color: #f97316;
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+
+.pattern-item:last-child {
+  margin-bottom: 0;
+}
+
+.env-vars-count {
+  color: #facc15;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* Explorer Maintenance Widget Specific */
+.explorer-maintenance-widget .health-badge {
+  display: inline-block;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 11px;
+  margin-bottom: 6px;
+}
+
+.health-badge.healthy {
+  background: #4ade80;
+  color: #0a0a0a;
+}
+
+.health-badge.warning {
+  background: #facc15;
+  color: #0a0a0a;
+}
+
+.health-badge.critical {
+  background: #ef4444;
+  color: white;
+}
+
+.file-counts {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+  font-size: 10px;
+  color: #888;
+}
+
+.directories-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.directory-item {
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.directory-item:hover {
+  border-color: #00d4ff;
+}
+
+.dir-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+}
+
+.dir-name {
+  font-weight: bold;
+  color: #00d4ff;
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dir-size {
+  color: #4ade80;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.dir-detail {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid #0f3460;
+  font-size: 9px;
+  color: #888;
+}
+
+.cache-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.cache-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 10px;
+}
+
+.cache-name {
+  flex-grow: 1;
+  color: #00d4ff;
+}
+
+.cache-size {
+  color: #888;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+.git-status-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.git-item {
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 8px;
+  text-align: center;
+  font-size: 10px;
+}
+
+.git-item.healthy {
+  border-left: 3px solid #4ade80;
+}
+
+.git-item.warning {
+  border-left: 3px solid #facc15;
+}
+
+.git-item.info {
+  border-left: 3px solid #00d4ff;
+}
+
+.git-name {
+  display: block;
+  font-weight: bold;
+  color: #00d4ff;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.git-status {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.file-count {
+  display: block;
+  font-size: 9px;
+  color: #888;
+}
+
+.tasks-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.task-item {
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 10px;
+}
+
+.task-item.pending {
+  border-left: 3px solid #facc15;
+}
+
+.task-item.running {
+  border-left: 3px solid #3b82f6;
+}
+
+.task-item.completed {
+  border-left: 3px solid #4ade80;
+}
+
+.task-item.failed {
+  border-left: 3px solid #ef4444;
+}
+
+.task-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.task-icon {
+  font-size: 11px;
+}
+
+.task-name {
+  flex-grow: 1;
+  font-weight: bold;
+  color: #00d4ff;
+}
+
+.task-status {
+  font-weight: bold;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: #0f3460;
+}
+
+.task-status.pending {
+  color: #facc15;
+}
+
+.task-status.running {
+  color: #3b82f6;
+}
+
+.task-status.completed {
+  color: #4ade80;
+}
+
+.task-status.failed {
+  color: #ef4444;
+}
+
+.task-times {
+  display: flex;
+  gap: 12px;
+  font-size: 9px;
+  color: #888;
+}
+
+.last-run,
+.next-run {
+  white-space: nowrap;
+}
+
+.backup-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 10px;
+}
+
+.backup-item.ok {
+  border-left: 3px solid #4ade80;
+}
+
+.backup-item.overdue {
+  border-left: 3px solid #facc15;
+}
+
+.backup-item.failed {
+  border-left: 3px solid #ef4444;
+}
+
+.backup-status {
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.backup-status.ok {
+  color: #4ade80;
+}
+
+.backup-status.overdue {
+  color: #facc15;
+}
+
+.backup-status.failed {
+  color: #ef4444;
+}
+
+.backup-time {
+  flex-grow: 1;
+  color: #ccc;
+}
+
+.explorer-section.recommended {
+  border-left-color: #00d4ff;
+}
+
+.actions-list {
+  background: #0a0a0a;
+  border: 1px solid #0f3460;
+  border-radius: 4px;
+  padding: 8px;
+  margin-top: 6px;
+}
+
+.action-item {
+  color: #00d4ff;
+  font-size: 10px;
+  margin-bottom: 4px;
+  line-height: 1.4;
+}
+
+.action-item:last-child {
+  margin-bottom: 0;
+}
+
+/* Scrollbar Styling */
+.widget-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.widget-container::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+
+.widget-container::-webkit-scrollbar-thumb {
+  background: #0f3460;
+  border-radius: 3px;
+}
+
+.widget-container::-webkit-scrollbar-thumb:hover {
+  background: #00d4ff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .metric-row {
+    grid-template-columns: 70px 1fr 70px;
+  }
+
+  .services-grid,
+  .gates-grid,
+  .categories-grid,
+  .cache-grid,
+  .git-status-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .incident-counts {
+    grid-template-columns: repeat(auto-fit, minmax(50px, 1fr));
+  }
+}

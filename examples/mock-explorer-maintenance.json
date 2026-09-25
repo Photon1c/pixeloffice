@@ -1,0 +1,106 @@
+{
+  "timestamp": "2026-09-24T23:08:15Z",
+  "diskUsagePercent": 45,
+  "diskUsageGb": 180,
+  "diskTotalGb": 400,
+  "fileCount": 850000,
+  "directoryCount": 180000,
+  "largestDirectories": [
+    {
+      "name": "HuggingFace",
+      "sizeGb": 42.5,
+      "fileCount": 12500
+    },
+    {
+      "name": "npm_modules",
+      "sizeGb": 25.3,
+      "fileCount": 450000
+    },
+    {
+      "name": "opencode",
+      "sizeGb": 18.7,
+      "fileCount": 85000
+    },
+    {
+      "name": "projects",
+      "sizeGb": 15.2,
+      "fileCount": 42000
+    }
+  ],
+  "gitStatus": {
+    "systems-lab": {
+      "status": "clean",
+      "files": 0
+    },
+    "pixel_office": {
+      "status": "clean",
+      "files": 0
+    },
+    "opencode": {
+      "status": "dirty",
+      "files": 5
+    },
+    "infrastructure": {
+      "status": "ahead",
+      "files": 8
+    },
+    "sherlock-trader": {
+      "status": "clean",
+      "files": 0
+    }
+  },
+  "maintenanceTasks": [
+    {
+      "id": "disk_cleanup",
+      "name": "Disk Cleanup",
+      "status": "completed",
+      "lastRun": "2026-09-17T00:00:00Z",
+      "nextScheduled": "2026-10-01T00:00:00Z"
+    },
+    {
+      "id": "git_audit",
+      "name": "Git Repository Audit",
+      "status": "completed",
+      "lastRun": "2026-09-21T00:00:00Z",
+      "nextScheduled": "2026-09-28T00:00:00Z"
+    },
+    {
+      "id": "backup",
+      "name": "System Backup",
+      "status": "pending",
+      "nextScheduled": "2026-09-25T02:00:00Z"
+    },
+    {
+      "id": "cache_cleanup",
+      "name": "Cache Cleanup",
+      "status": "running",
+      "lastRun": "2026-09-24T20:00:00Z",
+      "nextScheduled": "2026-10-01T20:00:00Z"
+    }
+  ],
+  "fileSystemHealth": "healthy",
+  "cacheSize": [
+    {
+      "name": "HuggingFace",
+      "sizeGb": 42.5
+    },
+    {
+      "name": "npm",
+      "sizeGb": 8.2
+    },
+    {
+      "name": "pip",
+      "sizeGb": 3.1
+    }
+  ],
+  "recommendedActions": [
+    "System is running optimally",
+    "Consider archiving old project backups quarterly",
+    "Commit pending changes in opencode repo before next sync",
+    "Monitor HuggingFace cache usage (approaching 50GB threshold)"
+  ],
+  "backupStatus": {
+    "lastBackup": "2026-09-23T02:15:00Z",
+    "status": "ok"
+  }
+}
