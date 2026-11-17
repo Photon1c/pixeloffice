@@ -1,6 +1,6 @@
 import mapping from "./model_role_mapping.json";
 
-export type RoleId = "custodian" | "clerk" | "specialist" | "executive" | "office_assistant" | "workload_planner";
+export type RoleId = "custodian" | "clerk" | "specialist" | "executive" | "office_assistant" | "workload_planner" | "archivist" | "receptionist";
 
 // Autonomy Zones: Green (auto), Yellow (propose/approve), Red (human only)
 export const AUTONOMY_ZONES = {

@@ -730,6 +730,15 @@ function selectWeightedParticipants(participants: string[], count: number): stri
 }
 import { getActiveHeat, depositReviewHeat } from "./cooler/reviewHeat.js";
 import { createScrumSession, advanceScrumSession } from "./scrum/scrumController.js";
+import {
+  createReflexiveArbiterSession,
+  advanceReflexiveArbiterSession,
+  loadAssessment,
+  listAssessments,
+  getAssessmentReport,
+} from "./scrum/reflexiveArbiterController.js";
+import type { ReflexiveArbiterSession } from "./scrum/reflexiveArbiterTypes.js";
+import { createEvidenceCollector } from "./scrum/arbiterEvidenceCollector.js";
 import { runRoomTurn, exportRoomSession } from "./services/coolerTalkService.js";
 import {
   createCoolerSession,
@@ -756,6 +765,7 @@ import {
 import type { ScrumSession } from "./scrum/types.js";
 
 let currentScrumSession: ScrumSession | null = null;
+let currentArbiterSession: ReflexiveArbiterSession | null = null;
 
 const PIXEL_ME_URL = "http://127.0.0.1:5001";
 const KB_SERVER_URL = "http://127.0.0.1:8787";
@@ -2221,6 +2231,258 @@ app.get("/api/scrum/github/status", async (req, res) => {
       ? `GitHub integration configured for ${repo} (${branch})`
       : "GitHub not configured. Set GITHUB_TOKEN and SAFE_SCRUM_REPO to enable."
   });
+});
+
+// ============================================================================
+// Reflexive Arbiter — Governance Divergence Assessment Endpoints
+// ============================================================================
+
+app.post("/api/arbiter/start", async (req, res) => {
+  try {
+    const { topic, systemScope, participants, sourceContext, repo, systemDescription, institutionalContext, boundaries } = req.body;
+    
+    if (!topic || !systemScope) {
+      return res.status(400).json({ error: "topic and systemScope are required" });
+    }
+    
+    const arbiterParticipants = participants || ["clerk", "specialist", "executive", "archivist"];
+    
+    currentArbiterSession = createReflexiveArbiterSession(
+      topic,
+      systemScope,
+      arbiterParticipants,
+      sourceContext,
+      repo
+    );
+    
+    const { session, stageResult } = await advanceReflexiveArbiterSession(currentArbiterSession, {
+      systemDescription,
+      institutionalContext,
+      boundaries,
+    });
+    currentArbiterSession = session;
+    
+    res.json({
+      session,
+      stageResult,
+      message: `Reflexive Arbiter started at stage: ${stageResult.stage}`
+    });
+  } catch (error: any) {
+    console.error("Error starting Reflexive Arbiter session:", error);
+    res.status(500).json({ error: "Failed to start Reflexive Arbiter session" });
+  }
+});
+
+app.post("/api/arbiter/advance", async (req, res) => {
+  try {
+    if (!currentArbiterSession) {
+      return res.status(400).json({ error: "No active Reflexive Arbiter session. Start one first." });
+    }
+    
+    if (currentArbiterSession.finalStatus === "complete") {
+      res.json({
+        session: currentArbiterSession,
+        message: "Reflexive Arbiter session already complete",
+        complete: true
+      });
+      return;
+    }
+    
+    // Automatically use evidence collector for independent_investigation stage
+    let evidenceCollector = req.body.evidenceCollector;
+    if (currentArbiterSession.currentStage === "independent_investigation" && !evidenceCollector) {
+      evidenceCollector = await createEvidenceCollector("specialist");
+    }
+    
+    const { session, stageResult } = await advanceReflexiveArbiterSession(currentArbiterSession, {
+      evidenceCollector,
+    });
+    currentArbiterSession = session;
+    
+    res.json({
+      session,
+      stageResult,
+      message: `Advanced to stage: ${stageResult.stage}`,
+      complete: session.finalStatus === "complete"
+    });
+  } catch (error: any) {
+    console.error("Error advancing Reflexive Arbiter session:", error);
+    res.status(500).json({ error: "Failed to advance Reflexive Arbiter session" });
+  }
+});
+
+app.get("/api/arbiter/status", async (req, res) => {
+  res.json({
+    active: currentArbiterSession !== null,
+    session: currentArbiterSession,
+    currentStage: currentArbiterSession?.currentStage || null,
+    complete: currentArbiterSession?.finalStatus === "complete",
+    assessment: currentArbiterSession?.assessment || null,
+  });
+});
+
+app.get("/api/arbiter/assessments", async (req, res) => {
+  try {
+    const { systemName } = req.query;
+    const assessments = listAssessments(systemName as string | undefined);
+    res.json({ assessments });
+  } catch (error: any) {
+    console.error("Error listing assessments:", error);
+    res.status(500).json({ error: "Failed to list assessments" });
+  }
+});
+
+app.get("/api/arbiter/assessments/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const assessment = loadAssessment(id);
+    if (!assessment) {
+      return res.status(404).json({ error: "Assessment not found" });
+    }
+    res.json({ assessment });
+  } catch (error: any) {
+    console.error("Error loading assessment:", error);
+    res.status(500).json({ error: "Failed to load assessment" });
+  }
+});
+
+app.get("/api/arbiter/assessments/:id/report", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const report = getAssessmentReport(id);
+    if (!report) {
+      return res.status(404).json({ error: "Report not found" });
+    }
+    res.set('Content-Type', 'text/markdown');
+    res.send(report);
+  } catch (error: any) {
+    console.error("Error loading report:", error);
+    res.status(500).json({ error: "Failed to load report" });
+  }
+});
+
+app.post("/api/arbiter/assessments/:id/compare", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { previousId } = req.body;
+    
+    const current = loadAssessment(id);
+    if (!current) {
+      return res.status(404).json({ error: "Current assessment not found" });
+    }
+    
+    const previous = loadAssessment(previousId);
+    if (!previous) {
+      return res.status(404).json({ error: "Previous assessment not found" });
+    }
+    
+    // Generate comparison
+    const comparison = {
+      current: { id: current.id, systemName: current.scope.systemName, createdAt: current.createdAt, overallScore: current.overallDivergenceScore },
+      previous: { id: previous.id, systemName: previous.scope.systemName, createdAt: previous.createdAt, overallScore: previous.overallDivergenceScore },
+      dimensionChanges: {} as any,
+      overallTrend: "stable" as "improving" | "worsening" | "stable" | "mixed",
+      debtTrajectory: "stable" as "accumulating" | "reducing" | "stable",
+    };
+    
+    const dimensions = ["temporal", "authority", "visibility", "competency", "recovery", "accountability"] as const;
+    let improved = 0, worsened = 0;
+    
+    for (const dim of dimensions) {
+      const prev = previous.dimensionAssessments.find(d => d.dimension === dim);
+      const curr = current.dimensionAssessments.find(d => d.dimension === dim);
+      const prevRating = prev?.rating ?? "unknown";
+      const currRating = curr?.rating ?? "unknown";
+      
+      let change: "improved" | "worsened" | "stable" | "unknown" = "unknown";
+      if (typeof prevRating === "number" && typeof currRating === "number") {
+        if (currRating < prevRating) { change = "improved"; improved++; }
+        else if (currRating > prevRating) { change = "worsened"; worsened++; }
+        else change = "stable";
+      }
+      
+      comparison.dimensionChanges[dim] = {
+        previousRating: prevRating,
+        currentRating: currRating,
+        change,
+        notes: `Previous: ${prevRating}, Current: ${currRating}`,
+      };
+    }
+    
+    if (improved > worsened) comparison.overallTrend = "improving";
+    else if (worsened > improved) comparison.overallTrend = "worsening";
+    else if (improved === 0 && worsened === 0) comparison.overallTrend = "stable";
+    else comparison.overallTrend = "mixed";
+    
+    const prevDebt = previous.governanceDebt.length;
+    const currDebt = current.governanceDebt.length;
+    if (currDebt > prevDebt) comparison.debtTrajectory = "accumulating";
+    else if (currDebt < prevDebt) comparison.debtTrajectory = "reducing";
+    
+    res.json({ comparison });
+  } catch (error: any) {
+    console.error("Error comparing assessments:", error);
+    res.status(500).json({ error: "Failed to compare assessments" });
+  }
+});
+
+// Auto-run a full Reflexive Arbiter assessment
+app.post("/api/arbiter/auto-run", async (req, res) => {
+  try {
+    const { topic, systemScope, participants, sourceContext, repo, systemDescription, institutionalContext, boundaries } = req.body;
+    
+    if (!topic || !systemScope) {
+      return res.status(400).json({ error: "topic and systemScope are required" });
+    }
+    
+    const arbiterParticipants = participants || ["clerk", "specialist", "executive", "archivist"];
+    
+    let session = createReflexiveArbiterSession(
+      topic,
+      systemScope,
+      arbiterParticipants,
+      sourceContext,
+      repo
+    );
+    
+    const evidenceCollector = await createEvidenceCollector("specialist");
+    
+    // Run all stages automatically
+    while (session.finalStatus !== "complete" && session.finalStatus !== "failed") {
+      const { session: updatedSession, stageResult } = await advanceReflexiveArbiterSession(session, {
+        systemDescription,
+        institutionalContext,
+        boundaries,
+        evidenceCollector,
+      });
+      session = updatedSession;
+      
+      if (stageResult.valid === false) {
+        console.error(`[Arbiter] Stage ${stageResult.stage} failed: ${stageResult.error}`);
+        break;
+      }
+      
+      if (session.finalStatus === "failed") break;
+    }
+    
+    if (session.finalStatus !== "complete") {
+      return res.status(500).json({
+        error: "Assessment did not complete successfully",
+        session,
+        finalStatus: session.finalStatus,
+      });
+    }
+    
+    res.json({
+      session,
+      assessment: session.assessment,
+      reportPath: session.assessment ? `docs/reports/reflexive_arbiter/${session.assessment.id}.md` : null,
+      message: "Reflexive Arbiter assessment completed successfully",
+    });
+  } catch (error: any) {
+    console.error("Error running auto arbiter assessment:", error);
+    res.status(500).json({ error: error.message || "Failed to run assessment" });
+  }
 });
 
 // List GitHub repos accessible by the current token

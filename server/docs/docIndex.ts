@@ -82,7 +82,7 @@ function participantsCount(participants: string): number {
 }
 
 function mdEscapePipe(s: string): string {
-  return s.replaceAll("|", "\\|");
+  return s.replace(/\|/g, "\\|");
 }
 
 function guessDateFromFilename(file: string): string {
