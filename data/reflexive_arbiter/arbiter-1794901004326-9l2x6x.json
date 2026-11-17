@@ -1,0 +1,618 @@
+{
+  "id": "arbiter-1794901004326-9l2x6x",
+  "version": "2.0.0",
+  "methodologyVersion": "2.0.0",
+  "scope": {
+    "systemName": "FAA-NOTAM-System",
+    "systemDescription": "FAA Notice to Air Missions (NOTAM) system and telecommunications infrastructure that experienced a nationwide outage on November 13, 2026, triggering a complete ground stop of all US domestic flights.",
+    "institutionalContext": "Federal Aviation Administration (FAA) under Department of Transportation; governed by aviation safety regulations (14 CFR), telecommunications infrastructure oversight (FCC), and incident response protocols.",
+    "boundaries": [
+      "NOTAM system technical infrastructure",
+      "Telecommunications backbone (fiber, satellite, redundant paths)",
+      "Air traffic control communication systems",
+      "Flight operations and airline coordination",
+      "Emergency response and recovery procedures"
+    ],
+    "assessmentTimestamp": "2026-11-17T07:36:44.327Z",
+    "assessorContext": "Reflexive Arbiter session arbiter-1794901004326-9l2x6x"
+  },
+  "operationalCapabilities": [],
+  "governanceMechanisms": [],
+  "dimensionAssessments": [
+    {
+      "dimension": "temporal",
+      "rating": 3,
+      "evidence": [
+        {
+          "content": "System executes decisions in milliseconds; institutional review cycles take days",
+          "sourceUri": "sim://temporal/System-executes-decisions-in-m",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "temporal"
+        },
+        {
+          "content": "FAA ground stop decision took 90 minutes after outage detection",
+          "sourceUri": "sim://temporal/FAA-ground-stop-decision-took-",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "temporal"
+        },
+        {
+          "content": "NOTAM system reboot cycle: 45 minutes minimum",
+          "sourceUri": "sim://temporal/NOTAM-system-reboot-cycle:-45-",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "temporal"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for temporal: System executes decisions in milliseconds; institutional review cycles take days",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "authority",
+      "rating": 3,
+      "evidence": [
+        {
+          "content": "System has write access to safety-critical databases without real-time authorization",
+          "sourceUri": "sim://authority/System-has-write-access-to-saf",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "authority"
+        },
+        {
+          "content": "FAA Order 7930.2 defines NOTAM authority but lacks automated enforcement",
+          "sourceUri": "sim://authority/FAA-Order-7930.2-defines-NOTAM",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "authority"
+        },
+        {
+          "content": "Telecom providers operate under FCC Part 4 but FAA has no direct control",
+          "sourceUri": "sim://authority/Telecom-providers-operate-unde",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "unverified",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "authority"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for authority: System has write access to safety-critical databases without real-time authorization",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "visibility",
+      "rating": 3,
+      "evidence": [
+        {
+          "content": "Real-time NOTAM status not visible to air traffic controllers during outage",
+          "sourceUri": "sim://visibility/Real-time-NOTAM-status-not-vis",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "visibility"
+        },
+        {
+          "content": "FAA dashboard showed 'green' status 20 minutes into outage",
+          "sourceUri": "sim://visibility/FAA-dashboard-showed-'green'-s",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "visibility"
+        },
+        {
+          "content": "Airlines learned of ground stop via media before official notification",
+          "sourceUri": "sim://visibility/Airlines-learned-of-ground-sto",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "visibility"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for visibility: Real-time NOTAM status not visible to air traffic controllers during outage",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "competency",
+      "rating": 4,
+      "evidence": [
+        {
+          "content": "NOTAM system runs on legacy mainframe; few operators understand full architecture",
+          "sourceUri": "sim://competency/NOTAM-system-runs-on-legacy-ma",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "competency"
+        },
+        {
+          "content": "FAA technical staff reduced by 30% over 5 years per GAO report",
+          "sourceUri": "sim://competency/FAA-technical-staff-reduced-by",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "competency"
+        },
+        {
+          "content": "Telecom failover procedures not tested since 2021",
+          "sourceUri": "sim://competency/Telecom-failover-procedures-no",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "competency"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for competency: NOTAM system runs on legacy mainframe; few operators understand full architecture",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "recovery",
+      "rating": 3,
+      "evidence": [
+        {
+          "content": "Mean time to restore NOTAM: 4.5 hours (historical average)",
+          "sourceUri": "sim://recovery/Mean-time-to-restore-NOTAM:-4.",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "recovery"
+        },
+        {
+          "content": "No automated failover to backup NOTAM system exists",
+          "sourceUri": "sim://recovery/No-automated-failover-to-backu",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "recovery"
+        },
+        {
+          "content": "Manual database synchronization required after restart",
+          "sourceUri": "sim://recovery/Manual-database-synchronizatio",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "recovery"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for recovery: Mean time to restore NOTAM: 4.5 hours (historical average)",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "accountability",
+      "rating": 2,
+      "evidence": [
+        {
+          "content": "Decision to ground stop traced to FAA Commander but rationale not documented",
+          "sourceUri": "sim://accountability/Decision-to-ground-stop-traced",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "accountability"
+        },
+        {
+          "content": "Telecom provider contract lacks penalties for NOTAM-critical path failures",
+          "sourceUri": "sim://accountability/Telecom-provider-contract-lack",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "accountability"
+        },
+        {
+          "content": "Post-incident review mandated by DOT but scope undefined",
+          "sourceUri": "sim://accountability/Post-incident-review-mandated-",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "accountability"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for accountability: Decision to ground stop traced to FAA Commander but rationale not documented",
+      "evidenceCoverage": 0.5,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": false
+    }
+  ],
+  "cascadingFailureRisks": [],
+  "governanceDebt": [
+    {
+      "description": "Governance gap in Execution velocity versus institutional response time (rating: 3)",
+      "dimension": "temporal",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "System executes decisions in milliseconds; institutional review cycles take days",
+          "sourceUri": "sim://temporal/System-executes-decisions-in-m",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "temporal"
+        },
+        {
+          "content": "FAA ground stop decision took 90 minutes after outage detection",
+          "sourceUri": "sim://temporal/FAA-ground-stop-decision-took-",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "temporal"
+        },
+        {
+          "content": "NOTAM system reboot cycle: 45 minutes minimum",
+          "sourceUri": "sim://temporal/NOTAM-system-reboot-cycle:-45-",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "temporal"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Technical permissions versus authorized scope (rating: 3)",
+      "dimension": "authority",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "System has write access to safety-critical databases without real-time authorization",
+          "sourceUri": "sim://authority/System-has-write-access-to-saf",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "authority"
+        },
+        {
+          "content": "FAA Order 7930.2 defines NOTAM authority but lacks automated enforcement",
+          "sourceUri": "sim://authority/FAA-Order-7930.2-defines-NOTAM",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "authority"
+        },
+        {
+          "content": "Telecom providers operate under FCC Part 4 but FAA has no direct control",
+          "sourceUri": "sim://authority/Telecom-providers-operate-unde",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "unverified",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "authority"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Actual system activity versus institutional awareness (rating: 3)",
+      "dimension": "visibility",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Real-time NOTAM status not visible to air traffic controllers during outage",
+          "sourceUri": "sim://visibility/Real-time-NOTAM-status-not-vis",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "visibility"
+        },
+        {
+          "content": "FAA dashboard showed 'green' status 20 minutes into outage",
+          "sourceUri": "sim://visibility/FAA-dashboard-showed-'green'-s",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "visibility"
+        },
+        {
+          "content": "Airlines learned of ground stop via media before official notification",
+          "sourceUri": "sim://visibility/Airlines-learned-of-ground-sto",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "visibility"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in System complexity versus operator comprehension (rating: 4)",
+      "dimension": "competency",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "NOTAM system runs on legacy mainframe; few operators understand full architecture",
+          "sourceUri": "sim://competency/NOTAM-system-runs-on-legacy-ma",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "competency"
+        },
+        {
+          "content": "FAA technical staff reduced by 30% over 5 years per GAO report",
+          "sourceUri": "sim://competency/FAA-technical-staff-reduced-by",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "competency"
+        },
+        {
+          "content": "Telecom failover procedures not tested since 2021",
+          "sourceUri": "sim://competency/Telecom-failover-procedures-no",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "competency"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Disruption potential versus restoration capacity (rating: 3)",
+      "dimension": "recovery",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Mean time to restore NOTAM: 4.5 hours (historical average)",
+          "sourceUri": "sim://recovery/Mean-time-to-restore-NOTAM:-4.",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "recovery"
+        },
+        {
+          "content": "No automated failover to backup NOTAM system exists",
+          "sourceUri": "sim://recovery/No-automated-failover-to-backu",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "recovery"
+        },
+        {
+          "content": "Manual database synchronization required after restart",
+          "sourceUri": "sim://recovery/Manual-database-synchronizatio",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "recovery"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Decision traceability versus attributable responsibility (rating: 2)",
+      "dimension": "accountability",
+      "severity": "high",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Decision to ground stop traced to FAA Commander but rationale not documented",
+          "sourceUri": "sim://accountability/Decision-to-ground-stop-traced",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "accountability"
+        },
+        {
+          "content": "Telecom provider contract lacks penalties for NOTAM-critical path failures",
+          "sourceUri": "sim://accountability/Telecom-provider-contract-lack",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "accountability"
+        },
+        {
+          "content": "Post-incident review mandated by DOT but scope undefined",
+          "sourceUri": "sim://accountability/Post-incident-review-mandated-",
+          "publishedAt": "2026-11-13T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:36:44.328Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "accountability"
+        }
+      ]
+    }
+  ],
+  "unresolvedQuestions": [],
+  "overallDivergenceScore": 3,
+  "maxDimensionDivergence": 4,
+  "criticalDimensionCount": 5,
+  "evidenceCoverage": 0.9166666666666666,
+  "dimensionConfidence": {
+    "temporal": 0.75,
+    "authority": 0.75,
+    "visibility": 0.75,
+    "competency": 0.75,
+    "recovery": 0.75,
+    "accountability": 0.75
+  },
+  "unresolvedDisagreementCount": 0,
+  "unknownDimensionCount": 0,
+  "hasCriticalDivergence": true,
+  "confidence": 0.75,
+  "evidenceLimitations": [
+    "Assessment based on available evidence only",
+    "Missing evidence does not imply governance failure",
+    "Some dimensions rated unknown due to insufficient data",
+    "LLM assertions marked as 'llm_assertion' are not verified evidence",
+    "Telemetry indicators may be estimated rather than measured"
+  ],
+  "recommendedInvestigations": [],
+  "createdAt": "2026-11-17T07:36:44.330Z",
+  "updatedAt": "2026-11-17T07:36:44.330Z",
+  "scrumSessionId": "arbiter-1794901004326-9l2x6x"
+}

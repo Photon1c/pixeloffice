@@ -1,0 +1,618 @@
+{
+  "id": "arbiter-1794901169685-a3y8t5",
+  "version": "2.0.0",
+  "methodologyVersion": "2.0.0",
+  "scope": {
+    "systemName": "Google-Autonomous-Security-System",
+    "systemDescription": "Google's autonomous cybersecurity defense system that detected and responded to a novel attack pattern on November 16, 2026, including AI-driven threat hunting, automated containment, and cross-platform correlation.",
+    "institutionalContext": "Google Security Operations (SecOps) under Alphabet; governed by internal security policies, industry standards (NIST CSF, ISO 27001), regulatory requirements (SEC, GDPR), and AI governance frameworks.",
+    "boundaries": [
+      "Autonomous threat detection and response engines",
+      "AI/ML model training and inference pipeline",
+      "Security data lake and correlation platform",
+      "Incident response automation and playbooks",
+      "Cross-product security integration (Cloud, Workspace, Android, etc.)"
+    ],
+    "assessmentTimestamp": "2026-11-17T07:39:29.685Z",
+    "assessorContext": "Reflexive Arbiter session arbiter-1794901169685-a3y8t5"
+  },
+  "operationalCapabilities": [],
+  "governanceMechanisms": [],
+  "dimensionAssessments": [
+    {
+      "dimension": "temporal",
+      "rating": 3,
+      "evidence": [
+        {
+          "content": "Autonomous response engine executes containment in <50ms; human review cycle averages 4 hours",
+          "sourceUri": "sim://Google-Autonomous-Security-System/temporal/Autonomous-response-engine-exe",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.686Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "temporal"
+        },
+        {
+          "content": "Nov 16 attack: autonomous system detected anomaly at T+0, contained at T+2min; human notified at T+15min",
+          "sourceUri": "sim://Google-Autonomous-Security-System/temporal/Nov-16-attack:-autonomous-syst",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.686Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "temporal"
+        },
+        {
+          "content": "Model retraining pipeline takes 6-8 hours; no hot-swap capability for inference models",
+          "sourceUri": "sim://Google-Autonomous-Security-System/temporal/Model-retraining-pipeline-take",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.686Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "temporal"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for temporal: Autonomous response engine executes containment in <50ms; human review cycle averages 4 hours",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "authority",
+      "rating": 3,
+      "evidence": [
+        {
+          "content": "Autonomous engine has write access to firewall rules, IAM policies, and quarantine zones without human approval",
+          "sourceUri": "sim://Google-Autonomous-Security-System/authority/Autonomous-engine-has-write-ac",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "authority"
+        },
+        {
+          "content": "Authority delegation defined in SecOps Charter v3.2 but lacks real-time revocation mechanism",
+          "sourceUri": "sim://Google-Autonomous-Security-System/authority/Authority-delegation-defined-i",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "authority"
+        },
+        {
+          "content": "Third-party cloud provider APIs (AWS/Azure) used for cross-cloud containment; Google has no direct control",
+          "sourceUri": "sim://Google-Autonomous-Security-System/authority/Third-party-cloud-provider-API",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "unverified",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "authority"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for authority: Autonomous engine has write access to firewall rules, IAM policies, and quarantine zones without human approval",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "visibility",
+      "rating": 2,
+      "evidence": [
+        {
+          "content": "Real-time autonomous action dashboard shows 2-min latency; blind spots in on-prem data centers",
+          "sourceUri": "sim://Google-Autonomous-Security-System/visibility/Real-time-autonomous-action-da",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "visibility"
+        },
+        {
+          "content": "Nov 16 attack: executive dashboard showed 'nominal' for 8 minutes after containment triggered",
+          "sourceUri": "sim://Google-Autonomous-Security-System/visibility/Nov-16-attack:-executive-dashb",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "visibility"
+        },
+        {
+          "content": "Threat intelligence sharing with partners (Mandiant, VirusTotal) has 15-min contractual delay",
+          "sourceUri": "sim://Google-Autonomous-Security-System/visibility/Threat-intelligence-sharing-wi",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "visibility"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for visibility: Real-time autonomous action dashboard shows 2-min latency; blind spots in on-prem data centers",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": false
+    },
+    {
+      "dimension": "competency",
+      "rating": 3,
+      "evidence": [
+        {
+          "content": "Ensemble of 47 ML models for detection; <3 engineers understand full ensemble behavior",
+          "sourceUri": "sim://Google-Autonomous-Security-System/competency/Ensemble-of-47-ML-models-for-d",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "competency"
+        },
+        {
+          "content": "Model drift detection relies on human-labeled feedback loop; 6-week labeling backlog",
+          "sourceUri": "sim://Google-Autonomous-Security-System/competency/Model-drift-detection-relies-o",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "competency"
+        },
+        {
+          "content": "Adversarial robustness testing last conducted Q2 2026; novel attack vectors untested",
+          "sourceUri": "sim://Google-Autonomous-Security-System/competency/Adversarial-robustness-testing",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "competency"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for competency: Ensemble of 47 ML models for detection; <3 engineers understand full ensemble behavior",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "recovery",
+      "rating": 2,
+      "evidence": [
+        {
+          "content": "Mean time to rollback erroneous autonomous action: 22 minutes (feature flag + canary)",
+          "sourceUri": "sim://Google-Autonomous-Security-System/recovery/Mean-time-to-rollback-erroneou",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "recovery"
+        },
+        {
+          "content": "No automated model rollback; requires manual CI/CD pipeline trigger (15-30 min)",
+          "sourceUri": "sim://Google-Autonomous-Security-System/recovery/No-automated-model-rollback;-r",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "recovery"
+        },
+        {
+          "content": "Quarantine zone release requires manual approval; no time-bounded auto-release",
+          "sourceUri": "sim://Google-Autonomous-Security-System/recovery/Quarantine-zone-release-requir",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "recovery"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for recovery: Mean time to rollback erroneous autonomous action: 22 minutes (feature flag + canary)",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": false
+    },
+    {
+      "dimension": "accountability",
+      "rating": 2,
+      "evidence": [
+        {
+          "content": "Autonomous decisions logged with model version, feature weights, and confidence score; rationale not human-readable",
+          "sourceUri": "sim://Google-Autonomous-Security-System/accountability/Autonomous-decisions-logged-wi",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "accountability"
+        },
+        {
+          "content": "Vendor contracts (Mandiant, CrowdStrike) include liability caps for autonomous action errors",
+          "sourceUri": "sim://Google-Autonomous-Security-System/accountability/Vendor-contracts-(Mandiant,-Cr",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "accountability"
+        },
+        {
+          "content": "Alphabet AI Ethics Review Board charter requires quarterly review; last review Q1 2026",
+          "sourceUri": "sim://Google-Autonomous-Security-System/accountability/Alphabet-AI-Ethics-Review-Boar",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "accountability"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for accountability: Autonomous decisions logged with model version, feature weights, and confidence score; rationale not human-readable",
+      "evidenceCoverage": 0.5,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": false
+    }
+  ],
+  "cascadingFailureRisks": [],
+  "governanceDebt": [
+    {
+      "description": "Governance gap in Execution velocity versus institutional response time (rating: 3)",
+      "dimension": "temporal",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Autonomous response engine executes containment in <50ms; human review cycle averages 4 hours",
+          "sourceUri": "sim://Google-Autonomous-Security-System/temporal/Autonomous-response-engine-exe",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.686Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "temporal"
+        },
+        {
+          "content": "Nov 16 attack: autonomous system detected anomaly at T+0, contained at T+2min; human notified at T+15min",
+          "sourceUri": "sim://Google-Autonomous-Security-System/temporal/Nov-16-attack:-autonomous-syst",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.686Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "temporal"
+        },
+        {
+          "content": "Model retraining pipeline takes 6-8 hours; no hot-swap capability for inference models",
+          "sourceUri": "sim://Google-Autonomous-Security-System/temporal/Model-retraining-pipeline-take",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.686Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "temporal"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Technical permissions versus authorized scope (rating: 3)",
+      "dimension": "authority",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Autonomous engine has write access to firewall rules, IAM policies, and quarantine zones without human approval",
+          "sourceUri": "sim://Google-Autonomous-Security-System/authority/Autonomous-engine-has-write-ac",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "authority"
+        },
+        {
+          "content": "Authority delegation defined in SecOps Charter v3.2 but lacks real-time revocation mechanism",
+          "sourceUri": "sim://Google-Autonomous-Security-System/authority/Authority-delegation-defined-i",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "authority"
+        },
+        {
+          "content": "Third-party cloud provider APIs (AWS/Azure) used for cross-cloud containment; Google has no direct control",
+          "sourceUri": "sim://Google-Autonomous-Security-System/authority/Third-party-cloud-provider-API",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "unverified",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "authority"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Actual system activity versus institutional awareness (rating: 2)",
+      "dimension": "visibility",
+      "severity": "high",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Real-time autonomous action dashboard shows 2-min latency; blind spots in on-prem data centers",
+          "sourceUri": "sim://Google-Autonomous-Security-System/visibility/Real-time-autonomous-action-da",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "visibility"
+        },
+        {
+          "content": "Nov 16 attack: executive dashboard showed 'nominal' for 8 minutes after containment triggered",
+          "sourceUri": "sim://Google-Autonomous-Security-System/visibility/Nov-16-attack:-executive-dashb",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "visibility"
+        },
+        {
+          "content": "Threat intelligence sharing with partners (Mandiant, VirusTotal) has 15-min contractual delay",
+          "sourceUri": "sim://Google-Autonomous-Security-System/visibility/Threat-intelligence-sharing-wi",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "visibility"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in System complexity versus operator comprehension (rating: 3)",
+      "dimension": "competency",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Ensemble of 47 ML models for detection; <3 engineers understand full ensemble behavior",
+          "sourceUri": "sim://Google-Autonomous-Security-System/competency/Ensemble-of-47-ML-models-for-d",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "competency"
+        },
+        {
+          "content": "Model drift detection relies on human-labeled feedback loop; 6-week labeling backlog",
+          "sourceUri": "sim://Google-Autonomous-Security-System/competency/Model-drift-detection-relies-o",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "competency"
+        },
+        {
+          "content": "Adversarial robustness testing last conducted Q2 2026; novel attack vectors untested",
+          "sourceUri": "sim://Google-Autonomous-Security-System/competency/Adversarial-robustness-testing",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "competency"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Disruption potential versus restoration capacity (rating: 2)",
+      "dimension": "recovery",
+      "severity": "high",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Mean time to rollback erroneous autonomous action: 22 minutes (feature flag + canary)",
+          "sourceUri": "sim://Google-Autonomous-Security-System/recovery/Mean-time-to-rollback-erroneou",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "recovery"
+        },
+        {
+          "content": "No automated model rollback; requires manual CI/CD pipeline trigger (15-30 min)",
+          "sourceUri": "sim://Google-Autonomous-Security-System/recovery/No-automated-model-rollback;-r",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "recovery"
+        },
+        {
+          "content": "Quarantine zone release requires manual approval; no time-bounded auto-release",
+          "sourceUri": "sim://Google-Autonomous-Security-System/recovery/Quarantine-zone-release-requir",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "recovery"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Decision traceability versus attributable responsibility (rating: 2)",
+      "dimension": "accountability",
+      "severity": "high",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Autonomous decisions logged with model version, feature weights, and confidence score; rationale not human-readable",
+          "sourceUri": "sim://Google-Autonomous-Security-System/accountability/Autonomous-decisions-logged-wi",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "accountability"
+        },
+        {
+          "content": "Vendor contracts (Mandiant, CrowdStrike) include liability caps for autonomous action errors",
+          "sourceUri": "sim://Google-Autonomous-Security-System/accountability/Vendor-contracts-(Mandiant,-Cr",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "accountability"
+        },
+        {
+          "content": "Alphabet AI Ethics Review Board charter requires quarterly review; last review Q1 2026",
+          "sourceUri": "sim://Google-Autonomous-Security-System/accountability/Alphabet-AI-Ethics-Review-Boar",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.687Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "accountability"
+        }
+      ]
+    }
+  ],
+  "unresolvedQuestions": [],
+  "overallDivergenceScore": 2.5,
+  "maxDimensionDivergence": 3,
+  "criticalDimensionCount": 3,
+  "evidenceCoverage": 0.9166666666666666,
+  "dimensionConfidence": {
+    "temporal": 0.75,
+    "authority": 0.75,
+    "visibility": 0.75,
+    "competency": 0.75,
+    "recovery": 0.75,
+    "accountability": 0.75
+  },
+  "unresolvedDisagreementCount": 0,
+  "unknownDimensionCount": 0,
+  "hasCriticalDivergence": true,
+  "confidence": 0.75,
+  "evidenceLimitations": [
+    "Assessment based on available evidence only",
+    "Missing evidence does not imply governance failure",
+    "Some dimensions rated unknown due to insufficient data",
+    "LLM assertions marked as 'llm_assertion' are not verified evidence",
+    "Telemetry indicators may be estimated rather than measured"
+  ],
+  "recommendedInvestigations": [],
+  "createdAt": "2026-11-17T07:39:29.688Z",
+  "updatedAt": "2026-11-17T07:39:29.688Z",
+  "scrumSessionId": "arbiter-1794901169685-a3y8t5"
+}

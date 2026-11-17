@@ -9,6 +9,7 @@ import AdminAssistant from "./AdminAssistant";
 import StockForecasts from "./StockForecasts";
 import TimeTasksPanel from "./TimeTasksPanel";
 import ScrumPanel from "./ScrumPanel";
+import ReflexiveArbiterPanel from "./ReflexiveArbiterPanel";
 import OfficeClock from "./OfficeClock";
 import YouTubePlayer from "./YouTubePlayer";
 import CalendarPanel from "./CalendarPanel";
@@ -58,6 +59,7 @@ import {
   getZoneAtPosition,
   ROOMS,
 } from "../utils/layout";
+import { clampToCanvas } from "../utils/agentLogic";
 
 // Loop detection available at: import { detectLoopOrStall } from "../utils/loopDetection";
 
@@ -387,14 +389,17 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
 
   const [agents, setAgents] = useState<Agent[]>(() => {
     if (!entranceDone) {
+      // Entrance origin now sits just inside the lobby (x=4) so agents are
+      // never drawn off-canvas during the entry walk-in.
+      const entrance = clampToCanvas(ENTRANCE_POSITION.x, ENTRANCE_POSITION.y);
       return INITIAL_AGENTS.map((agent, i) => ({
         ...agent,
-        x: ENTRANCE_POSITION.x,
-        y: ENTRANCE_POSITION.y + i * 18,
-        targetX: ENTRANCE_POSITION.x,
-        targetY: ENTRANCE_POSITION.y + i * 18,
+        x: entrance.x,
+        y: entrance.y + i * 18,
+        targetX: CHAIR_POSITIONS[agent.deskIndex].x,
+        targetY: CHAIR_POSITIONS[agent.deskIndex].y,
         dir: "right",
-        mode: "sitting",
+        mode: "walking",
       }));
     }
     const saved = localStorage.getItem("pixel_office_agents");
@@ -404,7 +409,19 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         if (Array.isArray(parsed) && parsed.length > 0) {
           const merged = INITIAL_AGENTS.map(initial => {
             const savedAgent = parsed.find((a: Agent) => a.id === initial.id);
-            return savedAgent ? { ...initial, ...savedAgent } : initial;
+            // Pull any stale off-canvas position back inside the visible area.
+            const clampedXY = savedAgent
+              ? clampToCanvas(savedAgent.x, savedAgent.y)
+              : { x: initial.x, y: initial.y };
+            const clampedTarget = savedAgent
+              ? clampToCanvas(
+                  savedAgent.targetX ?? initial.targetX,
+                  savedAgent.targetY ?? initial.targetY
+                )
+              : { x: initial.targetX, y: initial.targetY };
+            return savedAgent
+              ? { ...initial, ...savedAgent, ...clampedXY, targetX: clampedTarget.x, targetY: clampedTarget.y }
+              : initial;
           });
           INITIAL_AGENTS.forEach(initial => {
             if (!merged.find(m => m.id === initial.id)) merged.push(initial);
@@ -431,6 +448,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
   const [showParams, setShowParams] = useState<boolean>(false);
   const [showTimeTasks, setShowTimeTasks] = useState<boolean>(false);
   const [showScrum, setShowScrum] = useState<boolean>(false);
+  const [showArbiter, setShowArbiter] = useState<boolean>(false);
   const [showScrumSettings, setShowScrumSettings] = useState<boolean>(false);
   const [showChat, setShowChat] = useState<boolean>(false);
   const [showCriminologyLab, setShowCriminologyLab] = useState<boolean>(false);
@@ -1599,6 +1617,12 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         </div>
 
         <div style={{ marginBottom: '16px' }}>
+          <button style={{...styles.paramsToggle, background: showArbiter ? '#1a2a2a' : '#0a0a12', borderColor: '#9c27b0'}} onClick={() => setShowArbiter(!showArbiter)} title="Reflexive Arbiter — governance divergence assessment via multi-agent research scrum">
+            {showArbiter ? "▼ Reflexive Arbiter" : "▶ Reflexive Arbiter"}
+          </button>
+        </div>
+
+        <div style={{ marginBottom: '16px' }}>
           <button style={{...styles.paramsToggle, background: showChat ? '#1a2a2a' : '#0a0a12'}} onClick={() => setShowChat(!showChat)}>
             {showChat ? "▼ Chat" : "▶ Chat"}
           </button>
@@ -2293,6 +2317,7 @@ export default function PixelOffice({ config = {} }: PixelOfficeProps) {
         {showParams && <Dashboard config={dashboardConfig} onUpdate={updateConfig} onOpenCriminologyLab={() => setShowCriminologyLab(true)} onOpenAdminAssistant={() => setShowAdminAssistant(true)} onOpenStockForecasts={() => setShowStockForecasts(true)} onOpenConvoViewer={() => { setConvoViewerType("cooler"); setShowConvoViewer(true); }} />}
         {showTimeTasks && <TimeTasksPanel onClose={() => setShowTimeTasks(false)} />}
         {showScrum && <ScrumPanel scrumRepo={scrumRepo} scrumTask={scrumTask} />}
+        {showArbiter && <ReflexiveArbiterPanel />}
         {showChat && <ChatOverlay currentTopic={currentTopic} onClose={() => setShowChat(false)} />}
         {showInventoryWorkflow && <InventoryWorkflowDemo 
           onComplete={() => console.log("[Inventory] Workflow complete")}

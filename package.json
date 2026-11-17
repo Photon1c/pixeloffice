@@ -21,7 +21,9 @@
     "time:demo": "tsx scripts/time_tasks_demo.ts",
     "test:scrum": "tsx server/scrum/tests/scrumExporter.test.ts",
     "test:github": "tsx server/github/tests/safeScrumRepoClient.test.ts",
-    "test:repo": "tsx server/services/tests/repoQuestionHandler.test.ts"
+    "test:repo": "tsx server/services/tests/repoQuestionHandler.test.ts",
+    "test:arbiter": "vitest run server/scrum/tests/reflexiveArbiter.test.ts",
+    "test:arbiter:watch": "vitest server/scrum/tests/reflexiveArbiter.test.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.101.0",
@@ -47,6 +49,7 @@
     "@vitejs/plugin-react": "^4.3.3",
     "tsx": "^4.19.0",
     "typescript": "~5.6.2",
-    "vite": "^6.0.3"
+    "vite": "^6.0.3",
+    "vitest": "^2.1.0"
   }
 }

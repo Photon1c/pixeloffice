@@ -91,8 +91,8 @@
 | open-design | infrastructure | maintenance | 🟡 | 1 dirty |
 | openclaw-agent-blueprints | tools | archived | 🟡 | clean |
 | palantir-for-family-trips | archive | maintenance | 🟡 | 3 dirty |
-| pixel-me | infrastructure | maintenance | 🟡 | 16 dirty |
-| pixel_office | infrastructure | maintenance | 🟡 | 4 dirty |
+| pixel-me | infrastructure | maintenance | 🟡 | 17 dirty |
+| pixel_office | infrastructure | maintenance | 🟡 | 13 dirty |
 | pixel_office_remote | infrastructure | maintenance | 🟡 | 1 dirty |
 | router-visualizer | tools | paused | 🟡 | clean |
 | seeker | tools | archived | 🟡 | clean |
@@ -105,6 +105,6 @@
 | trer | observer | archived | 🟡 | clean |
 | turbovec | experiments | archived | 🟡 | clean |
 | vibe-trading | applications | archived | 🟡 | clean |
-| workspace-main | unknown | maintenance | 🟡 | 41 dirty |
+| workspace-main | unknown | maintenance | 🟡 | 42 dirty |
 | x-algorithm | applications | archived | 🟡 | clean |
 | yolo-training-template | tools | maintenance | 🟡 | 3 dirty |

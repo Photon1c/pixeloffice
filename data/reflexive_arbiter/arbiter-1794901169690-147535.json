@@ -1,0 +1,619 @@
+{
+  "id": "arbiter-1794901169690-147535",
+  "version": "2.0.0",
+  "methodologyVersion": "2.0.0",
+  "scope": {
+    "systemName": "Pixel-Office-Multi-Agent-System",
+    "systemDescription": "Pixel Office's multi-agent simulation and orchestration platform including autonomous agents, stigmergy-based coordination, SCRUM workflow engine, Reflexive Arbiter governance assessment, and human-in-the-loop oversight mechanisms.",
+    "institutionalContext": "Pixel Office development team and infrastructure; governed by software development practices, operational runbooks, monitoring/alerting, and the Reflexive Arbiter self-assessment framework.",
+    "boundaries": [
+      "Agent orchestration and scheduling system",
+      "Stigmergy-based coordination and task allocation",
+      "SCRUM workflow engine and multi-agent research scrum",
+      "Reflexive Arbiter governance divergence assessment",
+      "Human oversight interfaces (dashboard, chat, delegation)",
+      "Persistence, telemetry, and observability infrastructure"
+    ],
+    "assessmentTimestamp": "2026-11-17T07:39:29.690Z",
+    "assessorContext": "Reflexive Arbiter session arbiter-1794901169690-147535"
+  },
+  "operationalCapabilities": [],
+  "governanceMechanisms": [],
+  "dimensionAssessments": [
+    {
+      "dimension": "temporal",
+      "rating": 2,
+      "evidence": [
+        {
+          "content": "Agents execute decisions in <10ms; human review of SCRUM outcomes takes 30-60 minutes",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/temporal/Agents-execute-decisions-in-<1",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "temporal"
+        },
+        {
+          "content": "Vacation mode autopilot triggers cooler/SCRUM sessions without human approval per config",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/temporal/Vacation-mode-autopilot-trigge",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "temporal"
+        },
+        {
+          "content": "Loop detection triggers intervention after 5 iterations; no automated rollback of agent actions",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/temporal/Loop-detection-triggers-interv",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "temporal"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for temporal: Agents execute decisions in <10ms; human review of SCRUM outcomes takes 30-60 minutes",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": false
+    },
+    {
+      "dimension": "authority",
+      "rating": 2,
+      "evidence": [
+        {
+          "content": "Agents have write access to stigmergy fields, task assignments, and workspace state without human approval",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/authority/Agents-have-write-access-to-st",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "authority"
+        },
+        {
+          "content": "Delegation detection in chat triggers SCRUM creation autonomously; no confirmation step",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/authority/Delegation-detection-in-chat-t",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "authority"
+        },
+        {
+          "content": "External tool access (GitHub, router visualizer) gated by Lab Mode but not per-action authorization",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/authority/External-tool-access-(GitHub,-",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "unverified",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "authority"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for authority: Agents have write access to stigmergy fields, task assignments, and workspace state without human approval",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": false
+    },
+    {
+      "dimension": "visibility",
+      "rating": 2,
+      "evidence": [
+        {
+          "content": "Office Status Panel shows real-time agent positions and task shadows; 2-sec update latency",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/visibility/Office-Status-Panel-shows-real",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "visibility"
+        },
+        {
+          "content": "Sleep mode reduces agent movement but stigmergy deposits still occur; not visible in dashboard",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/visibility/Sleep-mode-reduces-agent-movem",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "visibility"
+        },
+        {
+          "content": "Cooler talk logs published to cooler_talk_log.md but not streamed to human observers",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/visibility/Cooler-talk-logs-published-to-",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "visibility"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for visibility: Office Status Panel shows real-time agent positions and task shadows; 2-sec update latency",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": false
+    },
+    {
+      "dimension": "competency",
+      "rating": 3,
+      "evidence": [
+        {
+          "content": "Agent orchestration involves 12+ interacting subsystems; <2 developers understand full architecture",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/competency/Agent-orchestration-involves-1",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "competency"
+        },
+        {
+          "content": "Stigmergy field semantics (heat types, decay rates) documented in code only; no operator manual",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/competency/Stigmergy-field-semantics-(hea",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "competency"
+        },
+        {
+          "content": "Reflexive Arbiter assessment methodology v2.0.0 not yet validated against real-world incidents",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/competency/Reflexive-Arbiter-assessment-m",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "competency"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for competency: Agent orchestration involves 12+ interacting subsystems; <2 developers understand full architecture",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "recovery",
+      "rating": 2,
+      "evidence": [
+        {
+          "content": "Mean time to restore agent workspace after crash: 3 minutes (auto desk reassignment)",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/recovery/Mean-time-to-restore-agent-wor",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "recovery"
+        },
+        {
+          "content": "No automated rollback of stigmergy state; corrupted fields require manual cleanup",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/recovery/No-automated-rollback-of-stigm",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "recovery"
+        },
+        {
+          "content": "Database migration (pixel_memory) requires manual CLI; no automated rollback on failure",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/recovery/Database-migration-(pixel_memo",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "recovery"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for recovery: Mean time to restore agent workspace after crash: 3 minutes (auto desk reassignment)",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": false
+    },
+    {
+      "dimension": "accountability",
+      "rating": 2,
+      "evidence": [
+        {
+          "content": "Agent decisions logged with agentId, timestamp, and action type; rationale in thought bubbles only",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/accountability/Agent-decisions-logged-with-ag",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "accountability"
+        },
+        {
+          "content": "Human delegation via chat creates audit trail but autonomous actions have no attributable owner",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/accountability/Human-delegation-via-chat-crea",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "accountability"
+        },
+        {
+          "content": "Reflexive Arbiter self-assessment creates governance record but no external oversight mandated",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/accountability/Reflexive-Arbiter-self-assessm",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "accountability"
+        }
+      ],
+      "assumptions": [
+        "Assessment based on simulated evidence for baseline testing"
+      ],
+      "confidence": 0.75,
+      "notes": "Simulated observation for accountability: Agent decisions logged with agentId, timestamp, and action type; rationale in thought bubbles only",
+      "evidenceCoverage": 0.5,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": false
+    }
+  ],
+  "cascadingFailureRisks": [],
+  "governanceDebt": [
+    {
+      "description": "Governance gap in Execution velocity versus institutional response time (rating: 2)",
+      "dimension": "temporal",
+      "severity": "high",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Agents execute decisions in <10ms; human review of SCRUM outcomes takes 30-60 minutes",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/temporal/Agents-execute-decisions-in-<1",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "temporal"
+        },
+        {
+          "content": "Vacation mode autopilot triggers cooler/SCRUM sessions without human approval per config",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/temporal/Vacation-mode-autopilot-trigge",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "temporal"
+        },
+        {
+          "content": "Loop detection triggers intervention after 5 iterations; no automated rollback of agent actions",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/temporal/Loop-detection-triggers-interv",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "temporal"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Technical permissions versus authorized scope (rating: 2)",
+      "dimension": "authority",
+      "severity": "high",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Agents have write access to stigmergy fields, task assignments, and workspace state without human approval",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/authority/Agents-have-write-access-to-st",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "authority"
+        },
+        {
+          "content": "Delegation detection in chat triggers SCRUM creation autonomously; no confirmation step",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/authority/Delegation-detection-in-chat-t",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "authority"
+        },
+        {
+          "content": "External tool access (GitHub, router visualizer) gated by Lab Mode but not per-action authorization",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/authority/External-tool-access-(GitHub,-",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "unverified",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "authority"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Actual system activity versus institutional awareness (rating: 2)",
+      "dimension": "visibility",
+      "severity": "high",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Office Status Panel shows real-time agent positions and task shadows; 2-sec update latency",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/visibility/Office-Status-Panel-shows-real",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "visibility"
+        },
+        {
+          "content": "Sleep mode reduces agent movement but stigmergy deposits still occur; not visible in dashboard",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/visibility/Sleep-mode-reduces-agent-movem",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "visibility"
+        },
+        {
+          "content": "Cooler talk logs published to cooler_talk_log.md but not streamed to human observers",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/visibility/Cooler-talk-logs-published-to-",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "visibility"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in System complexity versus operator comprehension (rating: 3)",
+      "dimension": "competency",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Agent orchestration involves 12+ interacting subsystems; <2 developers understand full architecture",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/competency/Agent-orchestration-involves-1",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "competency"
+        },
+        {
+          "content": "Stigmergy field semantics (heat types, decay rates) documented in code only; no operator manual",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/competency/Stigmergy-field-semantics-(hea",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "competency"
+        },
+        {
+          "content": "Reflexive Arbiter assessment methodology v2.0.0 not yet validated against real-world incidents",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/competency/Reflexive-Arbiter-assessment-m",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "competency"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Disruption potential versus restoration capacity (rating: 2)",
+      "dimension": "recovery",
+      "severity": "high",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Mean time to restore agent workspace after crash: 3 minutes (auto desk reassignment)",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/recovery/Mean-time-to-restore-agent-wor",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "recovery"
+        },
+        {
+          "content": "No automated rollback of stigmergy state; corrupted fields require manual cleanup",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/recovery/No-automated-rollback-of-stigm",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "recovery"
+        },
+        {
+          "content": "Database migration (pixel_memory) requires manual CLI; no automated rollback on failure",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/recovery/Database-migration-(pixel_memo",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "recovery"
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Decision traceability versus attributable responsibility (rating: 2)",
+      "dimension": "accountability",
+      "severity": "high",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Agent decisions logged with agentId, timestamp, and action type; rationale in thought bubbles only",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/accountability/Agent-decisions-logged-with-ag",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "accountability"
+        },
+        {
+          "content": "Human delegation via chat creates audit trail but autonomous actions have no attributable owner",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/accountability/Human-delegation-via-chat-crea",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "accountability"
+        },
+        {
+          "content": "Reflexive Arbiter self-assessment creates governance record but no external oversight mandated",
+          "sourceUri": "sim://Pixel-Office-Multi-Agent-System/accountability/Reflexive-Arbiter-self-assessm",
+          "publishedAt": "2026-11-16T00:00:00Z",
+          "retrievedAt": "2026-11-17T07:39:29.691Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "unverified",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "accountability"
+        }
+      ]
+    }
+  ],
+  "unresolvedQuestions": [],
+  "overallDivergenceScore": 2.1666666666666665,
+  "maxDimensionDivergence": 3,
+  "criticalDimensionCount": 1,
+  "evidenceCoverage": 0.9166666666666666,
+  "dimensionConfidence": {
+    "temporal": 0.75,
+    "authority": 0.75,
+    "visibility": 0.75,
+    "competency": 0.75,
+    "recovery": 0.75,
+    "accountability": 0.75
+  },
+  "unresolvedDisagreementCount": 0,
+  "unknownDimensionCount": 0,
+  "hasCriticalDivergence": true,
+  "confidence": 0.75,
+  "evidenceLimitations": [
+    "Assessment based on available evidence only",
+    "Missing evidence does not imply governance failure",
+    "Some dimensions rated unknown due to insufficient data",
+    "LLM assertions marked as 'llm_assertion' are not verified evidence",
+    "Telemetry indicators may be estimated rather than measured"
+  ],
+  "recommendedInvestigations": [],
+  "createdAt": "2026-11-17T07:39:29.692Z",
+  "updatedAt": "2026-11-17T07:39:29.692Z",
+  "scrumSessionId": "arbiter-1794901169690-147535"
+}

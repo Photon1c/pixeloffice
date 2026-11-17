@@ -9,6 +9,8 @@ This index tracks the implementation status of core features and recent upgrades
 - [opencode_cooler_to_scrum_meaningful_reports_handoff.md](./opencode_cooler_to_scrum_meaningful_reports_handoff.md) - Ensure Cooler → SCRUM produces meaningful reports (even "no action")
 - [opencode_multi_upgrade_handoff.md](./opencode_multi_upgrade_handoff.md) - Multi-upgrade summary: meaningful reports, loop detection, news auto-refresh, Agentic OS Kernel reasoning loop
 - [opencode_reflexive_arbiter_implementation.md](./opencode_reflexive_arbiter_implementation.md) - Reflexive Arbiter: Governance divergence assessment via multi-agent research scrum
+- [opencode_reflexive_arbiter_measurement_validation.md](../opencode/reflexive-arbiter-measurement-validation.md) - Reflexive Arbiter v2.0.0: Measurement Validation methodology (Evidence Integrity, Governance Telemetry, Scoring Refinement, Benchmark Scrum, Reliability Testing)
+- [opencode_reflexive_arbiter_limitations.md](../opencode/reflexive-arbiter-limitations.md) - Reflexive Arbiter v2.0.0: Remaining Architectural Limitations
 
 ## 🟢 Core Infrastructure
 - [x] **Live Server (Node/Express)** - Unified backend for API and socket management ✅
@@ -61,5 +63,21 @@ This index tracks the implementation status of core features and recent upgrades
 - [x] **Cooler Run-Turn Counter** - `pixel_office_cooler_run_turn_total` by location/status ✅
 - [x] **Desk Stigmergy Gauges** - `pixel_office_desk_stigmergy` with heat types ✅
 
+## 🧪 Measurement Validation (November 16, 2026)
+- [x] **Evidence Integrity** - Source URI, timestamps, classification (observed/reported/inferred/hypothetical), source independence, verification status (verified/unverified/disputed/llm_assertion) ✅
+- [x] **Governance Telemetry** - 8 measurable indicators (autonomous actions/hr, human review throughput, backlog, emergency interventions, MTTR, validation time, clearance time, external expertise dependency) with unavailable≠zero distinction ✅
+- [x] **Scoring Refinement** - Max dimension divergence, critical dimension count, evidence coverage, dimension-level confidence, unresolved disagreement count; unknown ratings excluded from aggregation ✅
+- [x] **Benchmark Research Scrum** - Three baseline assessments: FAA NOTAM outage (Nov 13), Google autonomous cyberattack (Nov 16), Pixel Office self-assessment ✅
+- [x] **Reliability Testing** - 24/25 regression tests passing: missing/contradictory evidence, fabricated sources, KB unavailable, interrupted scrum, duplicate requests, concurrent sessions, cross-version comparison ✅
+- [x] **Regression Test Suite** - `npm run test:arbiter` with vitest; full 7-stage workflow validation ✅
+
+## 🛰️ Comparative Infrastructure Governance Divergence (November 17, 2026)
+- [x] **Run** - `npx tsx scripts/run-infrastructure-governance-assessment.ts` produces a comparative governance-divergence assessment across Microsoft Outlook (Nov 12), FAA (Nov 13), United Airlines (Nov 16), Google (Nov 16), and NSA (Nov 17) ✅
+- [x] **Deliverables** - 7-section comparative report appended after the standard 7-stage SCRUM run: timeline, governance-divergence matrix, evidence-backed dependency analysis, recovery-and-saturation indicators, competing-hypotheses-with-confidence, longitudinal monitoring recommendations, unresolved research questions ✅
+- [x] **Preserved Disagreements** - 5 cross-investigator conflicts explicitly retained (authority dispersal, visibility scope, competency concentration locus, recovery definition, accountability framing) ✅
+- [x] **Featured comparison axis** - "grounding aircraft" (FAA) vs "staggering employee arrivals" (NSA) — both institutions reducing physical/world activity to accommodate digital coordination limits ✅
+- [x] **Primary NSA source** - [NSA public statement (Nov 17, 2026)](https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/) treated as the run's anchor ✅
+- [x] **Latest run** - `arbiter-1794947488732-6ywcov` (assessment [JSON](../data/reflexive_arbiter/arbiter-1794947488732-6ywcov.json) · [report](../reports/reflexive_arbiter/arbiter-1794947488732-6ywcov.md)) — overall divergence **2.83/4.00**, **4/6 critical**, evidence coverage **100%**, confidence **72%**, has critical divergence **YES** ✅
+
 ---
-*Last Updated: November 16, 2026*
+*Last Updated: November 17, 2026*

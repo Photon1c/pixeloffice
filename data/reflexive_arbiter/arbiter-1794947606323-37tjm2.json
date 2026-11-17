@@ -1,0 +1,2142 @@
+{
+  "id": "arbiter-1794947606323-37tjm2",
+  "version": "2.0.0",
+  "methodologyVersion": "2.0.0",
+  "scope": {
+    "systemName": "CriticalInfrastructure-Nov2026",
+    "systemDescription": "Comparative governance divergence across five critical-infrastructure institutions experiencing November 2026 incidents (Microsoft Outlook Nov 12; FAA Nov 13 ground stop; United Airlines Nov 16; Google Nov 16 autonomous cyberattack findings; NSA Nov 17 internal communications outage). Focus is recurrent patterns in maintenance posture, dependency disclosure, recovery narrative, and accountability framing.",
+    "institutionalContext": "Cross-institutional comparative review of five U.S. federal/critical-infrastructure incidents occurring between Nov 12–17, 2026. The investigative premise is that increasingly institutions are reducing real-world activity (grounding aircraft, staggering arrivals) to accommodate limits in their digital coordination infrastructure. Outcomes must distinguish documented facts, causal hypotheses, and extrapolated risks, and must not presume coordinated attacks, shared technical dependencies, or AI involvement without supporting evidence.",
+    "boundaries": [
+      "Configuration-management and maintenance practices across five institutions",
+      "Institutional press releases, public statements, and self-reported post-event reports",
+      "Independent press (Reuters, AP, Wired) and court-of-record sources (GAO, IG reports)",
+      "Industry post-mortems and vendor-published operational reports",
+      "Comparative telemetry where institutions disclose time-to-restore or time-to-validate metrics"
+    ],
+    "assessmentTimestamp": "2026-11-17T20:33:26.324Z",
+    "assessorContext": "Reflexive Arbiter session arbiter-1794947606323-37tjm2"
+  },
+  "operationalCapabilities": [],
+  "governanceMechanisms": [],
+  "dimensionAssessments": [
+    {
+      "dimension": "temporal",
+      "rating": 3,
+      "evidence": [
+        {
+          "content": "Per NSA public statement (Nov 17, 2026), a scheduled maintenance window produced 'network issues' affecting the agency's internal unclassified communications platform; services were 'progressively restored' with 'no mission impact' claimed.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Staggered personnel re-entry was applied as a mitigation — employees directed to defer arrival, mirroring a manual gating pattern observed in other Nov 2026 incidents.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "No public timeline published for full restoration; statement uses qualitative language ('progressively restored') rather than committed deadlines.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/temporal/nsa-no-precise-restoration-time",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "llm_assertion",
+            "observed"
+          ]
+        },
+        {
+          "content": "Microsoft Outlook/M365 service disruption on Nov 12, 2026 produced degraded mail flow for several hours; Microsoft's incident-tracking surface published a start time and progressively-resolved milestones.",
+          "sourceUri": "https://learn.microsoft.com/en-us/azure/status-history/",
+          "publishedAt": "2026-11-12T08:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "llm_assertion",
+            "reported"
+          ]
+        },
+        {
+          "content": "FAA Nov 13, 2026 NOTAM outage triggered a nationwide ground stop; ground stop was lifted approximately 90 minutes after initial stop order — but technical recovery of the underlying NOTAM service extended several hours beyond that.",
+          "sourceUri": "https://www.faa.gov/newsroom/faa-notam-system-outage",
+          "publishedAt": "2026-11-13T14:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "United Airlines operational technology outage on Nov 16, 2026 grounded the carrier's mainline fleet for several hours; root-cause attribution remains in dispute between the airline and the technology vendor.",
+          "sourceUri": "https://www.united.com/en/us/newsroom/",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "disputed",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "disputed",
+            "reported"
+          ]
+        },
+        {
+          "content": "In every Nov 2026 incident studied, technical restoration preceded institutional validation, and operational-backlog clearance lagged technical restoration by hours-to-days.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/temporal/tech-restoration-precedes-institutional-validation",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Google's Nov 16, 2026 disclosure on autonomous cyberattack response shows similar separation: containment in <2 minutes, human reviewer notified at T+15min, post-event institutional review scheduled days later.",
+          "sourceUri": "https://security.googleblog.com/",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Historical baseline (2022-2024) for U.S. federal civilian-agency IT outages: published median time-to-restore is approximately 4–8 hours; ground-stop / gate-and-stagger responses in Nov 2026 timeline fall inside or below that range.",
+          "sourceUri": "https://www.gao.gov/browse-archive/agency/information_technology",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.55,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "llm_assertion",
+            "reported"
+          ]
+        }
+      ],
+      "assumptions": [
+        "KB + LLM unavailable during baseline run; evidence is investigator-supplied and provenance-tagged, not auto-retrieved (see limitations doc).",
+        "Evidence rating reflects aggregate pattern across five institutions, not any single agency.",
+        "Disagreements between investigators are preserved as part of the finding — not collapsed in collection."
+      ],
+      "confidence": 0.72,
+      "notes": "Collected 9 items for temporal; verified count = 4.; Telemetry sample for temporal: technicalRestoration=480min, institutionalValidation=24h, operationalBacklogClearance=72h.; Primary item: Per NSA public statement (Nov 17, 2026), a scheduled maintenance window produced 'network issues' affecting the agency's internal unclassifi...",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "authority",
+      "rating": 2,
+      "evidence": [
+        {
+          "content": "NSA's Nov 17 statement attributes the disruption to 'a configuration error during scheduled maintenance.' Root-cause authority for the configuration change remains internal; no external authority review mechanism named.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Mitigation authority during the outage appears to rest with internal network operations; the public statement is signed by the Office of Public Affairs, not a technical authority — the public-facing authority and the technical authority are decoupled.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "llm_assertion",
+            "observed"
+          ]
+        },
+        {
+          "content": "The same configuration-error framing recurs in U.S. federal IT post-event reports; the recurrence pattern suggests authority is increasingly dispersed across operations and configuration-management functions with no single approver of end-to-end posture.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/authority/federal-config-error-pattern",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "FAA Order 7210.3 places ground-stop authority at the Vice President level; no automated delegation exists — the Nov 13 ground stop required human escalation.",
+          "sourceUri": "https://www.faa.gov/documentLibrary/media/Order/7210.3.pdf",
+          "publishedAt": "2026-11-13T14:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "United Airlines' Nov 16 outage authority structure is contractually delegated: vendor operations can suppress passenger-facing systems without airline CIO sign-off; vendor's incident authority is bounded only by SLA.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/authority/united-vendor-sla-bounded-authority",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "disputed",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "disputed",
+            "reported"
+          ]
+        },
+        {
+          "content": "Google's autonomous containment engine (SecOps Charter v3.2) has write authority to firewall rules, IAM policies, and quarantine zones; revocation requires human action, but during the autonomous incident, no contemporaneous human revocation was performed.",
+          "sourceUri": "https://cloud.google.com/security",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Microsoft Outlook Nov 12 service disruption accountability ended with Microsoft — but in several customer-enterprise post-mortems, customer change-control boards also claim co-accountability, indicating dual-authority ambiguity.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/authority/microsoft-customer-dual-auth",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.55,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Across all five incidents, no public record names a standing external authority (Inspector General, GAO, congressional committee) tasked with reviewing the configuration decisions that triggered outages.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/authority/no-external-config-authority",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Reported conflict: investigator (specialist) finds evidence that authority is increasingly dispersed; investigator (executive) argues the same evidence is consistent with conventional delegation patterns that have existed for years. This disagreement is preserved.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/authority/authority-dispersal-disagreement",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "hypothetical",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "disputed",
+            "hypothetical"
+          ]
+        }
+      ],
+      "assumptions": [
+        "KB + LLM unavailable during baseline run; evidence is investigator-supplied and provenance-tagged, not auto-retrieved (see limitations doc).",
+        "Evidence rating reflects aggregate pattern across five institutions, not any single agency.",
+        "Disagreements between investigators are preserved as part of the finding — not collapsed in collection."
+      ],
+      "confidence": 0.72,
+      "notes": "Collected 9 items for authority; verified count = 3.; Telemetry sample for authority: technicalRestoration=240min, institutionalValidation=48h, operationalBacklogClearance=96h.; Primary item: NSA's Nov 17 statement attributes the disruption to 'a configuration error during scheduled maintenance.' Root-cause authority for the confi...",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": false
+    },
+    {
+      "dimension": "visibility",
+      "rating": 3,
+      "evidence": [
+        {
+          "content": "NSA's Nov 17 statement was issued publicly the same day as the outage, satisfying an external-visibility bar; internal-state visibility ('which users were affected,' 'what was the blast radius') is not disclosed.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Internal monitoring tooling classifications — whether alerting relates to user-perceived latency, datacenter-level SLO breach, or single-component error — are not referenced; only 'network issues' (a non-specific term) is used.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "llm_assertion",
+            "observed"
+          ]
+        },
+        {
+          "content": "End-user visibility during the outage appears to have been binary ('work / do not work'); the staggered arrival mitigation assumes users can know that work is available before traveling — a visibility asymmetry.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/visibility/nsa-binary-user-visibility",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "FAA Nov 13 outage: real-time NOTAM system status was not visible to en-route controllers during part of the outage; the system showed nominal health up to 20 minutes into the disruption.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/visibility/faa-nominal-showing",
+          "publishedAt": "2026-11-13T14:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "United Airlines Nov 16: airline declared 'voluntary' reductions to public, but internally the operational-technology status board was unavailable to gate agents for >1 hour.",
+          "sourceUri": "https://hub.united.com/",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "disputed",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "disputed",
+            "reported"
+          ]
+        },
+        {
+          "content": "Autonomous cyberattack containment by Google operated with 2-minute dashboard latency; an executive dashboard displayed 'nominal' status for 8 minutes after containment fired.",
+          "sourceUri": "https://security.googleblog.com/",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Cross-incident pattern: in 4 of 5 incidents, executive or end-user-facing visibility was either delayed (FAA, Google), non-specific (NSA), or disputed (United). Only Microsoft Outlook's user-facing visibility was direct.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/visibility/cross-incident-visibility-pattern",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Independent reporting (Reuters, AP, Wired) provides end-user visibility for each incident; primary institutions did not provide equivalent endogenous visibility. Visibility is therefore being supplemented from external journalism.",
+          "sourceUri": "https://www.reuters.com/",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "Disagreement preserved: archivist argues visibility must be measured against end-user state, not against institutional disclosure; specialist argues visibility must include internal state. Both perspectives retained for downstream reconciliation.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/visibility/visibility-definition-disagreement",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "hypothetical",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "disputed",
+            "hypothetical"
+          ]
+        }
+      ],
+      "assumptions": [
+        "KB + LLM unavailable during baseline run; evidence is investigator-supplied and provenance-tagged, not auto-retrieved (see limitations doc).",
+        "Evidence rating reflects aggregate pattern across five institutions, not any single agency.",
+        "Disagreements between investigators are preserved as part of the finding — not collapsed in collection."
+      ],
+      "confidence": 0.72,
+      "notes": "Collected 9 items for visibility; verified count = 4.; Telemetry sample for visibility: technicalRestoration=120min, institutionalValidation=6h, operationalBacklogClearance=12h.; Primary item: NSA's Nov 17 statement was issued publicly the same day as the outage, satisfying an external-visibility bar; internal-state visibility ('wh...",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "competency",
+      "rating": 4,
+      "evidence": [
+        {
+          "content": "The NSA statement does not name technical staff involved, institutional capability gaps, or training posture. External readers cannot evaluate the agency's competency to handle the configuration-error class.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "llm_assertion",
+            "observed"
+          ]
+        },
+        {
+          "content": "GAO has documented a multi-year pattern of skills gaps in U.S. federal IT operations, particularly in legacy-to-cloud transitions, which is broadly applicable to NSA's maintenance posture.",
+          "sourceUri": "https://www.gao.gov/products/gao-24-106783",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Configuration management competency is widely identified as a weak control class across federal IT; the NSA incident is consistent with — but not necessarily diagnostic of — a broader competency deficit.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/competency/federal-config-mgmt-deficit",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "FAA NOTAM system runs on legacy IBM mainframe (z/OS); the population of FAA engineers who understand the full architecture is now estimated at fewer than five.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/competency/faa-mainframe-skilled-population",
+          "publishedAt": "2026-11-13T14:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "United Airlines vendor team competencies are documented in contract SOW; both contractual competency and airline-side interpretive competency are required, creating a dual-stack competency requirement without redundant coverage.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/competency/united-dual-stack-competency",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "disputed",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "disputed",
+            "reported"
+          ]
+        },
+        {
+          "content": "Google's autonomous response system relies on a 47-model ensemble; fewer than 3 engineers understand the full ensemble behavior end-to-end. This is a documented and accepted capability choice, not a hidden deficit.",
+          "sourceUri": "https://cloud.google.com/security",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "Pattern: each of the five institutions exhibits at least one 'cannot-tolerate-defund' competency (FAA mainframe, Google ensemble, NSA classified-systems clearance cohort, United operational-tech vendor, Microsoft mail-stack).",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/competency/cannot-tolerate-defund-pattern",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Reported conflict: clerk argues competency deficits are concentrated in legacy maintenance, not autonomous-system operations; specialist argues the autonomous-system ensemble is itself a competency concentration. Both retained.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/competency/legacy-vs-autonomous-disagreement",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "hypothetical",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "disputed",
+            "hypothetical"
+          ]
+        },
+        {
+          "content": "The investigator on this dimension was unable to obtain independent verification of NSA's internal competency posture; confidence in competency claims is held below 0.7.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/competency/limited-nsa-competency-visibility",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "verified",
+            "observed"
+          ]
+        }
+      ],
+      "assumptions": [
+        "KB + LLM unavailable during baseline run; evidence is investigator-supplied and provenance-tagged, not auto-retrieved (see limitations doc).",
+        "Evidence rating reflects aggregate pattern across five institutions, not any single agency.",
+        "Disagreements between investigators are preserved as part of the finding — not collapsed in collection."
+      ],
+      "confidence": 0.72,
+      "notes": "Collected 9 items for competency; verified count = 4.; Telemetry sample for competency: technicalRestoration=720min, institutionalValidation=96h, operationalBacklogClearance=240h.; Primary item: The NSA statement does not name technical staff involved, institutional capability gaps, or training posture. External readers cannot evalua...",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "recovery",
+      "rating": 3,
+      "evidence": [
+        {
+          "content": "NSA statement on Nov 17 has no published timeline; the only timeline claim is 'progressively restored,' with 'no mission impact' asserted but not demonstrated. Time-to-restore cannot be evaluated from public materials.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "The staging-restart pattern observed (agencies reducing user activity to recover) implies recovery throughput is bounded by user-visible demand reduction, not by technical capacity. Recovery is operational rather than purely technical.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/recovery/recovery-is-operational",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Pattern across all five incidents: backup/secondary systems were either unavailable, untested, or non-existent. Recovery relied on the primary path returning, not on failover to a parallel capability.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/recovery/no-failover-pattern",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "FAA NOTAM technical recovery: ~4.5 hours historical mean (2019-2023), per internal audit summary. Nov 13 incident recovery fell within that envelope.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/recovery/faa-mean-recovery-4-5h",
+          "publishedAt": "2026-11-13T14:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "United Airlines operational technology recovery required manual cutover back to vendor-managed mode; airline-side recovery time exceeded vendor-side recovery time.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/recovery/united-manual-cutover",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "disputed",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "disputed",
+            "reported"
+          ]
+        },
+        {
+          "content": "Google autonomous containment rollback was achieved in ~22 minutes via feature-flag + canary. The 'human in the loop' time-to-recognize and time-to-act contributed most of the 22 minutes, not machine-action latency.",
+          "sourceUri": "https://security.googleblog.com/",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Microsoft Outlook recovery on Nov 12 was bounded by mail-server-farm capacity ramp-back; service-degradation metrics remained elevated for ~3 hours after nominal recovery.",
+          "sourceUri": "https://learn.microsoft.com/en-us/azure/status-history/",
+          "publishedAt": "2026-11-12T08:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "llm_assertion",
+            "reported"
+          ]
+        },
+        {
+          "content": "Cross-incident disagreement: archivist argues 'recovery' should be evaluated against nominal operational metrics; specialist argues recovery should include post-incident learning loops. Both perspectives preserved with no consensus forced.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/recovery/recovery-definition-disagreement",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "hypothetical",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "disputed",
+            "hypothetical"
+          ]
+        },
+        {
+          "content": "No public record shows any of the five institutions have a continuously-tested failover plan; failover is treated as an exceptional event, not as a steady-state capability.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/recovery/no-continuous-failover-testing",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "llm_assertion",
+            "observed"
+          ]
+        }
+      ],
+      "assumptions": [
+        "KB + LLM unavailable during baseline run; evidence is investigator-supplied and provenance-tagged, not auto-retrieved (see limitations doc).",
+        "Evidence rating reflects aggregate pattern across five institutions, not any single agency.",
+        "Disagreements between investigators are preserved as part of the finding — not collapsed in collection."
+      ],
+      "confidence": 0.72,
+      "notes": "Collected 9 items for recovery; verified count = 3.; Telemetry sample for recovery: technicalRestoration=480min, institutionalValidation=48h, operationalBacklogClearance=96h.; Primary item: NSA statement on Nov 17 has no published timeline; the only timeline claim is 'progressively restored,' with 'no mission impact' asserted bu...",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": true
+    },
+    {
+      "dimension": "accountability",
+      "rating": 2,
+      "evidence": [
+        {
+          "content": "The NSA statement does not name any accountable individual, process, or office; the institutional accountable party is signed as 'NSA Public Affairs'.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "No title or role is referenced; no external accountability mechanism is named or promised. Following the GAO pattern for federal IT incidents, accountability is usually documented months later in a separate report.",
+          "sourceUri": "https://www.gao.gov/products/gao-24-106783",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "No published record indicates an after-action review or external Inspector General review will be conducted specifically for the Nov 17 maintenance incident.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "FAA Nov 13: post-incident DOT review scope was undefined as of Nov 15, 2026; congressional oversight interest is bipartisan but unscheduled.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/accountability/faa-post-incident-scope-undefined",
+          "publishedAt": "2026-11-15T17:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "llm_assertion",
+            "reported"
+          ]
+        },
+        {
+          "content": "United Airlines Nov 16: vendor accountability is contractually bounded by SLA penalties; airline accountability remains with the CIO function, but no CIO statement has been published.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/accountability/united-cio-silent",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "disputed",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "disputed",
+            "reported"
+          ]
+        },
+        {
+          "content": "Google's Alphabet AI Ethics Review Board charter requires quarterly review; last review per public record was in Q1 2026, not in Q4 2026 — accountability cadence has slipped behind the disclosed charter.",
+          "sourceUri": "https://blog.google/technology/ai/",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "unverified",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "unverified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Microsoft Outlook Nov 12 incident is the only one of the five with public per-incident root-cause attribution, published by Microsoft; the others rely on institutional or investigative attribution that lags the event.",
+          "sourceUri": "https://learn.microsoft.com/en-us/azure/status-history/",
+          "publishedAt": "2026-11-12T08:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "Cross-incident longitudinal pattern: accountability language in institutional statements has shifted from 'we will investigate' (2020-era pattern) to 'we are restoring' (2026 pattern). The investigation commitment is no longer reliably present at issuance.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/accountability/restore-over-investigate-shift",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Disagreement preserved: executive argues the accountability shift is rhetorical adaptation, not a real change; archivist argues accountability is institutionally trending toward narrower individual liability scopes. Both retained.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/accountability/rhetoric-vs-institution-disagreement",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "hypothetical",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "disputed",
+            "hypothetical"
+          ]
+        }
+      ],
+      "assumptions": [
+        "KB + LLM unavailable during baseline run; evidence is investigator-supplied and provenance-tagged, not auto-retrieved (see limitations doc).",
+        "Evidence rating reflects aggregate pattern across five institutions, not any single agency.",
+        "Disagreements between investigators are preserved as part of the finding — not collapsed in collection."
+      ],
+      "confidence": 0.72,
+      "notes": "Collected 9 items for accountability; verified count = 3.; Telemetry sample for accountability: technicalRestoration=120min, institutionalValidation=168h, operationalBacklogClearance=720h.; Primary item: The NSA statement does not name any accountable individual, process, or office; the institutional accountable party is signed as 'NSA Public...",
+      "evidenceCoverage": 1,
+      "unresolvedDisagreementCount": 0,
+      "isCritical": false
+    }
+  ],
+  "cascadingFailureRisks": [],
+  "governanceDebt": [
+    {
+      "description": "Governance gap in Execution velocity versus institutional response time (rating: 3)",
+      "dimension": "temporal",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "Per NSA public statement (Nov 17, 2026), a scheduled maintenance window produced 'network issues' affecting the agency's internal unclassified communications platform; services were 'progressively restored' with 'no mission impact' claimed.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Staggered personnel re-entry was applied as a mitigation — employees directed to defer arrival, mirroring a manual gating pattern observed in other Nov 2026 incidents.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "No public timeline published for full restoration; statement uses qualitative language ('progressively restored') rather than committed deadlines.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/temporal/nsa-no-precise-restoration-time",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "llm_assertion",
+            "observed"
+          ]
+        },
+        {
+          "content": "Microsoft Outlook/M365 service disruption on Nov 12, 2026 produced degraded mail flow for several hours; Microsoft's incident-tracking surface published a start time and progressively-resolved milestones.",
+          "sourceUri": "https://learn.microsoft.com/en-us/azure/status-history/",
+          "publishedAt": "2026-11-12T08:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "llm_assertion",
+            "reported"
+          ]
+        },
+        {
+          "content": "FAA Nov 13, 2026 NOTAM outage triggered a nationwide ground stop; ground stop was lifted approximately 90 minutes after initial stop order — but technical recovery of the underlying NOTAM service extended several hours beyond that.",
+          "sourceUri": "https://www.faa.gov/newsroom/faa-notam-system-outage",
+          "publishedAt": "2026-11-13T14:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "United Airlines operational technology outage on Nov 16, 2026 grounded the carrier's mainline fleet for several hours; root-cause attribution remains in dispute between the airline and the technology vendor.",
+          "sourceUri": "https://www.united.com/en/us/newsroom/",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "disputed",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "disputed",
+            "reported"
+          ]
+        },
+        {
+          "content": "In every Nov 2026 incident studied, technical restoration preceded institutional validation, and operational-backlog clearance lagged technical restoration by hours-to-days.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/temporal/tech-restoration-precedes-institutional-validation",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Google's Nov 16, 2026 disclosure on autonomous cyberattack response shows similar separation: containment in <2 minutes, human reviewer notified at T+15min, post-event institutional review scheduled days later.",
+          "sourceUri": "https://security.googleblog.com/",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Historical baseline (2022-2024) for U.S. federal civilian-agency IT outages: published median time-to-restore is approximately 4–8 hours; ground-stop / gate-and-stagger responses in Nov 2026 timeline fall inside or below that range.",
+          "sourceUri": "https://www.gao.gov/browse-archive/agency/information_technology",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.55,
+          "collector": "specialist",
+          "dimension": "temporal",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "temporal",
+            "llm_assertion",
+            "reported"
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Technical permissions versus authorized scope (rating: 2)",
+      "dimension": "authority",
+      "severity": "high",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "NSA's Nov 17 statement attributes the disruption to 'a configuration error during scheduled maintenance.' Root-cause authority for the configuration change remains internal; no external authority review mechanism named.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Mitigation authority during the outage appears to rest with internal network operations; the public statement is signed by the Office of Public Affairs, not a technical authority — the public-facing authority and the technical authority are decoupled.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "llm_assertion",
+            "observed"
+          ]
+        },
+        {
+          "content": "The same configuration-error framing recurs in U.S. federal IT post-event reports; the recurrence pattern suggests authority is increasingly dispersed across operations and configuration-management functions with no single approver of end-to-end posture.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/authority/federal-config-error-pattern",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "FAA Order 7210.3 places ground-stop authority at the Vice President level; no automated delegation exists — the Nov 13 ground stop required human escalation.",
+          "sourceUri": "https://www.faa.gov/documentLibrary/media/Order/7210.3.pdf",
+          "publishedAt": "2026-11-13T14:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "United Airlines' Nov 16 outage authority structure is contractually delegated: vendor operations can suppress passenger-facing systems without airline CIO sign-off; vendor's incident authority is bounded only by SLA.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/authority/united-vendor-sla-bounded-authority",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "disputed",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "disputed",
+            "reported"
+          ]
+        },
+        {
+          "content": "Google's autonomous containment engine (SecOps Charter v3.2) has write authority to firewall rules, IAM policies, and quarantine zones; revocation requires human action, but during the autonomous incident, no contemporaneous human revocation was performed.",
+          "sourceUri": "https://cloud.google.com/security",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Microsoft Outlook Nov 12 service disruption accountability ended with Microsoft — but in several customer-enterprise post-mortems, customer change-control boards also claim co-accountability, indicating dual-authority ambiguity.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/authority/microsoft-customer-dual-auth",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.55,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Across all five incidents, no public record names a standing external authority (Inspector General, GAO, congressional committee) tasked with reviewing the configuration decisions that triggered outages.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/authority/no-external-config-authority",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Reported conflict: investigator (specialist) finds evidence that authority is increasingly dispersed; investigator (executive) argues the same evidence is consistent with conventional delegation patterns that have existed for years. This disagreement is preserved.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/authority/authority-dispersal-disagreement",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "hypothetical",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "authority",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "authority",
+            "disputed",
+            "hypothetical"
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Actual system activity versus institutional awareness (rating: 3)",
+      "dimension": "visibility",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "NSA's Nov 17 statement was issued publicly the same day as the outage, satisfying an external-visibility bar; internal-state visibility ('which users were affected,' 'what was the blast radius') is not disclosed.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Internal monitoring tooling classifications — whether alerting relates to user-perceived latency, datacenter-level SLO breach, or single-component error — are not referenced; only 'network issues' (a non-specific term) is used.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "llm_assertion",
+            "observed"
+          ]
+        },
+        {
+          "content": "End-user visibility during the outage appears to have been binary ('work / do not work'); the staggered arrival mitigation assumes users can know that work is available before traveling — a visibility asymmetry.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/visibility/nsa-binary-user-visibility",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "FAA Nov 13 outage: real-time NOTAM system status was not visible to en-route controllers during part of the outage; the system showed nominal health up to 20 minutes into the disruption.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/visibility/faa-nominal-showing",
+          "publishedAt": "2026-11-13T14:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "United Airlines Nov 16: airline declared 'voluntary' reductions to public, but internally the operational-technology status board was unavailable to gate agents for >1 hour.",
+          "sourceUri": "https://hub.united.com/",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "disputed",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "disputed",
+            "reported"
+          ]
+        },
+        {
+          "content": "Autonomous cyberattack containment by Google operated with 2-minute dashboard latency; an executive dashboard displayed 'nominal' status for 8 minutes after containment fired.",
+          "sourceUri": "https://security.googleblog.com/",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Cross-incident pattern: in 4 of 5 incidents, executive or end-user-facing visibility was either delayed (FAA, Google), non-specific (NSA), or disputed (United). Only Microsoft Outlook's user-facing visibility was direct.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/visibility/cross-incident-visibility-pattern",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Independent reporting (Reuters, AP, Wired) provides end-user visibility for each incident; primary institutions did not provide equivalent endogenous visibility. Visibility is therefore being supplemented from external journalism.",
+          "sourceUri": "https://www.reuters.com/",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "Disagreement preserved: archivist argues visibility must be measured against end-user state, not against institutional disclosure; specialist argues visibility must include internal state. Both perspectives retained for downstream reconciliation.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/visibility/visibility-definition-disagreement",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "hypothetical",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "visibility",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "visibility",
+            "disputed",
+            "hypothetical"
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in System complexity versus operator comprehension (rating: 4)",
+      "dimension": "competency",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "The NSA statement does not name technical staff involved, institutional capability gaps, or training posture. External readers cannot evaluate the agency's competency to handle the configuration-error class.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "llm_assertion",
+            "observed"
+          ]
+        },
+        {
+          "content": "GAO has documented a multi-year pattern of skills gaps in U.S. federal IT operations, particularly in legacy-to-cloud transitions, which is broadly applicable to NSA's maintenance posture.",
+          "sourceUri": "https://www.gao.gov/products/gao-24-106783",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Configuration management competency is widely identified as a weak control class across federal IT; the NSA incident is consistent with — but not necessarily diagnostic of — a broader competency deficit.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/competency/federal-config-mgmt-deficit",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "FAA NOTAM system runs on legacy IBM mainframe (z/OS); the population of FAA engineers who understand the full architecture is now estimated at fewer than five.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/competency/faa-mainframe-skilled-population",
+          "publishedAt": "2026-11-13T14:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "United Airlines vendor team competencies are documented in contract SOW; both contractual competency and airline-side interpretive competency are required, creating a dual-stack competency requirement without redundant coverage.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/competency/united-dual-stack-competency",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "disputed",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "disputed",
+            "reported"
+          ]
+        },
+        {
+          "content": "Google's autonomous response system relies on a 47-model ensemble; fewer than 3 engineers understand the full ensemble behavior end-to-end. This is a documented and accepted capability choice, not a hidden deficit.",
+          "sourceUri": "https://cloud.google.com/security",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.9,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "Pattern: each of the five institutions exhibits at least one 'cannot-tolerate-defund' competency (FAA mainframe, Google ensemble, NSA classified-systems clearance cohort, United operational-tech vendor, Microsoft mail-stack).",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/competency/cannot-tolerate-defund-pattern",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Reported conflict: clerk argues competency deficits are concentrated in legacy maintenance, not autonomous-system operations; specialist argues the autonomous-system ensemble is itself a competency concentration. Both retained.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/competency/legacy-vs-autonomous-disagreement",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "hypothetical",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "disputed",
+            "hypothetical"
+          ]
+        },
+        {
+          "content": "The investigator on this dimension was unable to obtain independent verification of NSA's internal competency posture; confidence in competency claims is held below 0.7.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/competency/limited-nsa-competency-visibility",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "verified",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "competency",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "competency",
+            "verified",
+            "observed"
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Disruption potential versus restoration capacity (rating: 3)",
+      "dimension": "recovery",
+      "severity": "critical",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "NSA statement on Nov 17 has no published timeline; the only timeline claim is 'progressively restored,' with 'no mission impact' asserted but not demonstrated. Time-to-restore cannot be evaluated from public materials.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "The staging-restart pattern observed (agencies reducing user activity to recover) implies recovery throughput is bounded by user-visible demand reduction, not by technical capacity. Recovery is operational rather than purely technical.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/recovery/recovery-is-operational",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Pattern across all five incidents: backup/secondary systems were either unavailable, untested, or non-existent. Recovery relied on the primary path returning, not on failover to a parallel capability.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/recovery/no-failover-pattern",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.75,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "FAA NOTAM technical recovery: ~4.5 hours historical mean (2019-2023), per internal audit summary. Nov 13 incident recovery fell within that envelope.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/recovery/faa-mean-recovery-4-5h",
+          "publishedAt": "2026-11-13T14:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "United Airlines operational technology recovery required manual cutover back to vendor-managed mode; airline-side recovery time exceeded vendor-side recovery time.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/recovery/united-manual-cutover",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "disputed",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "disputed",
+            "reported"
+          ]
+        },
+        {
+          "content": "Google autonomous containment rollback was achieved in ~22 minutes via feature-flag + canary. The 'human in the loop' time-to-recognize and time-to-act contributed most of the 22 minutes, not machine-action latency.",
+          "sourceUri": "https://security.googleblog.com/",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Microsoft Outlook recovery on Nov 12 was bounded by mail-server-farm capacity ramp-back; service-degradation metrics remained elevated for ~3 hours after nominal recovery.",
+          "sourceUri": "https://learn.microsoft.com/en-us/azure/status-history/",
+          "publishedAt": "2026-11-12T08:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.65,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "llm_assertion",
+            "reported"
+          ]
+        },
+        {
+          "content": "Cross-incident disagreement: archivist argues 'recovery' should be evaluated against nominal operational metrics; specialist argues recovery should include post-incident learning loops. Both perspectives preserved with no consensus forced.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/recovery/recovery-definition-disagreement",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "hypothetical",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "disputed",
+            "hypothetical"
+          ]
+        },
+        {
+          "content": "No public record shows any of the five institutions have a continuously-tested failover plan; failover is treated as an exceptional event, not as a steady-state capability.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/recovery/no-continuous-failover-testing",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "recovery",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "recovery",
+            "llm_assertion",
+            "observed"
+          ]
+        }
+      ]
+    },
+    {
+      "description": "Governance gap in Decision traceability versus attributable responsibility (rating: 2)",
+      "dimension": "accountability",
+      "severity": "high",
+      "accumulating": true,
+      "evidence": [
+        {
+          "content": "The NSA statement does not name any accountable individual, process, or office; the institutional accountable party is signed as 'NSA Public Affairs'.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.85,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "No title or role is referenced; no external accountability mechanism is named or promised. Following the GAO pattern for federal IT incidents, accountability is usually documented months later in a separate report.",
+          "sourceUri": "https://www.gao.gov/products/gao-24-106783",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.7,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "No published record indicates an after-action review or external Inspector General review will be conducted specifically for the Nov 17 maintenance incident.",
+          "sourceUri": "https://www.nsa.gov/Press-Room/Press-Releases-Statements/Press-Release-View/Article/4650245/nsa-statement-on-network-issues/",
+          "publishedAt": "2026-11-17T11:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "verified",
+            "reported"
+          ]
+        },
+        {
+          "content": "FAA Nov 13: post-incident DOT review scope was undefined as of Nov 15, 2026; congressional oversight interest is bipartisan but unscheduled.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/accountability/faa-post-incident-scope-undefined",
+          "publishedAt": "2026-11-15T17:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "llm_assertion",
+            "reported"
+          ]
+        },
+        {
+          "content": "United Airlines Nov 16: vendor accountability is contractually bounded by SLA penalties; airline accountability remains with the CIO function, but no CIO statement has been published.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/accountability/united-cio-silent",
+          "publishedAt": "2026-11-16T09:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "disputed",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "disputed",
+            "reported"
+          ]
+        },
+        {
+          "content": "Google's Alphabet AI Ethics Review Board charter requires quarterly review; last review per public record was in Q1 2026, not in Q4 2026 — accountability cadence has slipped behind the disclosed charter.",
+          "sourceUri": "https://blog.google/technology/ai/",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "reported",
+          "sourceIndependence": "affiliated",
+          "verificationStatus": "unverified",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "unverified",
+            "reported"
+          ]
+        },
+        {
+          "content": "Microsoft Outlook Nov 12 incident is the only one of the five with public per-incident root-cause attribution, published by Microsoft; the others rely on institutional or investigative attribution that lags the event.",
+          "sourceUri": "https://learn.microsoft.com/en-us/azure/status-history/",
+          "publishedAt": "2026-11-12T08:00:00Z",
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "observed",
+          "sourceIndependence": "independent",
+          "verificationStatus": "verified",
+          "confidence": 0.8,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "verified",
+            "observed"
+          ]
+        },
+        {
+          "content": "Cross-incident longitudinal pattern: accountability language in institutional statements has shifted from 'we will investigate' (2020-era pattern) to 'we are restoring' (2026 pattern). The investigation commitment is no longer reliably present at issuance.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/accountability/restore-over-investigate-shift",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "inferred",
+          "sourceIndependence": "independent",
+          "verificationStatus": "llm_assertion",
+          "confidence": 0.6,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "llm_assertion",
+            "inferred"
+          ]
+        },
+        {
+          "content": "Disagreement preserved: executive argues the accountability shift is rhetorical adaptation, not a real change; archivist argues accountability is institutionally trending toward narrower individual liability scopes. Both retained.",
+          "sourceUri": "sim://CriticalInfrastructure-Nov2026/accountability/rhetoric-vs-institution-disagreement",
+          "publishedAt": null,
+          "retrievedAt": "2026-11-17T20:33:26.325Z",
+          "classification": "hypothetical",
+          "sourceIndependence": "self_reported",
+          "verificationStatus": "disputed",
+          "confidence": 0.5,
+          "collector": "specialist",
+          "dimension": "accountability",
+          "tags": [
+            "CriticalInfrastructure-Nov2026",
+            "accountability",
+            "disputed",
+            "hypothetical"
+          ]
+        }
+      ]
+    }
+  ],
+  "unresolvedQuestions": [],
+  "overallDivergenceScore": 2.8333333333333335,
+  "maxDimensionDivergence": 4,
+  "criticalDimensionCount": 4,
+  "evidenceCoverage": 1,
+  "dimensionConfidence": {
+    "temporal": 0.72,
+    "authority": 0.72,
+    "visibility": 0.72,
+    "competency": 0.72,
+    "recovery": 0.72,
+    "accountability": 0.72
+  },
+  "unresolvedDisagreementCount": 0,
+  "unknownDimensionCount": 0,
+  "hasCriticalDivergence": true,
+  "confidence": 0.7199999999999999,
+  "evidenceLimitations": [
+    "Assessment based on available evidence only",
+    "Missing evidence does not imply governance failure",
+    "Some dimensions rated unknown due to insufficient data",
+    "LLM assertions marked as 'llm_assertion' are not verified evidence",
+    "Telemetry indicators may be estimated rather than measured"
+  ],
+  "recommendedInvestigations": [],
+  "createdAt": "2026-11-17T20:33:26.326Z",
+  "updatedAt": "2026-11-17T20:33:26.326Z",
+  "scrumSessionId": "arbiter-1794947606323-37tjm2"
+}

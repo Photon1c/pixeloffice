@@ -1,6 +1,6 @@
 {
   "_available": {
-    "lastSync": "2026-11-06T20:56:59.750Z",
+    "lastSync": "2026-11-17T20:35:43.449Z",
     "models": {
       "emapper:latest": {
         "name": "emapper:latest",
@@ -22,13 +22,13 @@
         "name": "geometrid:latest",
         "size": 5629116807
       },
-      "ornith:latest": {
-        "name": "ornith:latest",
-        "size": 5629110568
-      },
       "cicero-sharp:latest": {
         "name": "cicero-sharp:latest",
         "size": 5629110056
+      },
+      "ornith:latest": {
+        "name": "ornith:latest",
+        "size": 5629110568
       },
       "qwen2.5:7b": {
         "name": "qwen2.5:7b",
@@ -73,10 +73,6 @@
       "gemma-cuatro:latest": {
         "name": "gemma-cuatro:latest",
         "size": 468
-      },
-      "kimi-k2.5:cloud": {
-        "name": "kimi-k2.5:cloud",
-        "size": 340
       },
       "gemma4:31b-cloud": {
         "name": "gemma4:31b-cloud",
