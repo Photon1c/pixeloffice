@@ -15,6 +15,11 @@ export const CELL_HEIGHT = (CANVAS_HEIGHT - STATUS_BAR_HEIGHT) / GRID_ROWS; // 2
 // Standard padding inside rooms to prevent props from touching walls
 export const ROOM_PADDING = 15;
 
+// Lobby door inner position — used by ENTRANCE_POSITION and the door graphic
+// (in drawOffice.ts) so both sit inside the visible canvas (lobby room:
+// x=0..240, y=240..480). Must be declared before ENTRANCE_POSITION below.
+const RoomPaddingInner = 4;
+
 // ============================================================================
 // SPATIAL COMPOSITION CONSTANTS (GUI Polish)
 // ============================================================================
@@ -131,7 +136,9 @@ export const CHAIR_POSITIONS = CUBICLE_POSITIONS.map((pos) => ({
   y: pos.y,
 }));
 
-export const ENTRANCE_POSITION = { x: -60, y: 394 };
+// Entrance origin: just inside the lobby door on the left edge of the canvas.
+// (Previously { x: -60, y: 394 } placed agents off-canvas during the entry animation.)
+export const ENTRANCE_POSITION = { x: RoomPaddingInner, y: 394 }; // inside lobby col 0
 
 // ============================================================================
 // WANDER POINTS (for idle agents) - Expanded for free movement

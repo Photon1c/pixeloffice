@@ -301,8 +301,9 @@ export function drawLobby(ctx: CanvasRenderingContext2D): void {
 export function drawMainEntrance(ctx: CanvasRenderingContext2D): void {
   const lobby = ROOMS.lobby;
   const floorY = lobby.y + lobby.height * 0.7;
-  const doorX = lobby.x - 36;
-  const doorY = floorY - 40;
+  // Door sits inside the lobby on its left edge so it is always inside the canvas.
+  const doorX = lobby.x + 4;
+  const doorY = floorY - 50;
   ctx.fillStyle = "#3a2a1a";
   ctx.fillRect(doorX, doorY, 30, 50);
   ctx.fillStyle = "#4a3a2a";

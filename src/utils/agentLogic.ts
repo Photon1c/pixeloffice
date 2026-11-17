@@ -335,6 +335,25 @@ export const INITIAL_AGENTS: Agent[] = [
   },
 ];
 
+// ============================================================================
+// CANVAS BOUNDARY CLAMP
+// ============================================================================
+// Keeps any (x, y) — current position or target — inside the visible canvas.
+// Used both during the move step (updateAgentPosition) and wherever an agent
+// is constructed or assigned a target, so no path can leave an agent stranded
+// off-camera (e.g. via legacy ENTRANCE_POSITION={<0}, bad wander targets,
+// or stale localStorage state).
+const CANVAS_FLOOR_Y = CANVAS_HEIGHT - STATUS_BAR_HEIGHT;
+const CANVAS_RIGHT_X = CANVAS_WIDTH - 40;
+const CANVAS_BOTTOM_Y = CANVAS_FLOOR_Y - 40;
+
+export function clampToCanvas(x: number, y: number): { x: number; y: number } {
+  return {
+    x: Math.max(0, Math.min(CANVAS_RIGHT_X, x)),
+    y: Math.max(0, Math.min(CANVAS_BOTTOM_Y, y)),
+  };
+}
+
 export function updateAgentPosition(
   agent: Agent,
   speed: number,
@@ -344,8 +363,14 @@ export function updateAgentPosition(
     return agent;
   }
 
-  const dx = agent.targetX - agent.x;
-  const dy = agent.targetY - agent.y;
+  // If the target itself is outside the canvas (e.g. legacy -60 entrance pos),
+  // redirect it to the lobby chair before any movement — keeps agents on-camera.
+  const targetClamp = clampToCanvas(agent.targetX, agent.targetY);
+  const safeTargetX = targetClamp.x;
+  const safeTargetY = targetClamp.y;
+
+  const dx = safeTargetX - agent.x;
+  const dy = safeTargetY - agent.y;
   const distance = Math.sqrt(dx * dx + dy * dy);
 
   // Only snap to sitting mode for walking agents, keep standing agents in place
@@ -354,15 +379,19 @@ export function updateAgentPosition(
       return {
         ...agent,
         mode: "sitting",
-        x: agent.targetX,
-        y: agent.targetY,
+        x: safeTargetX,
+        y: safeTargetY,
+        targetX: safeTargetX,
+        targetY: safeTargetY,
       };
     }
     // For standing mode, just snap to position without changing mode
     return {
       ...agent,
-      x: agent.targetX,
-      y: agent.targetY,
+      x: safeTargetX,
+      y: safeTargetY,
+      targetX: safeTargetX,
+      targetY: safeTargetY,
     };
   }
 
@@ -372,9 +401,10 @@ export function updateAgentPosition(
   const newDir = dx > 0 ? "right" : "left";
   const newFrame: 0 | 1 = agent.frame === 0 ? 1 : 0;
   
-  // Apply boundary constraints
-  const newX = Math.max(0, Math.min(CANVAS_WIDTH - 40, agent.x + moveX));
-  const newY = Math.max(0, Math.min(CANVAS_HEIGHT - STATUS_BAR_HEIGHT - 40, agent.y + moveY));
+  // Apply boundary constraints — use shared helper so all paths agree on bounds.
+  const moved = clampToCanvas(agent.x + moveX, agent.y + moveY);
+  const newX = moved.x;
+  const newY = moved.y;
 
   return {
     ...agent,
