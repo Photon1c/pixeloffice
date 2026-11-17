@@ -34,7 +34,7 @@
 - All features in `active/index.md` are ✅ implemented and stable (actively used, not in development)
 - Full historical records in `complete/index.md` with per-item status (🟢 verified, 🟡 needs review, 🔴 archived)
 
-*Last updated: 2026-05-26*
+*Last updated: 2026-11-16*
 
 ## Projects (Auto-generated)
 

@@ -6,8 +6,9 @@ This index tracks the implementation status of core features and recent upgrades
 - [ghost_executive.md](./ghost_executive.md) - User role concept
 - [onboarding_models.md](./onboarding_models.md) - Model reference
 - [opencode_pixel_office_tsa_health_ui_handoff.md](./opencode_pixel_office_tsa_health_ui_handoff.md) - TSA Health HUD (UI) + positioning polish handoff
-- [opencode_cooler_to_scrum_meaningful_reports_handoff.md](./opencode_cooler_to_scrum_meaningful_reports_handoff.md) - Ensure Cooler → SCRUM produces meaningful reports (even “no action”)
+- [opencode_cooler_to_scrum_meaningful_reports_handoff.md](./opencode_cooler_to_scrum_meaningful_reports_handoff.md) - Ensure Cooler → SCRUM produces meaningful reports (even "no action")
 - [opencode_multi_upgrade_handoff.md](./opencode_multi_upgrade_handoff.md) - Multi-upgrade summary: meaningful reports, loop detection, news auto-refresh, Agentic OS Kernel reasoning loop
+- [opencode_reflexive_arbiter_implementation.md](./opencode_reflexive_arbiter_implementation.md) - Reflexive Arbiter: Governance divergence assessment via multi-agent research scrum
 
 ## 🟢 Core Infrastructure
 - [x] **Live Server (Node/Express)** - Unified backend for API and socket management ✅
@@ -61,4 +62,4 @@ This index tracks the implementation status of core features and recent upgrades
 - [x] **Desk Stigmergy Gauges** - `pixel_office_desk_stigmergy` with heat types ✅
 
 ---
-*Last Updated: April 23, 2026*
+*Last Updated: November 16, 2026*
