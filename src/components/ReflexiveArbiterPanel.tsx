@@ -24,6 +24,7 @@ interface AutoRunPayload {
   institutionalContext?: string;
   boundaries?: string[];
   participants?: string[];
+  mermaidDiagram?: string;
 }
 
 interface AutoRunResult {
@@ -31,6 +32,32 @@ interface AutoRunResult {
   assessment?: { id: string; systemName: string; overallDivergenceScore: number };
   reportPath?: string;
   error?: string;
+}
+
+interface DashboardSummary {
+  totalAssessments: number;
+  systems: number;
+  criticalAssessments: number;
+  totalGovernanceDebt: number;
+  recentAssessments: Array<{
+    id: string;
+    systemName: string;
+    createdAt: string;
+    overallDivergenceScore: number;
+  }>;
+  dimensionStats: Record<string, { avgScore: number; criticalCount: number }>;
+}
+
+interface ActivityLogEntry {
+  id: string;
+  assessmentId: string;
+  stage: string;
+  agent: string;
+  action: string;
+  description: string;
+  details?: Record<string, any>;
+  timestamp: string;
+  severity: "info" | "warning" | "critical";
 }
 
 const DEFAULT_COMPARATIVE_SYSTEM_SCOPE = "CriticalInfrastructure-Nov2026";
@@ -163,9 +190,21 @@ export default function ReflexiveArbiterPanel() {
   // Quick-run form state — pre-loaded with the comparative-infrastructure defaults.
   const [topic, setTopic] = useState<string>(DEFAULT_COMPARATIVE_TOPIC);
   const [systemScope, setSystemScope] = useState<string>(DEFAULT_COMPARATIVE_SYSTEM_SCOPE);
+  const [mermaidDiagram, setMermaidDiagram] = useState<string>("");
   const [running, setRunning] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  // Admin features state
+  const [dashboard, setDashboard] = useState<DashboardSummary | null>(null);
+  const [activityLog, setActivityLog] = useState<ActivityLogEntry[]>([]);
+  const [loadingDashboard, setLoadingDashboard] = useState<boolean>(false);
+  const [loadingActivity, setLoadingActivity] = useState<string | null>(null);
+  const [showMermaid, setShowMermaid] = useState<boolean>(false);
+  const [newsTrigger, setNewsTrigger] = useState<{title: string; url: string; source: string; keywords: string}>({
+    title: "", url: "", source: "", keywords: ""
+  });
+  const [triggeringNews, setTriggeringNews] = useState<boolean>(false);
 
   const refreshStatus = async () => {
     try {
@@ -192,6 +231,136 @@ export default function ReflexiveArbiterPanel() {
     refreshStatus();
     refreshAssessments();
   }, []);
+
+  const loadDashboard = async () => {
+    setLoadingDashboard(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/arbiter/dashboard`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setDashboard(data.summary);
+    } catch (err: any) {
+      setError(`Failed to load dashboard: ${err?.message ?? err}`);
+    } finally {
+      setLoadingDashboard(false);
+    }
+  };
+
+  const loadActivity = async (id: string) => {
+    if (loadingActivity === id) {
+      setLoadingActivity(null);
+      setActivityLog([]);
+      return;
+    }
+    setLoadingActivity(id);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/arbiter/assessments/${id}/activity`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setActivityLog(data.activityLog || []);
+    } catch (err: any) {
+      setError(`Failed to load activity: ${err?.message ?? err}`);
+    } finally {
+      setLoadingActivity(null);
+    }
+  };
+
+  const downloadEvidencePack = async (id: string) => {
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/arbiter/assessments/${id}/evidence-pack`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `evidence-pack-${id}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      setSuccess(`Evidence pack downloaded for ${id}`);
+    } catch (err: any) {
+      setError(`Failed to download evidence pack: ${err?.message ?? err}`);
+    }
+  };
+
+  const handleMermaidRun = async () => {
+    if (!topic.trim() || !systemScope.trim() || !mermaidDiagram.trim()) {
+      setError("Topic, System Scope, and Mermaid diagram are required.");
+      return;
+    }
+    setRunning(true);
+    setError(null);
+    setSuccess(null);
+    try {
+      const payload = {
+        topic,
+        systemScope,
+        systemDescription: DEFAULT_COMPARATIVE_DESCRIPTION,
+        institutionalContext: DEFAULT_COMPARATIVE_INSTITUTIONAL_CONTEXT,
+        boundaries: DEFAULT_COMPARATIVE_BOUNDARIES,
+        participants: ["clerk", "specialist", "executive", "archivist"],
+        mermaidDiagram,
+      };
+      const res = await fetch(`${API_BASE}/api/admin/arbiter/start-with-mermaid`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      setSuccess(`Mermaid-based assessment started: ${data.session?.id ?? "(no id)"} at stage ${data.stageResult?.stage}`);
+      await refreshStatus();
+      await refreshAssessments();
+    } catch (err: any) {
+      setError(`Mermaid run failed: ${err?.message ?? err}`);
+    } finally {
+      setRunning(false);
+    }
+  };
+
+  const handleNewsTrigger = async () => {
+    if (!newsTrigger.title.trim()) {
+      setError("News title is required.");
+      return;
+    }
+    if (!status?.assessment?.id) {
+      setError("No active assessment to attach news trigger to. Run an assessment first.");
+      return;
+    }
+    setTriggeringNews(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/admin/arbiter/news-trigger`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assessmentId: status.assessment.id,
+          newsTitle: newsTrigger.title,
+          newsUrl: newsTrigger.url,
+          newsSource: newsTrigger.source || "manual",
+          publishedAt: new Date().toISOString(),
+          keywords: newsTrigger.keywords.split(",").map(k => k.trim()).filter(Boolean),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
+      setSuccess(`News trigger processed: matched ${data.newsTrigger?.triggeredDimensions?.length ?? 0} dimensions`);
+      setNewsTrigger({title: "", url: "", source: "", keywords: ""});
+      await refreshStatus();
+    } catch (err: any) {
+      setError(`News trigger failed: ${err?.message ?? err}`);
+    } finally {
+      setTriggeringNews(false);
+    }
+  };
 
   const loadReport = async (id: string) => {
     if (loadedReportId === id) {
@@ -332,6 +501,136 @@ export default function ReflexiveArbiterPanel() {
         {success && <div style={styles.success}>{success}</div>}
       </div>
 
+      {/* Admin Dashboard */}
+      <div style={styles.section}>
+        <div style={styles.row}>
+          <div style={styles.label}>Admin Dashboard</div>
+          <button
+            style={styles.btnSecondary}
+            onClick={loadDashboard}
+            disabled={loadingDashboard}
+            title="Load admin dashboard summary"
+          >
+            {loadingDashboard ? "⟳" : "↻ Load"}
+          </button>
+        </div>
+        {dashboard && (
+          <div style={{ fontSize: "10px", color: "#a0a0b0", marginTop: "4px" }}>
+            <div style={styles.row}>
+              <span>Total Assessments: <strong>{dashboard.totalAssessments}</strong></span>
+              <span>Systems: <strong>{dashboard.systems}</strong></span>
+            </div>
+            <div style={styles.row}>
+              <span>Critical: <strong style={{color: "#ff8888"}}>{dashboard.criticalAssessments}</strong></span>
+              <span>Governance Debt: <strong style={{color: "#ffcc88"}}>{dashboard.totalGovernanceDebt}</strong></span>
+            </div>
+            <div style={{ marginTop: "4px" }}>
+              <strong>Dimension Stats:</strong>
+              {Object.entries(dashboard.dimensionStats).map(([dim, stats]) => (
+                <span key={dim} style={{ ...styles.pill, marginRight: "4px", marginTop: "2px" }}>
+                  {dim}: avg {stats.avgScore.toFixed(2)} / crit {stats.criticalCount}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Mermaid Diagram Scope */}
+      <div style={styles.section}>
+        <div style={styles.row}>
+          <div style={styles.label}>Mermaid Scope Definition</div>
+          <button
+            style={styles.btnSecondary}
+            onClick={() => setShowMermaid(!showMermaid)}
+            title="Toggle Mermaid diagram input"
+          >
+            {showMermaid ? "▲ Hide" : "▼ Show"}
+          </button>
+        </div>
+        {showMermaid && (
+          <div style={{ ...styles.row, flexDirection: "column", alignItems: "stretch" }}>
+            <textarea
+              style={styles.textarea}
+              value={mermaidDiagram}
+              onChange={(e) => setMermaidDiagram(e.target.value)}
+              placeholder="graph TD&#10;    A[User] --> B[Frontend]&#10;    B --> C[API Gateway]&#10;    C --> D[Auth Service]&#10;    C --> E[Data Service]&#10;    E --> F[(Database)]&#10;    C --> G[External API]"
+              disabled={running}
+            />
+            <button
+              style={{
+                ...styles.btnPrimary,
+                marginTop: "6px",
+                ...(running ? styles.btnDisabled : {}),
+              }}
+              disabled={running}
+              onClick={handleMermaidRun}
+            >
+              {running ? "Running…" : "Run Assessment with Mermaid Scope"}
+            </button>
+            <div style={styles.metaLine}>
+              Define system architecture as a Mermaid diagram. Boundaries are auto-extracted from
+              system/component/external nodes. Nodes in [brackets] become labeled elements.
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* News Trigger */}
+      <div style={styles.section}>
+        <div style={styles.row}>
+          <div style={styles.label}>News Evidence Trigger</div>
+          <span style={{fontSize: "10px", color: status?.assessment ? "#7fc77f" : "#7f8597"}}>
+            {status?.assessment ? `Active: ${status.assessment.id.slice(0, 20)}…` : "No active assessment"}
+          </span>
+        </div>
+        <div style={{ ...styles.row, flexDirection: "column", alignItems: "stretch" }}>
+          <input
+            style={{ ...styles.input, marginBottom: "4px" }}
+            value={newsTrigger.title}
+            onChange={(e) => setNewsTrigger({...newsTrigger, title: e.target.value})}
+            placeholder="News title (e.g. 'Major outage in payment system')"
+            disabled={triggeringNews}
+          />
+          <input
+            style={{ ...styles.input, marginBottom: "4px" }}
+            value={newsTrigger.url}
+            onChange={(e) => setNewsTrigger({...newsTrigger, url: e.target.value})}
+            placeholder="News URL (optional)"
+            disabled={triggeringNews}
+          />
+          <input
+            style={{ ...styles.input, marginBottom: "4px" }}
+            value={newsTrigger.source}
+            onChange={(e) => setNewsTrigger({...newsTrigger, source: e.target.value})}
+            placeholder="Source (e.g. TechCrunch, Reuters)"
+            disabled={triggeringNews}
+          />
+          <input
+            style={styles.input}
+            value={newsTrigger.keywords}
+            onChange={(e) => setNewsTrigger({...newsTrigger, keywords: e.target.value})}
+            placeholder="Keywords (comma-separated, optional)"
+            disabled={triggeringNews}
+          />
+          <button
+            style={{
+              ...styles.btnPrimary,
+              marginTop: "6px",
+              ...(triggeringNews ? styles.btnDisabled : {}),
+            }}
+            disabled={triggeringNews || !status?.assessment}
+            onClick={handleNewsTrigger}
+          >
+            {triggeringNews ? "Triggering…" : "Trigger Evidence Collection"}
+          </button>
+          <div style={styles.metaLine}>
+            Matches keywords against 6 governance dimensions. Creates evidence records from news content.
+            Requires an active assessment to attach triggers to.
+          </div>
+        </div>
+      </div>
+
       <div style={styles.reportsHeader}>Past Assessments ({sorted.length})</div>
       {sorted.length === 0 && (
         <div style={{ ...styles.metaLine, paddingLeft: "4px" }}>
@@ -388,6 +687,28 @@ export default function ReflexiveArbiterPanel() {
               >
                 {loadingReport === a.id ? "…" : loadedReportId === a.id ? "▲" : "View"}
               </button>
+              <button
+                style={{
+                  ...styles.btnSecondary,
+                  marginLeft: "4px",
+                  ...(loadingActivity === a.id ? styles.btnDisabled : {}),
+                }}
+                onClick={() => loadActivity(a.id)}
+                disabled={loadingActivity === a.id}
+                title={`View activity log ${a.id}`}
+              >
+                {loadingActivity === a.id ? "…" : loadedReportId === a.id ? "📋" : "📋"}
+              </button>
+              <button
+                style={{
+                  ...styles.btnSecondary,
+                  marginLeft: "4px",
+                }}
+                onClick={() => downloadEvidencePack(a.id)}
+                title={`Download evidence pack ${a.id}`}
+              >
+                📦
+              </button>
             </div>
             {loadedReportId === a.id && loadedReportContent && (
               <pre
@@ -408,6 +729,40 @@ export default function ReflexiveArbiterPanel() {
               >
                 {loadedReportContent}
               </pre>
+            )}
+            {loadingActivity === a.id && (
+              <div style={{ margin: "4px 0", padding: "8px", background: "#1a1a2e", borderRadius: "4px", color: "#7f8597" }}>
+                Loading activity log…
+              </div>
+            )}
+            {loadedReportId === a.id && activityLog.length > 0 && (
+              <div style={{ marginTop: "4px", padding: "8px", background: "#0d0d14", borderRadius: "4px", border: "1px solid #1b2333" }}>
+                <div style={{ fontSize: "10px", color: "#a0a0b0", marginBottom: "4px", fontWeight: 600 }}>
+                  Activity Log ({activityLog.length} entries)
+                </div>
+                {activityLog.slice(0, 20).map((entry) => (
+                  <div key={entry.id} style={{ fontSize: "9px", color: "#bcc0c9", marginBottom: "2px", fontFamily: "monospace" }}>
+                    <span style={{color: "#7f8597"}}>{entry.timestamp.slice(11, 19)}</span>{" "}
+                    <span style={{
+                      color: entry.severity === "critical" ? "#ff8888" : entry.severity === "warning" ? "#ffcc88" : "#88ccff"
+                    }}>
+                      [{entry.severity.toUpperCase()}]
+                    </span>{" "}
+                    <span style={{color: "#a0a0b0"}}>{entry.agent}</span> -{" "}
+                    <span>{entry.action}</span>: {entry.description}
+                    {entry.details && Object.keys(entry.details).length > 0 && (
+                      <span style={{color: "#7f8597", marginLeft: "8px"}}>
+                        {JSON.stringify(entry.details).slice(0, 100)}…
+                      </span>
+                    )}
+                  </div>
+                ))}
+                {activityLog.length > 20 && (
+                  <div style={{ fontSize: "9px", color: "#7f8597", marginTop: "4px" }}>
+                    … and {activityLog.length - 20} more entries
+                  </div>
+                )}
+              </div>
             )}
           </div>
         );
