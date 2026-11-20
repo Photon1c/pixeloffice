@@ -171,6 +171,76 @@ export interface AssessmentScope {
   assessorContext: string;
   /** Telemetry context for this assessment */
   telemetryContext?: GovernanceTelemetry;
+  /** Optional Mermaid diagram defining system architecture */
+  mermaidDiagram?: string;
+  /** Parsed architecture elements from Mermaid */
+  architectureElements?: ArchitectureElement[];
+}
+
+export interface ArchitectureElement {
+  id: string;
+  label: string;
+  type: "system" | "component" | "actor" | "boundary" | "datastore" | "external";
+  parents: string[];
+  children: string[];
+  metadata?: Record<string, any>;
+}
+
+/** Activity log entry for assessment lifecycle */
+export interface ArbiterActivityLogEntry {
+  id: string;
+  assessmentId: string;
+  stage: ReflexiveArbiterStage;
+  agent: string;
+  action: string;
+  description: string;
+  details?: Record<string, any>;
+  timestamp: string;
+  /** Severity for filtering: info, warning, critical */
+  severity: "info" | "warning" | "critical";
+}
+
+/** Governance forecast for tracking prediction accuracy */
+export interface GovernanceForecast {
+  id: string;
+  assessmentId: string;
+  dimension: AssessmentDimension;
+  predictedRating: DivergenceRating;
+  predictor: string; // agent or "human"
+  confidence: number; // 0-1
+  rationale: string;
+  createdAt: string;
+  /** Evaluation results (filled when next assessment completes) */
+  evaluation?: {
+    actualRating: DivergenceRating;
+    evaluatedAt: string;
+    directionCorrect: boolean; // predicted direction vs actual
+    absoluteError: number | null; // numeric difference
+    notes: string;
+  };
+}
+
+/** News trigger for evidence collection */
+export interface NewsTrigger {
+  id: string;
+  assessmentId: string;
+  newsTitle: string;
+  newsUrl: string;
+  newsSource: string;
+  publishedAt: string;
+  matchedKeywords: string[];
+  triggeredDimensions: AssessmentDimension[];
+  evidenceCollectorTaskId?: string;
+  status: "pending" | "processing" | "completed" | "failed";
+  createdAt: string;
+}
+
+/** GitHub evidence source configuration */
+export interface GitHubEvidenceSource {
+  repo: string; // owner/repo
+  token?: string; // optional GitHub token
+  paths?: string[]; // specific paths to monitor
+  events?: ("push" | "pull_request" | "issue" | "workflow_run")[];
 }
 
 export interface GovernanceDivergenceAssessment {
@@ -456,6 +526,176 @@ export function createLLMAssertionEvidence(params: {
     dimension: params.dimension,
     tags: ["llm-generated"],
   });
+}
+
+/** Create activity log entry */
+export function createActivityLogEntry(params: {
+  assessmentId: string;
+  stage: ReflexiveArbiterStage;
+  agent: string;
+  action: string;
+  description: string;
+  details?: Record<string, any>;
+  severity?: "info" | "warning" | "critical";
+}): ArbiterActivityLogEntry {
+  return {
+    id: `activity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    assessmentId: params.assessmentId,
+    stage: params.stage,
+    agent: params.agent,
+    action: params.action,
+    description: params.description,
+    details: params.details,
+    timestamp: new Date().toISOString(),
+    severity: params.severity ?? "info",
+  };
+}
+
+/** Parse Mermaid diagram into architecture elements */
+export function parseMermaidDiagram(mermaid: string): ArchitectureElement[] {
+  const elements: ArchitectureElement[] = [];
+  const lines = mermaid.split('\n');
+  
+  // Simple parser for graph TD / flowchart TD syntax
+  // Matches: A[Label] --> B[Label] or A --> B
+  const nodeRegex = /(\w+)\s*\[([^\]]+)\]\s*(-->)?/g;
+  const edgeRegex = /(\w+)\s*-->\s*(\w+)/g;
+  
+  const nodeMap = new Map<string, { label: string; type: ArchitectureElement['type'] }>();
+  
+  // First pass: extract nodes
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('graph') || trimmed.startsWith('flowchart')) continue;
+    
+    // Reset regex
+    nodeRegex.lastIndex = 0;
+    let match;
+    while ((match = nodeRegex.exec(trimmed)) !== null) {
+      const id = match[1];
+      const label = match[2];
+      // Infer type from label or id patterns
+      let type: ArchitectureElement['type'] = "component";
+      const lowerLabel = label.toLowerCase();
+      if (lowerLabel.includes('system') || lowerLabel.includes('platform')) type = "system";
+      else if (lowerLabel.includes('user') || lowerLabel.includes('operator') || lowerLabel.includes('admin')) type = "actor";
+      else if (lowerLabel.includes('db') || lowerLabel.includes('store') || lowerLabel.includes('cache')) type = "datastore";
+      else if (lowerLabel.includes('external') || lowerLabel.includes('third') || lowerLabel.includes('api')) type = "external";
+      else if (lowerLabel.includes('boundary') || lowerLabel.includes('zone') || lowerLabel.includes('perimeter')) type = "boundary";
+      
+      nodeMap.set(id, { label, type });
+    }
+  }
+  
+  // Build elements
+  for (const [id, { label, type }] of nodeMap) {
+    elements.push({
+      id,
+      label,
+      type,
+      parents: [],
+      children: [],
+      metadata: {}
+    });
+  }
+  
+  // Second pass: extract edges
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    
+    edgeRegex.lastIndex = 0;
+    let match;
+    while ((match = edgeRegex.exec(trimmed)) !== null) {
+      const fromId = match[1];
+      const toId = match[2];
+      
+      const fromEl = elements.find(e => e.id === fromId);
+      const toEl = elements.find(e => e.id === toId);
+      
+      if (fromEl && toEl) {
+        fromEl.children.push(toId);
+        toEl.parents.push(fromId);
+      }
+    }
+  }
+  
+  return elements;
+}
+
+/** Extract boundaries from architecture elements */
+export function extractBoundariesFromArchitecture(elements: ArchitectureElement[]): string[] {
+  const boundaries = new Set<string>();
+  
+  for (const el of elements) {
+    if (el.type === "boundary") {
+      boundaries.add(el.label);
+    } else if (el.type === "system") {
+      boundaries.add(`${el.label} system boundary`);
+    } else if (el.type === "external") {
+      boundaries.add(`External dependency: ${el.label}`);
+    }
+  }
+  
+  // Add implicit boundaries from disconnected components
+  const systems = elements.filter(e => e.type === "system");
+  if (systems.length > 1) {
+    boundaries.add("Multi-system integration boundaries");
+  }
+  
+  return Array.from(boundaries);
+}
+
+/** Calculate forecast accuracy metrics */
+export function calculateForecastAccuracy(forecasts: GovernanceForecast[]): {
+  totalEvaluated: number;
+  directionHitRate: number;
+  meanAbsoluteError: number | null;
+  byDimension: Record<AssessmentDimension, { evaluated: number; hitRate: number; meanError: number | null }>;
+} {
+  const evaluated = forecasts.filter(f => f.evaluation);
+  const byDimension: Record<AssessmentDimension, { evaluated: number; correct: number; errors: number[] }> = {
+    temporal: { evaluated: 0, correct: 0, errors: [] },
+    authority: { evaluated: 0, correct: 0, errors: [] },
+    visibility: { evaluated: 0, correct: 0, errors: [] },
+    competency: { evaluated: 0, correct: 0, errors: [] },
+    recovery: { evaluated: 0, correct: 0, errors: [] },
+    accountability: { evaluated: 0, correct: 0, errors: [] },
+  };
+  
+  for (const f of evaluated) {
+    if (!f.evaluation) continue;
+    
+    const dim = f.dimension;
+    byDimension[dim].evaluated++;
+    if (f.evaluation.directionCorrect) byDimension[dim].correct++;
+    if (f.evaluation.absoluteError !== null) byDimension[dim].errors.push(f.evaluation.absoluteError);
+  }
+  
+  const result: any = {
+    totalEvaluated: evaluated.length,
+    directionHitRate: evaluated.length > 0 
+      ? evaluated.filter(f => f.evaluation?.directionCorrect).length / evaluated.length 
+      : 0,
+    meanAbsoluteError: null,
+    byDimension: {}
+  };
+  
+  const allErrors = evaluated.map(f => f.evaluation?.absoluteError).filter((e): e is number => e !== null && e !== undefined);
+  if (allErrors.length > 0) {
+    result.meanAbsoluteError = allErrors.reduce((a, b) => a + b, 0) / allErrors.length;
+  }
+  
+  for (const dim of Object.keys(byDimension) as AssessmentDimension[]) {
+    const d = byDimension[dim];
+    result.byDimension[dim] = {
+      evaluated: d.evaluated,
+      hitRate: d.evaluated > 0 ? d.correct / d.evaluated : 0,
+      meanError: d.errors.length > 0 ? d.errors.reduce((a, b) => a + b, 0) / d.errors.length : null
+    };
+  }
+  
+  return result;
 }
 
 /** Check if evidence is a verified, non-LLM source */

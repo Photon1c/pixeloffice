@@ -1,7 +1,11 @@
 {
   "_available": {
-    "lastSync": "2026-11-18T01:58:43.528Z",
+    "lastSync": "2026-11-20T05:35:33.694Z",
     "models": {
+      "qwen3:0.6b": {
+        "name": "qwen3:0.6b",
+        "size": 522653767
+      },
       "emapper:latest": {
         "name": "emapper:latest",
         "size": 5629122057
@@ -22,13 +26,13 @@
         "name": "geometrid:latest",
         "size": 5629116807
       },
-      "cicero-sharp:latest": {
-        "name": "cicero-sharp:latest",
-        "size": 5629110056
-      },
       "ornith:latest": {
         "name": "ornith:latest",
         "size": 5629110568
+      },
+      "cicero-sharp:latest": {
+        "name": "cicero-sharp:latest",
+        "size": 5629110056
       },
       "qwen2.5:7b": {
         "name": "qwen2.5:7b",

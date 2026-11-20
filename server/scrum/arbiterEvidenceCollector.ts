@@ -513,3 +513,160 @@ export function validateEvidenceIntegrity(evidence: EvidenceRecord[]): {
     verifiedCount,
   };
 }
+
+/**
+ * Collect evidence from news article
+ * Creates evidence records from news content with proper classification
+ */
+export async function collectNewsEvidence(params: {
+  newsTitle: string;
+  newsUrl: string;
+  newsSource: string;
+  publishedAt: string;
+  content: string; // Full article content or summary
+  dimension: AssessmentDimension;
+  collector: string;
+}): Promise<EvidenceRecord[]> {
+  const evidence: EvidenceRecord[] = [];
+  
+  // Main news report as "reported" evidence
+  evidence.push(createEvidenceRecord({
+    content: `${params.newsTitle}: ${params.content.slice(0, 500)}`,
+    sourceUri: params.newsUrl || `news://${params.newsSource}/${Date.now()}`,
+    publishedAt: params.publishedAt,
+    classification: "reported",
+    sourceIndependence: "independent", // News sources are typically independent
+    verificationStatus: "unverified", // Requires cross-verification
+    confidence: 0.7,
+    collector: params.collector,
+    dimension: params.dimension,
+    tags: ["news", params.newsSource, params.dimension],
+  }));
+  
+  // Extract specific claims as separate evidence items
+  const sentences = params.content.split(/[.!?]+/).filter(s => s.trim().length > 20);
+  for (const sentence of sentences.slice(0, 5)) {
+    evidence.push(createEvidenceRecord({
+      content: sentence.trim(),
+      sourceUri: params.newsUrl || `news://${params.newsSource}/${Date.now()}`,
+      publishedAt: params.publishedAt,
+      classification: "reported",
+      sourceIndependence: "independent",
+      verificationStatus: "unverified",
+      confidence: 0.5,
+      collector: params.collector,
+      dimension: params.dimension,
+      tags: ["news-extract", params.newsSource, params.dimension],
+    }));
+  }
+  
+  return evidence;
+}
+
+/**
+ * Collect evidence from GitHub repository
+ * Fetches commits, PRs, issues, workflows as evidence
+ */
+export async function collectGitHubEvidence(params: {
+  repo: string; // owner/repo
+  token?: string;
+  dimension: AssessmentDimension;
+  collector: string;
+  since?: string; // ISO date string
+  paths?: string[];
+  events?: ("push" | "pull_request" | "issue" | "workflow_run")[];
+}): Promise<EvidenceRecord[]> {
+  const evidence: EvidenceRecord[] = [];
+  const headers: Record<string, string> = {
+    "Accept": "application/vnd.github.v3+json",
+    "User-Agent": "PixelOffice-Arbiter",
+  };
+  if (params.token) {
+    headers["Authorization"] = `Bearer ${params.token}`;
+  }
+  
+  const baseUrl = `https://api.github.com/repos/${params.repo}`;
+  const since = params.since || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  
+  try {
+    // Fetch commits
+    const commitsUrl = `${baseUrl}/commits?since=${since}&per_page=50`;
+    const commitsResp = await fetch(commitsUrl, { headers });
+    if (commitsResp.ok) {
+      const commits = await commitsResp.json();
+      for (const commit of commits.slice(0, 20)) {
+        evidence.push(createEvidenceRecord({
+          content: `Commit: ${commit.commit.message.split('\n')[0]} (${commit.sha.slice(0, 7)})`,
+          sourceUri: commit.html_url,
+          publishedAt: commit.commit.author.date,
+          classification: "observed", // Direct observation of code changes
+          sourceIndependence: "affiliated", // From the system's own repo
+          verificationStatus: "verified", // Git history is verifiable
+          confidence: 0.9,
+          collector: params.collector,
+          dimension: params.dimension,
+          tags: ["github", "commit", params.dimension, params.repo],
+        }));
+      }
+    }
+    
+    // Fetch pull requests
+    const prsUrl = `${baseUrl}/pulls?state=all&sort=updated&direction=desc&per_page=30`;
+    const prsResp = await fetch(prsUrl, { headers });
+    if (prsResp.ok) {
+      const prs = await prsResp.json();
+      for (const pr of prs.slice(0, 15)) {
+        evidence.push(createEvidenceRecord({
+          content: `PR #${pr.number}: ${pr.title} (${pr.state}) - ${pr.additions} additions, ${pr.deletions} deletions`,
+          sourceUri: pr.html_url,
+          publishedAt: pr.updated_at,
+          classification: "observed",
+          sourceIndependence: "affiliated",
+          verificationStatus: "verified",
+          confidence: 0.85,
+          collector: params.collector,
+          dimension: params.dimension,
+          tags: ["github", "pull_request", params.dimension, params.repo],
+        }));
+      }
+    }
+    
+    // Fetch workflow runs (for CI/CD evidence)
+    const runsUrl = `${baseUrl}/actions/runs?per_page=20`;
+    const runsResp = await fetch(runsUrl, { headers });
+    if (runsResp.ok) {
+      const runs = await runsResp.json();
+      for (const run of (runs.workflow_runs || []).slice(0, 10)) {
+        evidence.push(createEvidenceRecord({
+          content: `Workflow: ${run.name} (${run.conclusion}) - ${run.run_number}`,
+          sourceUri: run.html_url,
+          publishedAt: run.updated_at,
+          classification: "observed",
+          sourceIndependence: "affiliated",
+          verificationStatus: "verified",
+          confidence: 0.8,
+          collector: params.collector,
+          dimension: params.dimension,
+          tags: ["github", "workflow", params.dimension, params.repo],
+        }));
+      }
+    }
+    
+  } catch (e) {
+    console.error(`[EvidenceCollector] GitHub evidence collection failed for ${params.repo}:`, e);
+  }
+  
+  return evidence;
+}
+
+/**
+ * Create evidence collector with news and GitHub support
+ */
+export async function createAdvancedEvidenceCollector(
+  defaultRole: RoleId = "specialist"
+): Promise<(task: ResearchTask) => Promise<Partial<AgentFinding>>> {
+  return async (task: ResearchTask) => {
+    const role = (task.assignedAgent as any) || defaultRole;
+    return collectEvidenceForTask(task, { role, useKnowledgeBase: true, collectTelemetry: true });
+  };
+}

@@ -2485,6 +2485,261 @@ app.post("/api/arbiter/auto-run", async (req, res) => {
   }
 });
 
+// Admin: Get activity log for an assessment
+app.get("/api/admin/arbiter/assessments/:id/activity", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const assessment = loadAssessment(id);
+    if (!assessment) {
+      return res.status(404).json({ error: "Assessment not found" });
+    }
+    const activityLog = (assessment as any).activityLog || [];
+    res.json({ activityLog });
+  } catch (error: any) {
+    console.error("Error loading activity log:", error);
+    res.status(500).json({ error: "Failed to load activity log" });
+  }
+});
+
+// Admin: Export evidence pack for an assessment
+app.get("/api/admin/arbiter/assessments/:id/evidence-pack", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const assessment = loadAssessment(id);
+    if (!assessment) {
+      return res.status(404).json({ error: "Assessment not found" });
+    }
+    
+    const evidencePack = {
+      assessmentId: assessment.id,
+      systemName: assessment.scope.systemName,
+      generatedAt: new Date().toISOString(),
+      dimensions: assessment.dimensionAssessments.map(da => ({
+        dimension: da.dimension,
+        rating: da.rating,
+        confidence: da.confidence,
+        evidenceCoverage: da.evidenceCoverage,
+        unresolvedDisagreementCount: da.unresolvedDisagreementCount,
+        isCritical: da.isCritical,
+        evidence: da.evidence.map(e => ({
+          content: e.content,
+          sourceUri: e.sourceUri,
+          publishedAt: e.publishedAt,
+          retrievedAt: e.retrievedAt,
+          classification: e.classification,
+          sourceIndependence: e.sourceIndependence,
+          verificationStatus: e.verificationStatus,
+          confidence: e.confidence,
+          collector: e.collector,
+          tags: e.tags,
+        })),
+        assumptions: da.assumptions,
+        notes: da.notes,
+      })),
+      cascadingFailureRisks: assessment.cascadingFailureRisks.map(r => ({
+        trigger: r.trigger,
+        propagationPath: r.propagationPath,
+        impact: r.impact,
+        likelihood: r.likelihood,
+        governanceGap: r.governanceGap,
+        evidence: r.evidence.map(e => e.content),
+      })),
+      governanceDebt: assessment.governanceDebt.map(d => ({
+        description: d.description,
+        dimension: d.dimension,
+        severity: d.severity,
+        accumulating: d.accumulating,
+        evidence: d.evidence.map(e => e.content),
+      })),
+      unresolvedQuestions: assessment.unresolvedQuestions.map(q => ({
+        question: q.question,
+        dimension: q.dimension,
+        priority: q.priority,
+        blockingEvidence: q.blockingEvidence.map(e => e.content),
+      })),
+      telemetry: assessment.scope.telemetryContext,
+    };
+    
+    res.set('Content-Type', 'application/json');
+    res.set('Content-Disposition', `attachment; filename="evidence-pack-${id}.json"`);
+    res.send(JSON.stringify(evidencePack, null, 2));
+  } catch (error: any) {
+    console.error("Error exporting evidence pack:", error);
+    res.status(500).json({ error: "Failed to export evidence pack" });
+  }
+});
+
+// Admin: Start assessment with Mermaid diagram for scope definition
+app.post("/api/admin/arbiter/start-with-mermaid", async (req, res) => {
+  try {
+    const { topic, systemScope, participants, sourceContext, repo, systemDescription, institutionalContext, boundaries, mermaidDiagram } = req.body;
+    
+    if (!topic || !systemScope) {
+      return res.status(400).json({ error: "topic and systemScope are required" });
+    }
+    
+    const arbiterParticipants = participants || ["clerk", "specialist", "executive", "archivist"];
+    
+    currentArbiterSession = createReflexiveArbiterSession(
+      topic,
+      systemScope,
+      arbiterParticipants,
+      sourceContext,
+      repo
+    );
+    
+    const { session, stageResult } = await advanceReflexiveArbiterSession(currentArbiterSession, {
+      systemDescription,
+      institutionalContext,
+      boundaries,
+      mermaidDiagram,
+    });
+    currentArbiterSession = session;
+    
+    res.json({
+      session,
+      stageResult,
+      message: `Reflexive Arbiter started with Mermaid scope at stage: ${stageResult.stage}`
+    });
+  } catch (error: any) {
+    console.error("Error starting Reflexive Arbiter session with Mermaid:", error);
+    res.status(500).json({ error: "Failed to start Reflexive Arbiter session" });
+  }
+});
+
+// Admin: Trigger evidence collection from news item
+app.post("/api/admin/arbiter/news-trigger", async (req, res) => {
+  try {
+    const { assessmentId, newsTitle, newsUrl, newsSource, publishedAt, keywords } = req.body;
+    
+    if (!assessmentId || !newsTitle) {
+      return res.status(400).json({ error: "assessmentId and newsTitle are required" });
+    }
+    
+    const assessment = loadAssessment(assessmentId);
+    if (!assessment) {
+      return res.status(404).json({ error: "Assessment not found" });
+    }
+    
+    // Determine which dimensions are relevant based on keywords
+    const dimensionKeywords: Record<AssessmentDimension, string[]> = {
+      temporal: ["velocity", "speed", "latency", "response time", "deadline", "real-time", "throughput"],
+      authority: ["permission", "access", "authorization", "privilege", "scope", "boundary", "escalation"],
+      visibility: ["monitoring", "observability", "telemetry", "dashboard", "alert", "blind spot", "awareness"],
+      competency: ["complexity", "understanding", "expertise", "knowledge", "training", "skill", "operator"],
+      recovery: ["restoration", "failover", "backup", "resilience", "MTTR", "disaster", "recovery", "outage"],
+      accountability: ["traceability", "audit", "responsibility", "decision", "logging", "attribution", "compliance"],
+    };
+    
+    const matchedDimensions: AssessmentDimension[] = [];
+    const matchedKeywords: string[] = [];
+    
+    for (const [dimension, dimKeywords] of Object.entries(dimensionKeywords)) {
+      for (const kw of dimKeywords) {
+        if (newsTitle.toLowerCase().includes(kw.toLowerCase()) || 
+            (keywords && keywords.some((k: string) => k.toLowerCase().includes(kw.toLowerCase())))) {
+          if (!matchedDimensions.includes(dimension as AssessmentDimension)) {
+            matchedDimensions.push(dimension as AssessmentDimension);
+          }
+          if (!matchedKeywords.includes(kw)) matchedKeywords.push(kw);
+        }
+      }
+    }
+    
+    const newsTrigger = {
+      id: `news-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      assessmentId,
+      newsTitle,
+      newsUrl: newsUrl || "",
+      newsSource: newsSource || "unknown",
+      publishedAt: publishedAt || new Date().toISOString(),
+      matchedKeywords,
+      triggeredDimensions: matchedDimensions,
+      status: "pending" as const,
+      createdAt: new Date().toISOString(),
+    };
+    
+    // Log activity
+    const activityLog = (assessment as any).activityLog || [];
+    activityLog.push({
+      id: `activity-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      assessmentId,
+      stage: "independent_investigation",
+      agent: "system",
+      action: "news_triggered",
+      description: `News trigger activated: ${newsTitle}`,
+      details: { newsTrigger, matchedDimensions },
+      timestamp: new Date().toISOString(),
+      severity: "info",
+    });
+    (assessment as any).activityLog = activityLog;
+    
+    // Save updated assessment
+    const assessmentPath = path.join("data/reflexive_arbiter", `${assessmentId}.json`);
+    fs.writeFileSync(assessmentPath, JSON.stringify(assessment, null, 2), "utf8");
+    
+    res.json({ 
+      success: true, 
+      newsTrigger,
+      message: `News trigger processed. Matched ${matchedDimensions.length} dimensions.`
+    });
+  } catch (error: any) {
+    console.error("Error processing news trigger:", error);
+    res.status(500).json({ error: error.message || "Failed to process news trigger" });
+  }
+});
+
+// Admin: Get arbiter dashboard summary
+app.get("/api/admin/arbiter/dashboard", async (req, res) => {
+  try {
+    const assessments = listAssessments();
+    
+    const summary = {
+      totalAssessments: assessments.length,
+      systems: [...new Set(assessments.map(a => a.systemName))].length,
+      recentAssessments: assessments.slice(0, 10).map(a => ({
+        id: a.id,
+        systemName: a.systemName,
+        createdAt: a.createdAt,
+        overallDivergenceScore: a.overallDivergenceScore,
+      })),
+      dimensionStats: {
+        temporal: { avgScore: 0, criticalCount: 0 },
+        authority: { avgScore: 0, criticalCount: 0 },
+        visibility: { avgScore: 0, criticalCount: 0 },
+        competency: { avgScore: 0, criticalCount: 0 },
+        recovery: { avgScore: 0, criticalCount: 0 },
+        accountability: { avgScore: 0, criticalCount: 0 },
+      },
+      criticalAssessments: 0,
+      totalGovernanceDebt: 0,
+    };
+    
+    // Calculate dimension stats from completed assessments
+    for (const a of assessments) {
+      const full = loadAssessment(a.id);
+      if (full) {
+        if (full.hasCriticalDivergence) summary.criticalAssessments++;
+        summary.totalGovernanceDebt += full.governanceDebt.length;
+        
+        for (const da of full.dimensionAssessments) {
+          if (typeof da.rating === "number") {
+            const dim = da.dimension;
+            const stats = summary.dimensionStats[dim];
+            stats.avgScore = (stats.avgScore + da.rating) / 2; // Running average approximation
+            if (da.rating >= 3) stats.criticalCount++;
+          }
+        }
+      }
+    }
+    
+    res.json({ summary });
+  } catch (error: any) {
+    console.error("Error loading arbiter dashboard:", error);
+    res.status(500).json({ error: "Failed to load dashboard" });
+  }
+});
+
 // List GitHub repos accessible by the current token
 app.get("/api/github/repos", async (req, res) => {
   const token = process.env.GITHUB_TOKEN;

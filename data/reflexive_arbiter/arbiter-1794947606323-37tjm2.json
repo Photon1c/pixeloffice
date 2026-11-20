@@ -2138,5 +2138,41 @@
   "recommendedInvestigations": [],
   "createdAt": "2026-11-17T20:33:26.326Z",
   "updatedAt": "2026-11-17T20:33:26.326Z",
-  "scrumSessionId": "arbiter-1794947606323-37tjm2"
+  "scrumSessionId": "arbiter-1794947606323-37tjm2",
+  "activityLog": [
+    {
+      "id": "activity-1795152941115-v0xs78",
+      "assessmentId": "arbiter-1794947606323-37tjm2",
+      "stage": "independent_investigation",
+      "agent": "system",
+      "action": "news_triggered",
+      "description": "News trigger activated: Major outage in payment processing system due to visibility gaps",
+      "details": {
+        "newsTrigger": {
+          "id": "news-1795152941115-r5b70o",
+          "assessmentId": "arbiter-1794947606323-37tjm2",
+          "newsTitle": "Major outage in payment processing system due to visibility gaps",
+          "newsUrl": "https://example.com/news/outage",
+          "newsSource": "TechCrunch",
+          "publishedAt": "2026-11-20T10:00:00Z",
+          "matchedKeywords": [
+            "monitoring",
+            "outage"
+          ],
+          "triggeredDimensions": [
+            "visibility",
+            "recovery"
+          ],
+          "status": "pending",
+          "createdAt": "2026-11-20T05:35:41.115Z"
+        },
+        "matchedDimensions": [
+          "visibility",
+          "recovery"
+        ]
+      },
+      "timestamp": "2026-11-20T05:35:41.115Z",
+      "severity": "info"
+    }
+  ]
 }

@@ -42,10 +42,14 @@ import {
   type UnresolvedQuestion,
   type GovernanceTelemetry,
   type EvidenceRecord,
+  type ArbiterActivityLogEntry,
   DIVERGENCE_SCALE_DESCRIPTIONS,
   DIMENSION_DESCRIPTIONS,
   isVerifiedIndependentEvidence,
   calculateEvidenceCoverage,
+  createActivityLogEntry,
+  parseMermaidDiagram,
+  extractBoundariesFromArchitecture,
 } from "./reflexiveArbiterTypes.js";
 
 function isNumericRating(rating: DivergenceRating): rating is 0 | 1 | 2 | 3 | 4 {
@@ -91,7 +95,7 @@ export function createReflexiveArbiterSession(
 ): ReflexiveArbiterSession {
   ensureDirs();
   
-  return {
+  const session: ReflexiveArbiterSession = {
     id: generateId("arbiter"),
     topic,
     systemScope,
@@ -105,6 +109,21 @@ export function createReflexiveArbiterSession(
     createdAt: nowIso(),
     updatedAt: nowIso(),
   };
+  
+  // Initialize activity log
+  (session as any)._activityLog = [
+    createActivityLogEntry({
+      assessmentId: session.id,
+      stage: "scope_definition",
+      agent: "system",
+      action: "session_created",
+      description: `Reflexive Arbiter session created for ${topic}`,
+      details: { topic, systemScope, participants },
+      severity: "info",
+    })
+  ];
+  
+  return session;
 }
 
 export function getNextArbiterStage(current: ReflexiveArbiterStage): ReflexiveArbiterStage | null {
@@ -116,18 +135,29 @@ export async function runScopeDefinitionStage(
   session: ReflexiveArbiterSession,
   systemDescription?: string,
   institutionalContext?: string,
-  boundaries?: string[]
+  boundaries?: string[],
+  mermaidDiagram?: string
 ): Promise<ReflexiveArbiterStageResult> {
   const topic = session.topic;
   const systemScope = session.systemScope;
+  
+  // Parse Mermaid diagram if provided
+  let architectureElements: any[] = [];
+  let mermaidBoundaries: string[] = [];
+  if (mermaidDiagram) {
+    architectureElements = parseMermaidDiagram(mermaidDiagram);
+    mermaidBoundaries = extractBoundariesFromArchitecture(architectureElements);
+  }
   
   const scope: AssessmentScope = {
     systemName: systemScope || topic,
     systemDescription: systemDescription || `System under assessment: ${topic}`,
     institutionalContext: institutionalContext || "Institutional context to be defined during investigation",
-    boundaries: boundaries || ["System boundary to be defined during investigation"],
+    boundaries: [...(boundaries || ["System boundary to be defined during investigation"]), ...mermaidBoundaries],
     assessmentTimestamp: nowIso(),
     assessorContext: `Reflexive Arbiter session ${session.id}`,
+    mermaidDiagram: mermaidDiagram,
+    architectureElements,
   };
 
   const researchQuestions = [
@@ -149,6 +179,19 @@ export async function runScopeDefinitionStage(
   };
 
   (session as any)._scope = scope;
+  
+  // Log activity
+  const activityLog = (session as any)._activityLog || [];
+  activityLog.push(createActivityLogEntry({
+    assessmentId: session.id,
+    stage: "scope_definition",
+    agent: "clerk",
+    action: "scope_defined",
+    description: `Defined assessment scope for ${scope.systemName} with ${scope.boundaries.length} boundaries`,
+    details: { systemName: scope.systemName, boundaryCount: scope.boundaries.length, hasMermaid: !!mermaidDiagram },
+    severity: "info",
+  }));
+  (session as any)._activityLog = activityLog;
 
   return {
     stage: "scope_definition",
@@ -226,6 +269,19 @@ export function runTaskAllocationStage(session: ReflexiveArbiterSession): Reflex
   (session as any)._tasks = tasks;
   (session as any)._assignments = assignments;
 
+  // Log activity
+  const activityLog = (session as any)._activityLog || [];
+  activityLog.push(createActivityLogEntry({
+    assessmentId: session.id,
+    stage: "task_allocation",
+    agent: "clerk",
+    action: "tasks_allocated",
+    description: `Allocated ${tasks.length} research tasks across ${Object.keys(assignments).length} agents`,
+    details: { taskCount: tasks.length, agentCount: Object.keys(assignments).length, dimensions: DIMENSIONS },
+    severity: "info",
+  }));
+  (session as any)._activityLog = activityLog;
+
   return {
     stage: "task_allocation",
     agent: "clerk",
@@ -299,6 +355,21 @@ export async function runIndependentInvestigationStage(
 
   (session as any)._findings = findings;
 
+  // Log activity
+  const activityLog = (session as any)._activityLog || [];
+  const evidenceCount = findings.reduce((sum, f) => sum + (f.evidence?.length || 0), 0);
+  const ratingsGiven = findings.filter(f => f.rating !== "unknown").length;
+  activityLog.push(createActivityLogEntry({
+    assessmentId: session.id,
+    stage: "independent_investigation",
+    agent: "specialist",
+    action: "investigation_completed",
+    description: `Completed independent investigation for ${findings.length} dimensions`,
+    details: { dimensionCount: findings.length, evidenceItemsCollected: evidenceCount, ratingsProvided: ratingsGiven },
+    severity: "info",
+  }));
+  (session as any)._activityLog = activityLog;
+
   return {
     stage: "independent_investigation",
     agent: "specialist",
@@ -355,6 +426,22 @@ export function runCrossAgentReviewStage(session: ReflexiveArbiterSession): Refl
   };
 
   (session as any)._reviews = reviews;
+
+  // Log activity
+  const activityLog = (session as any)._activityLog || [];
+  const reviewCount = reviews.length;
+  const agreementCount = agreements.length;
+  const disagreementCount = disagreements.length;
+  activityLog.push(createActivityLogEntry({
+    assessmentId: session.id,
+    stage: "cross_agent_review",
+    agent: "executive",
+    action: "peer_review_completed",
+    description: `Completed cross-agent peer review with ${reviewCount} reviews`,
+    details: { reviewCount, agreementCount, disagreementCount, agentsInvolved: [...new Set(reviews.map(r => r.reviewer))].length },
+    severity: disagreementCount > 0 ? "warning" : "info",
+  }));
+  (session as any)._activityLog = activityLog;
 
   return {
     stage: "cross_agent_review",
@@ -455,6 +542,27 @@ export function runFindingsReconciliationStage(session: ReflexiveArbiterSession)
 
   (session as any)._reconciledFindings = reconciledFindings;
   (session as any)._unresolvedDisagreements = unresolvedDisagreements;
+
+  // Log activity
+  const activityLog = (session as any)._activityLog || [];
+  const criticalCount = reconciledFindings.filter(r => r.consensusRating !== "unknown" && typeof r.consensusRating === "number" && r.consensusRating >= 3).length;
+  const unknownCount = reconciledFindings.filter(r => r.consensusRating === "unknown").length;
+  const totalDisagreements = unresolvedDisagreements.length;
+  activityLog.push(createActivityLogEntry({
+    assessmentId: session.id,
+    stage: "findings_reconciliation",
+    agent: "executive",
+    action: "findings_reconciled",
+    description: `Reconciled findings across ${reconciledFindings.length} dimensions`,
+    details: { 
+      dimensionCount: reconciledFindings.length, 
+      criticalDimensions: criticalCount, 
+      unknownDimensions: unknownCount,
+      unresolvedDisagreements: totalDisagreements 
+    },
+    severity: criticalCount > 0 || totalDisagreements > 0 ? "warning" : "info",
+  }));
+  (session as any)._activityLog = activityLog;
 
   return {
     stage: "findings_reconciliation",
@@ -609,6 +717,24 @@ export function runReportGenerationStage(session: ReflexiveArbiterSession): Refl
     reportGeneration: { assessment, reportPath },
   };
 
+  // Log activity
+  const activityLog = (session as any)._activityLog || [];
+  activityLog.push(createActivityLogEntry({
+    assessmentId: session.id,
+    stage: "report_generation",
+    agent: "archivist",
+    action: "report_generated",
+    description: `Generated assessment report: ${assessment.id}`,
+    details: { 
+      reportPath, 
+      overallScore: assessment.overallDivergenceScore, 
+      criticalCount: assessment.criticalDimensionCount,
+      evidenceCoverage: assessment.evidenceCoverage 
+    },
+    severity: assessment.hasCriticalDivergence ? "critical" : "info",
+  }));
+  (session as any)._activityLog = activityLog;
+
   return {
     stage: "report_generation",
     agent: "archivist",
@@ -651,6 +777,28 @@ export function runArchivalStage(session: ReflexiveArbiterSession): ReflexiveArb
   const output: ReflexiveArbiterStageOutput = {
     archival: { archived: true, paths, longitudinalComparison },
   };
+
+  // Log activity
+  const activityLog = (session as any)._activityLog || [];
+  activityLog.push(createActivityLogEntry({
+    assessmentId: session.id,
+    stage: "archival",
+    agent: "archivist",
+    action: "assessment_archived",
+    description: `Archived assessment ${assessment.id} with ${paths.length} files`,
+    details: { 
+      assessmentPath: paths[0], 
+      hasLongitudinalComparison: !!longitudinalComparison,
+      previousAssessmentId: longitudinalComparison?.previousAssessmentId 
+    },
+    severity: "info",
+  }));
+  (session as any)._activityLog = activityLog;
+
+  // Save activity log to assessment
+  if (session.assessment) {
+    (session.assessment as any).activityLog = activityLog;
+  }
 
   return {
     stage: "archival",

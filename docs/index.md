@@ -66,7 +66,7 @@
 | cursor-agent-workspace | infrastructure | archived | 🟡 | clean |
 | eagle | tools | maintenance | 🟡 | 1 dirty |
 | editor | infrastructure | maintenance | 🟡 | 1 dirty |
-| esp-backend | infrastructure | maintenance | 🟡 | 1 dirty |
+| esp-backend | infrastructure | active | 🟢 | clean |
 | finance-formulas-repertoire | applications | archived | 🟡 | clean |
 | finance_crow_engine | applications | maintenance | 🟡 | 7 dirty |
 | flight-sim | dynamics | archived | 🟡 | clean |
@@ -92,11 +92,11 @@
 | openclaw-agent-blueprints | tools | archived | 🟡 | clean |
 | palantir-for-family-trips | archive | maintenance | 🟡 | 3 dirty |
 | pixel-me | infrastructure | maintenance | 🟡 | 17 dirty |
-| pixel_office | infrastructure | maintenance | 🟡 | 13 dirty |
+| pixel_office | infrastructure | maintenance | 🟡 | 1 dirty |
 | pixel_office_remote | infrastructure | maintenance | 🟡 | 1 dirty |
 | router-visualizer | tools | paused | 🟡 | clean |
 | seeker | tools | archived | 🟡 | clean |
-| sherlock-trader | applications | maintenance | 🟡 |  2/0 |
+| sherlock-trader | applications | active | 🟢 | clean |
 | spamisher | applications | archived | 🟡 | clean |
 | stock-monitor | applications | maintenance | 🟡 | 69 dirty |
 | supersplat | infrastructure | maintenance | 🟡 | 1 dirty |
@@ -105,6 +105,6 @@
 | trer | observer | archived | 🟡 | clean |
 | turbovec | experiments | archived | 🟡 | clean |
 | vibe-trading | applications | archived | 🟡 | clean |
-| workspace-main | unknown | maintenance | 🟡 | 42 dirty |
+| workspace-main | unknown | maintenance | 🟡 | 44 dirty |
 | x-algorithm | applications | archived | 🟡 | clean |
 | yolo-training-template | tools | maintenance | 🟡 | 3 dirty |
